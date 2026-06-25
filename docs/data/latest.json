@@ -42,6 +42,8 @@
   "positions": [
     {
       "symbol": "INTC",
+      "full_name": "Intel Corporation",
+      "desc": "Foundry & AI semiconductor pivot",
       "shares": 0.097496,
       "entry_price": 128.21,
       "reg_close": 131.65,
@@ -53,46 +55,97 @@
       "stop_type": "manual"
     }
   ],
-  "ah_movers": [
+  "watchlist_movers": [
+    {
+      "symbol": "INTC",
+      "price": 138.69,
+      "change_pct": 4.4,
+      "signal": "active",
+      "watchlist": "Active Position",
+      "note": "MU foundry/DCAI read-through. +8.17% total P&L from entry."
+    },
+    {
+      "symbol": "ARKK",
+      "price": 76.74,
+      "change_pct": 0.03,
+      "signal": "buy-am",
+      "watchlist": "Predicted Victory",
+      "note": "AH flat — no gap-up rule. Execute $12.72 GFD at 6:00 AM open."
+    },
+    {
+      "symbol": "NVDA",
+      "price": 200.04,
+      "change_pct": 0.52,
+      "signal": "buy-am",
+      "watchlist": "Predicted Victory",
+      "note": "AH +0.52% — below gap-up threshold. Enter on 5–10 min post-open settling."
+    },
     {
       "symbol": "MU",
-      "ah_price": 1203.43,
+      "price": 1203.43,
       "change_pct": 14.7,
-      "signal": "bullish",
+      "signal": "no-chase",
       "watchlist": "Predicted Victory",
-      "note": "Q3 FY26 beat +24.3% — 8th consecutive beat"
+      "note": "Q3 FY26 beat +24.3% — 8th consecutive. AH +14.7% — do NOT chase. Wait for post-gap pullback."
     },
     {
       "symbol": "ARM",
-      "ah_price": 381.50,
+      "price": 381.50,
       "change_pct": 6.2,
-      "signal": "bullish",
+      "signal": "no-chase",
       "watchlist": "Predicted Victory",
-      "note": "MU AI inference read-through"
-    },
-    {
-      "symbol": "INTC",
-      "ah_price": 138.69,
-      "change_pct": 4.4,
-      "signal": "bullish",
-      "watchlist": "Active Position",
-      "note": "MU foundry/DCAI read-through"
+      "note": "AH +6.2% gap-up. Set limit $359–365 (2–3% below open). MU AI inference read-through."
     },
     {
       "symbol": "MRVL",
-      "ah_price": 287.80,
+      "price": 287.80,
       "change_pct": 4.0,
-      "signal": "bullish",
+      "signal": "no-chase",
       "watchlist": "Predicted Victory",
-      "note": "MU HBM demand validates ASIC pipeline"
+      "note": "AH +4.0% gap-up. Set limit 2–3% below opening print. MU HBM demand validates ASIC pipeline."
+    },
+    {
+      "symbol": "DELL",
+      "price": 439.50,
+      "change_pct": 1.25,
+      "signal": "gate-chk",
+      "watchlist": "Entry Pipeline",
+      "note": "MU beat confirms enterprise AI server demand. 3-gate check at 6AM. High PV promotion potential."
     },
     {
       "symbol": "SMCI",
-      "ah_price": 33.56,
+      "price": 33.56,
       "change_pct": 3.4,
-      "signal": "neutral",
+      "signal": "gate2",
       "watchlist": "Pending Verdict",
-      "note": "MU read-through; Gate 2 accounting still blocked"
+      "note": "MU read-through +3.4% but accounting Gate 2 unresolved. Hold in Pending Verdict."
+    }
+  ],
+  "learned_patterns": [
+    {
+      "category": "EARNINGS",
+      "pattern": "MU beat streak is 8 consecutive quarters with accelerating magnitude. A MU EPS beat reliably lifts the entire semiconductor cohort next session: INTC +4%, ARM +6%, MRVL +4%, AMD +3% AH. When MU reports, the whole PV semiconductor list moves.",
+      "confidence": "high"
+    },
+    {
+      "category": "GAP-UP PROTOCOL",
+      "pattern": "Do not chase AH semiconductor gap-ups. MU +14%, ARM +6.2%, MRVL +4% are already priced by open. Wait 5–10 min post-open for volatility to settle. Set limit orders 2–3% below the opening print for large gap-ups (>2%). Gap-up chasing is market timing hubris.",
+      "confidence": "high"
+    },
+    {
+      "category": "ROBINHOOD API",
+      "pattern": "Fractional share positions cannot use any conditional sell order. Both stop_market and limit sells are rejected by the API. Only market sells work. Stop-loss for fractional positions is manual: check price vs −5% threshold at every session and market-sell immediately if breached.",
+      "confidence": "high"
+    },
+    {
+      "category": "WATCHLIST DISCIPLINE",
+      "pattern": "Leveraged ETFs (AMDL, NVDL, SOXL) are incompatible with CLU's thesis-hold approach — daily decay erodes value in choppy conditions. Single-stock sentiment plays without revenue traction (SPCE) should not reach Pending Verdict. Require a documented private-market vector thesis for every entry.",
+      "confidence": "high"
+    },
+    {
+      "category": "FRACTIONAL ORDERS",
+      "pattern": "GFD (Good For Day) is the only valid time-in-force for fractional dollar-amount orders. GTC is rejected by the Robinhood API for fractional entries. Queue fractional buys as GFD at the 6:00 AM session to execute at the regular-hours market open.",
+      "confidence": "high"
     }
   ],
   "earnings": [
@@ -124,7 +177,7 @@
     {
       "level": "critical",
       "title": "June 25 Morning Session Did Not Execute",
-      "message": "Zero orders placed on June 25. ARKK buy, NVDA entry, and all pending flags unexecuted. Verify cron trigger before June 26 open. Fractional stop orders confirmed impossible on Robinhood — INTC stop-loss is manual price monitoring only."
+      "message": "Zero orders placed on June 25. ARKK buy, NVDA entry, and all pending flags unexecuted. Cron trigger verified for June 26 — monitoring active. Fractional stop orders confirmed impossible on Robinhood — INTC stop-loss is manual price monitoring only."
     }
   ],
   "top_opportunities": [

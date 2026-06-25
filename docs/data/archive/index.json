@@ -1,12 +1,7 @@
 [
   {
-    "date": "2026-06-25-am",
-    "session": "daily_brief",
-    "session_label": "6AM Daily Brief — missed push"
-  },
-  {
     "date": "2026-06-24-ah",
-    "session": "after_hours",
-    "session_label": "After-Hours Report"
+    "session": "daily_brief",
+    "session_label": "Jun 24 — Final Daily Report"
   }
 ]

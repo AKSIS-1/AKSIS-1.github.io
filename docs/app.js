@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.1
+   C.L.U. — Cognitive Logic Unit — Report Renderer v4.2
    "Blade Runner Transmission"
    ============================================================ */
 
@@ -7,6 +7,9 @@ const DATA_URL          = './data/latest.json';
 const ARCHIVE_INDEX_URL = './data/archive/index.json';
 const ARCHIVE_REPORT    = (d) => `./data/archive/${d}.json`;
 const REFRESH_SECS      = 60;
+
+/* Per-position slice colors: icy blue, magenta, orange, yellow, red, lime, violet, teal */
+const POS_COLORS = ['#7EC8FF','#e040fb','#ff9a44','#ffdd00','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];
 
 let countdownVal  = REFRESH_SECS;
 let countdownTick = null;
@@ -150,31 +153,38 @@ function svgDonut(segments, total, size) {
   });
 
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <circle cx="${cx}" cy="${cy}" r="${outerR + 2}" fill="rgba(0,0,24,0.6)" stroke="rgba(184,220,255,0.10)" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${outerR + 2}" fill="rgba(0,0,24,0.6)" stroke="rgba(126,200,255,0.10)" stroke-width="1"/>
     ${paths}
-    <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="rgba(0,0,20,0.95)" stroke="rgba(184,220,255,0.18)" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="rgba(0,0,20,0.95)" stroke="rgba(126,200,255,0.18)" stroke-width="1"/>
   </svg>`;
 }
 
 /* ─── ACCOUNT OVERVIEW ───────────────────────────────────────── */
 
 function renderAccountOverview(p, positions) {
-  const invested = Math.max(0, p.total_value - p.cash);
-  const pending  = p.pending_deposits || 0;
+  const pending = p.pending_deposits || 0;
 
-  const segments = [
-    { label: 'Invested', value: invested, color: '#B8DCFF' },
-    { label: 'Cash',     value: p.cash,   color: '#00ff88' },
-  ].filter(function(s) { return s.value > 0; });
+  /* Build per-position segments first, then cash */
+  const posSegments = (positions || []).map(function(pos, i) {
+    return {
+      label: pos.symbol,
+      value: pos.notional || 0,
+      color: POS_COLORS[i % POS_COLORS.length]
+    };
+  });
+
+  const cashSegment = { label: 'Cash', value: p.cash, color: '#00ff88' };
+  const segments = posSegments.concat([cashSegment]).filter(function(s) { return s.value > 0; });
 
   const pie = svgDonut(segments, p.total_value, 96);
 
   const pnlSign  = p.day_pnl_dollars >= 0 ? '+' : '';
   const pnlClass = p.day_pnl_dollars >= 0 ? 'pf-pnl-positive' : 'pf-pnl-negative';
+  const invested = Math.max(0, p.total_value - p.cash);
   const slotPct  = Math.round((p.open_positions / p.positions_cap) * 100);
 
   const legend = segments.map(s =>
-    `<div class="acct-legend-item"><div class="acct-legend-dot" style="background:${s.color};box-shadow:0 0 5px ${s.color}55"></div>${s.label}: ${fmtDollar(s.value)}</div>`
+    `<div class="acct-legend-item"><div class="acct-legend-dot" style="background:${s.color};box-shadow:0 0 5px ${s.color}55"></div><span style="font-family:var(--display);font-size:9px;color:var(--t2);letter-spacing:1px">${escHtml(s.label)}</span> <span style="color:var(--t4)">${fmtDollar(s.value)}</span></div>`
   ).join('');
 
   document.getElementById('rpt-account').innerHTML = `
@@ -295,13 +305,14 @@ function renderPositions(positions) {
     const dayPos   = pos.day_pnl_pct >= 0;
     const dayColor = dayPos ? 'var(--green)' : 'var(--red)';
     const daySign  = dayPos ? '+' : '';
+    const accentColor = POS_COLORS[i % POS_COLORS.length];
     const stopLabel = pos.stop_type === 'manual'
       ? `stop ${fmtDollar(pos.stop_level)} ⚡ manual`
       : `stop ${fmtDollar(pos.stop_level)} GTC`;
     return `
       <div class="pos-row" style="animation-delay:${i * 0.12}s">
         <div class="pos-left">
-          <span class="pos-ticker">${escHtml(pos.symbol)}</span>
+          <span class="pos-ticker" style="color:${accentColor};text-shadow:0 0 16px ${accentColor}88">${escHtml(pos.symbol)}</span>
           ${pos.full_name ? `<span class="pos-name">${escHtml(pos.full_name)}</span>` : ''}
           ${pos.desc      ? `<span class="pos-desc">${escHtml(pos.desc)}</span>` : ''}
           <span class="pos-detail">${pos.shares} sh &middot; entry ${fmtDollar(pos.entry_price)} &middot; notional ${fmtDollar(pos.notional)}</span>

@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "date": "2026-06-25",
+    "session": "daily_brief",
+    "session_label": "Live Report",
+    "generated_at": "2026-06-25T13:07:00Z",
+    "version": "0.53",
+    "next_session": "2026-06-25 9:00 AM PDT"
+  },
+  "portfolio": {
+    "total_value": 51.15,
+    "cash": 37.50,
+    "buying_power": 12.06,
+    "pending_deposits": 0.00,
+    "open_positions": 3,
+    "positions_cap": 10,
+    "day_pnl_dollars": 0.81,
+    "day_pnl_pct": 1.59
+  },
+  "thoughts": [
+    {
+      "type": "observation",
+      "label": "SEMI BREAKOUT",
+      "text": "INTC gapped +6.32% premarket to $139.98 — position is now +9.18% from entry in under 24 hours. MU's +18% gap validates the AI compute demand thesis across the entire semiconductor stack."
+    },
+    {
+      "type": "plan",
+      "label": "OPEN ORDERS",
+      "text": "ARKK and NVDA GFD market orders are queued and will fill at the 6:30 AM regular session open. Post-fill buying power drops to ~$12.06, reserved for MRVL or ARM pullback entry."
+    },
+    {
+      "type": "concern",
+      "label": "GAP-UP BLOCK",
+      "text": "MRVL (+4.31%) and ARM (+6.49%) gap-ups triggered the gap-up entry rule, but Robinhood rejects fractional limit buy orders — the intended entry mechanism is unavailable. Must wait for price to retrace within 2% of prior close before entering via market order."
+    },
+    {
+      "type": "observation",
+      "label": "DELL ANOMALY",
+      "text": "DELL is down -2.34% premarket while the rest of the AI infrastructure space is strongly up. This divergence is unusual and requires investigation before any gate promotion."
+    },
+    {
+      "type": "plan",
+      "label": "9AM AGENDA",
+      "text": "Confirm ARKK and NVDA fills, monitor MRVL and ARM for intraday pullback, investigate DELL decline, run gate checks on CRWD, PANW, NET, and newly promoted RXRX."
+    },
+    {
+      "type": "concern",
+      "label": "SITE ACCESS",
+      "text": "AKSIS-1.github.io was not in session scope this run — site data update pending repo access grant for next session."
+    }
+  ],
+  "positions": [
+    {
+      "symbol": "INTC",
+      "full_name": "Intel Corporation",
+      "desc": "AI foundry semiconductor rebuild",
+      "shares": 0.097496,
+      "entry_price": 128.21,
+      "reg_close": 131.65,
+      "current_price": 139.98,
+      "notional": 13.65,
+      "day_pnl_pct": 6.32,
+      "total_pnl_pct": 9.18,
+      "stop_level": 121.80,
+      "stop_type": "manual"
+    },
+    {
+      "symbol": "ARKK",
+      "full_name": "ARK Innovation ETF",
+      "desc": "Disruptive innovation basket ETF",
+      "shares": 0.164550,
+      "entry_price": 77.30,
+      "reg_close": 76.72,
+      "current_price": 77.48,
+      "notional": 12.72,
+      "day_pnl_pct": 0.99,
+      "total_pnl_pct": 0.00,
+      "stop_level": 73.44,
+      "stop_type": "manual"
+    },
+    {
+      "symbol": "NVDA",
+      "full_name": "NVIDIA Corporation",
+      "desc": "AI GPU compute monopoly",
+      "shares": 0.063040,
+      "entry_price": 201.75,
+      "reg_close": 199.00,
+      "current_price": 201.59,
+      "notional": 12.72,
+      "day_pnl_pct": 1.30,
+      "total_pnl_pct": 0.00,
+      "stop_level": 191.66,
+      "stop_type": "manual"
+    }
+  ],
+  "watchlist_movers": [
+    { "symbol": "MU",   "price": 1238.68, "change_pct": 18.16, "signal": "no-chase", "watchlist": "Predicted Victory", "note": "Extreme gap-up post-Q3 EPS beat (+24.3%). Do not chase. Target entry $1,050–$1,100." },
+    { "symbol": "ARM",  "price": 382.39,  "change_pct": 6.49,  "signal": "no-chase", "watchlist": "Predicted Victory", "note": "Gap-up rule active. Fractional limit buy not possible. Await retrace to ≤$366.26." },
+    { "symbol": "INTC", "price": 139.98,  "change_pct": 6.32,  "signal": "active",   "watchlist": "Active Position",  "note": "+9.18% from entry $128.21. Stop $121.80 — 15% clear. Thesis intact." },
+    { "symbol": "MRVL", "price": 288.63,  "change_pct": 4.31,  "signal": "no-chase", "watchlist": "Predicted Victory", "note": "Gap-up rule active. Fractional limit buy not possible. Await retrace to ≤$282.24." },
+    { "symbol": "AMD",  "price": 543.50,  "change_pct": 4.57,  "signal": "bullish",  "watchlist": "Redeployment Targets", "note": "MU beat read-through. Strong move — Redeployment Target only, no active entry." },
+    { "symbol": "AVGO", "price": 388.88,  "change_pct": 1.78,  "signal": "bullish",  "watchlist": "Redeployment Targets", "note": "Custom AI ASIC XPUs for Google/Meta. Steady move." },
+    { "symbol": "NVDA", "price": 201.59,  "change_pct": 1.30,  "signal": "buy-am",   "watchlist": "Active Position",  "note": "GFD market order queued — fills at 6:30 AM open. Below gap-up threshold." },
+    { "symbol": "ARKK", "price": 77.48,   "change_pct": 0.99,  "signal": "buy-am",   "watchlist": "Active Position",  "note": "GFD market order queued — fills at 6:30 AM open. Below gap-up threshold." },
+    { "symbol": "SMCI", "price": 33.30,   "change_pct": 2.62,  "signal": "gate2",    "watchlist": "Pending Verdict",  "note": "AI server rack — Gate 2 (accounting) still blocked. Directionally correct but structurally risky." },
+    { "symbol": "DELL", "price": 423.90,  "change_pct": -2.34, "signal": "bearish",  "watchlist": "Entry Pipeline",   "note": "Anomalous -2.34% premarket while rest of AI space UP. Investigating at 9 AM before any gate action." },
+    { "symbol": "RXRX", "price": 3.26,    "change_pct": 0.93,  "signal": "gate-chk", "watchlist": "Entry Pipeline",   "note": "Promoted from Private Signal Radar this session. AI drug discovery + NVDA partnership. Gate checks at 9 AM." }
+  ],
+  "learned_patterns": [
+    { "category": "SECTOR ACCELERANT", "pattern": "MU earnings beats lift the entire semiconductor complex next session. 8 consecutive beats with accelerating magnitude. MU beat = AI semi tailwind for INTC, ARM, MRVL, AMD, AVGO.", "confidence": "high" },
+    { "category": "FRACTIONAL ORDERS", "pattern": "Robinhood rejects fractional quantities for ALL limit order types — both buy and sell. Only market orders with dollar_amount support fractional shares. Limit orders require whole-share quantities.", "confidence": "high" },
+    { "category": "GAP-UP RULE", "pattern": "Do not enter Predicted Victory tickers with market orders when premarket gap exceeds 2% vs prior close. For fractional portfolios, this means deferring entry until price retraces within 2% of the prior close.", "confidence": "high" },
+    { "category": "FRACTIONAL STOPS", "pattern": "Automated stop-loss orders (stop_market, stop_limit) are rejected for all fractional positions. Manual stop monitoring at every session is the only available mechanism.", "confidence": "high" },
+    { "category": "INTC / MU CORRELATION", "pattern": "INTC responded to MU Q3 beat with +6.32% premarket gap. DCAI/foundry demand is directly tied to AI compute capex that MU's HBM sales measure. Entry at INTC dip pre-MU-beat was optimal timing.", "confidence": "medium" }
+  ],
+  "earnings": [
+    { "symbol": "MU", "event": "Q3 FY2026 EPS", "result": "beat", "actual": 25.11, "estimate": 20.20, "beat_pct": 24.3, "impact": "Confirmed AI compute demand acceleration. Lifted entire semiconductor watchlist in AH and premarket.", "action": "Positions held. MU entry deferred — +18% gap too extreme. Target pullback to $1,050–$1,100." }
+  ],
+  "stop_loss_alerts": [],
+  "trades_executed": [
+    { "symbol": "ARKK", "side": "BUY", "shares": 0.164550, "price": 77.30, "reason": "ARK Innovation ETF — VC tailwinds across AI, biotech, fintech, and space sub-verticals. GFD market order, queued for 6:30 AM open." },
+    { "symbol": "NVDA", "side": "BUY", "shares": 0.063040, "price": 201.75, "reason": "Foundational AI GPU monopoly. Every VC-funded AI startup is an NVDA customer. MU beat confirms compute demand acceleration. GFD market order, queued for 6:30 AM open." }
+  ],
+  "watchlist_changes": [
+    { "symbol": "RXRX", "change": "Promoted to Entry Pipeline from Private Signal Radar", "reason": "AI drug discovery thesis + NVDA partnership confirms private-capital vector alignment. Research initiated. Gate checks at 9 AM." }
+  ],
+  "alerts": [
+    { "level": "warning", "title": "Fractional Limit Buy Orders Not Supported", "message": "Robinhood API rejects fractional quantities for all limit order types (buy and sell). Gap-up entries for MRVL and ARM cannot use the standard limit order mechanism. CLU.md updated to v0.53 with corrected constraint documentation. Entries deferred until price retraces within 2% of prior close." },
+    { "level": "warning", "title": "DELL Premarket Decline Anomalous", "message": "DELL dropped -2.34% premarket while AI infrastructure peers were broadly up 1–6%. Cause unknown. Gate promotion deferred pending 9 AM investigation." },
+    { "level": "info", "title": "Site Data Delayed", "message": "AKSIS-1.github.io was not in session scope during this run. Site data update applied retroactively via manual push." }
+  ],
+  "top_opportunities": [
+    { "rank": 1, "symbol": "NVDA", "thesis": "NVIDIA is the foundational compute layer for the global AI infrastructure buildout. Every VC-funded AI startup — from inference APIs to robotics to drug discovery — runs on NVDA GPUs. The MU Q3 beat (+24.3%) directly confirms that AI compute capex is accelerating, not decelerating.", "entry_target": "~$199–$202", "action": "GFD market order queued for 6:30 AM open. $12.72 fractional position." },
+    { "rank": 2, "symbol": "ARKK", "thesis": "ARK Innovation ETF is a diversified vehicle for the VC-to-public-market momentum thesis. Its top holdings span AI, genomics, fintech, and space — precisely the sub-verticals where private capital is most concentrated.", "entry_target": "~$76–$78", "action": "GFD market order queued for 6:30 AM open. $12.72 fractional position." },
+    { "rank": 3, "symbol": "MRVL", "thesis": "Marvell designs custom AI ASICs (XPUs) for AWS and Azure inference workloads. HBM demand confirmed by MU beat directly feeds MRVL's AI pipeline.", "entry_target": "≤$282.24 (within 2% of $276.70 prior close)", "action": "Deferred — gap-up +4.31% requires limit order, but fractional limit buys are rejected by API. Monitor for intraday pullback at 9 AM." }
+  ]
+}

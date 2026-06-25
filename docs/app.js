@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.3
+   C.L.U. — Cognitive Logic Unit — Report Renderer v4.4
    "Blade Runner Transmission"
    ============================================================ */
 
@@ -7,7 +7,7 @@ const DATA_URL          = './data/latest.json';
 const ARCHIVE_INDEX_URL = './data/archive/index.json';
 const ARCHIVE_REPORT    = (d) => `./data/archive/${d}.json`;
 const JOURNEY_URL       = './data/projected_journey.json';
-const REFRESH_SECS      = 60;
+const REFRESH_SECS      = 300;
 
 /* Per-position slice colors: icy blue, magenta, orange, yellow, red, lime, violet, teal */
 const POS_COLORS = ['#7EC8FF','#e040fb','#ff9a44','#ffdd00','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];

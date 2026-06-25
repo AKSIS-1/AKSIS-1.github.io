@@ -1,11 +1,12 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.2
+   C.L.U. — Cognitive Logic Unit — Report Renderer v4.3
    "Blade Runner Transmission"
    ============================================================ */
 
 const DATA_URL          = './data/latest.json';
 const ARCHIVE_INDEX_URL = './data/archive/index.json';
 const ARCHIVE_REPORT    = (d) => `./data/archive/${d}.json`;
+const JOURNEY_URL       = './data/projected_journey.json';
 const REFRESH_SECS      = 60;
 
 /* Per-position slice colors: icy blue, magenta, orange, yellow, red, lime, violet, teal */
@@ -14,8 +15,9 @@ const POS_COLORS = ['#7EC8FF','#e040fb','#ff9a44','#ffdd00','#ff5a7a','#80ff9a',
 let countdownVal  = REFRESH_SECS;
 let countdownTick = null;
 let currentTab    = 'today';
+let journeyLoaded = false;
 
-/* ─── INIT ──────────────────────────────────────────────────── */
+/* ─── INIT ───────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
   startClock();
@@ -23,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadReport();
 });
 
-/* ─── CLOCK ─────────────────────────────────────────────────── */
+/* ─── CLOCK ───────────────────────────────────────────── */
 
 function startClock() {
   const el = document.getElementById('live-clock');
@@ -38,7 +40,7 @@ function startClock() {
   setInterval(tick, 1000);
 }
 
-/* ─── TABS ─────────────────────────────────────────────────── */
+/* ─── TABS ───────────────────────────────────────────── */
 
 function initTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -58,9 +60,10 @@ function switchTab(tab) {
     p.classList.toggle('hidden', p.id !== `tab-${tab}`);
   });
   if (tab === 'archive') loadArchive();
+  if (tab === 'journey') loadJourney();
 }
 
-/* ─── AUTO-REFRESH ───────────────────────────────────────────── */
+/* ─── AUTO-REFRESH ─────────────────────────────────────────── */
 
 function resetCountdown() {
   countdownVal = REFRESH_SECS;
@@ -73,7 +76,7 @@ function resetCountdown() {
   }, 1000);
 }
 
-/* ─── DATA LOADING ─────────────────────────────────────────── */
+/* ─── DATA LOADING ────────────────────────────────────────── */
 
 async function loadReport() {
   showState('loading');
@@ -124,7 +127,7 @@ function renderReport(d) {
   renderOpportunities(top_opportunities || []);
 }
 
-/* ─── PIE CHART (SVG donut) ────────────────────────────────────── */
+/* ─── PIE CHART (SVG donut) ────────────────────────────────────────── */
 
 function svgDonut(segments, total, size) {
   size = size || 96;
@@ -159,18 +162,13 @@ function svgDonut(segments, total, size) {
   </svg>`;
 }
 
-/* ─── ACCOUNT OVERVIEW ───────────────────────────────────────── */
+/* ─── ACCOUNT OVERVIEW ────────────────────────────────────────── */
 
 function renderAccountOverview(p, positions) {
   const pending = p.pending_deposits || 0;
 
-  /* Build per-position segments first, then cash */
   const posSegments = (positions || []).map(function(pos, i) {
-    return {
-      label: pos.symbol,
-      value: pos.notional || 0,
-      color: POS_COLORS[i % POS_COLORS.length]
-    };
+    return { label: pos.symbol, value: pos.notional || 0, color: POS_COLORS[i % POS_COLORS.length] };
   });
 
   const cashSegment = { label: 'Cash', value: p.cash, color: '#00ff88' };
@@ -248,7 +246,7 @@ function renderThoughts(thoughts) {
     </div>`;
 }
 
-/* ─── LEARNED PATTERNS ────────────────────────────────────────── */
+/* ─── LEARNED PATTERNS ─────────────────────────────────────────── */
 
 function renderLearnedPatterns(patterns) {
   const el = document.getElementById('rpt-patterns');
@@ -276,7 +274,7 @@ function renderLearnedPatterns(patterns) {
   </div>`;
 }
 
-/* ─── ALERTS ────────────────────────────────────────────────── */
+/* ─── ALERTS ────────────────────────────────────────────── */
 
 function renderAlerts(alerts) {
   const el = document.getElementById('rpt-alerts');
@@ -328,7 +326,7 @@ function renderPositions(positions) {
   el.innerHTML = `<div class="card-title"><span class="card-title-icon">◉</span> Active Positions</div>${rows}`;
 }
 
-/* ─── WATCHLIST MOVERS ────────────────────────────────────────── */
+/* ─── WATCHLIST MOVERS ─────────────────────────────────────────── */
 
 function renderMovers(movers) {
   const el = document.getElementById('rpt-movers');
@@ -361,7 +359,7 @@ function renderMovers(movers) {
     </div>`;
 }
 
-/* ─── EARNINGS ───────────────────────────────────────────────── */
+/* ─── EARNINGS ────────────────────────────────────────────── */
 
 function renderEarnings(earnings) {
   const el = document.getElementById('rpt-earnings');
@@ -392,7 +390,7 @@ function renderEarnings(earnings) {
     </div>`;
 }
 
-/* ─── STOP-LOSS ───────────────────────────────────────────────── */
+/* ─── STOP-LOSS ────────────────────────────────────────────── */
 
 function renderStopLoss(alerts) {
   const el = document.getElementById('rpt-stoploss');
@@ -418,7 +416,7 @@ function renderStopLoss(alerts) {
     </div>`;
 }
 
-/* ─── TRADES ─────────────────────────────────────────────────── */
+/* ─── TRADES ─────────────────────────────────────────────── */
 
 function renderTrades(trades) {
   const el = document.getElementById('rpt-trades');
@@ -447,7 +445,7 @@ function renderTrades(trades) {
     </div>`;
 }
 
-/* ─── WATCHLIST CHANGES ────────────────────────────────────────── */
+/* ─── WATCHLIST CHANGES ─────────────────────────────────────────── */
 
 function renderWatchlistChanges(changes) {
   const el = document.getElementById('rpt-watchlist');
@@ -492,7 +490,309 @@ function renderOpportunities(opps) {
     <div class="opp-grid">${cards}</div>`;
 }
 
-/* ─── ARCHIVE ─────────────────────────────────────────────────── */
+/* ============================================================
+   PROJECTED JOURNEY
+   ============================================================ */
+
+async function loadJourney() {
+  if (journeyLoaded) return;
+  journeyLoaded = true;
+  const loading = document.getElementById('journey-loading');
+  const error   = document.getElementById('journey-error');
+  const root    = document.getElementById('journey-root');
+  try {
+    const res = await fetch(JOURNEY_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    loading.classList.add('hidden');
+    root.classList.remove('hidden');
+    renderProjectedJourney(data);
+  } catch {
+    loading.classList.add('hidden');
+    error.classList.remove('hidden');
+  }
+}
+
+function renderProjectedJourney(d) {
+  const root = document.getElementById('journey-root');
+  root.innerHTML =
+    buildJourneyHeader(d.meta, d.growth_chart) +
+    `<div class="card journey-chart-card">` +
+      `<div class="card-title"><span class="card-title-icon">◈</span> Growth Projection</div>` +
+      `<div class="journey-chart-wrap">` +
+        svgLineChart(d.growth_chart.actual || [], d.growth_chart.projected || []) +
+        `<div class="journey-chart-legend">` +
+          `<span class="jcl-item jcl-actual"><span class="jcl-line"></span> Actual</span>` +
+          `<span class="jcl-item jcl-proj"><span class="jcl-line jcl-line-dash"></span> Projected</span>` +
+          `<span class="jcl-meta">${escHtml(d.growth_chart.projection_basis || '')}</span>` +
+          `<span class="jcl-conf conf-${escHtml(d.growth_chart.projection_confidence || 'low')}">${escHtml((d.growth_chart.projection_confidence || 'low').toUpperCase())} CONFIDENCE</span>` +
+        `</div>` +
+      `</div>` +
+    `</div>` +
+    `<div class="journey-grid-3">` +
+      buildJourneyDecisions(d.next_decisions || []) +
+      buildJourneyEvolution(d.intelligence_evolution || []) +
+      buildJourneyDNA(d.strategy_dna || []) +
+    `</div>` +
+    `<div class="journey-grid-2">` +
+      buildJourneyRisk(d.risk_profile) +
+      buildJourneyMilestones(d.milestones || []) +
+    `</div>` +
+    buildJourneyRecap(d.weekly_recap);
+}
+
+function buildJourneyHeader(meta, chart) {
+  const updDate   = meta.updated_at ? formatTime(meta.updated_at) : '—';
+  const nextUpd   = meta.next_update || '—';
+  const weeklyTgt = chart && chart.weekly_target_pct  ? `+${chart.weekly_target_pct}%/wk`  : '';
+  const monthTgt  = chart && chart.monthly_target_pct ? `+${chart.monthly_target_pct}%/mo` : '';
+  return `<div class="journey-header">
+    <div class="journey-header-title"><span class="journey-title-icon">◆</span> CLU — Projected Journey</div>
+    <div class="journey-header-meta">
+      <span>Updated ${escHtml(updDate)}</span>
+      <span class="meta-sep">·</span>
+      <span>Next update: <strong>${escHtml(nextUpd)}</strong></span>
+      <span class="meta-sep">·</span>
+      <span>Target ${escHtml(weeklyTgt)} · ${escHtml(monthTgt)}</span>
+      <span class="meta-sep">·</span>
+      <span class="journey-cadence">${escHtml(meta.update_cadence || 'Weekly — Friday')}</span>
+    </div>
+  </div>`;
+}
+
+/* ─── SVG LINE CHART (Robinhood-style) ────────────────────────────── */
+
+function svgLineChart(actual, projected) {
+  const VW = 900, VH = 200;
+  const padL = 56, padR = 28, padT = 22, padB = 40;
+  const plotW = VW - padL - padR;
+  const plotH = VH - padT - padB;
+
+  function dayMs(d) { return new Date(d + 'T00:00:00Z').getTime(); }
+
+  const allDates = [...new Set([...actual.map(p => p.date), ...projected.map(p => p.date)])].sort();
+  const allVals  = [...actual.map(p => p.value), ...projected.map(p => p.value)];
+  if (allDates.length < 2 || allVals.length < 2) return '<p class="no-data" style="padding:20px">Not enough data to render chart.</p>';
+
+  const minT = dayMs(allDates[0]);
+  const maxT = dayMs(allDates[allDates.length - 1]);
+  const minV = Math.min(...allVals) * 0.95;
+  const maxV = Math.max(...allVals) * 1.03;
+
+  const xf = d => padL + (maxT === minT ? plotW / 2 : (dayMs(d) - minT) / (maxT - minT) * plotW);
+  const yf = v => padT + plotH - ((v - minV) / (maxV - minV)) * plotH;
+
+  let grid = '';
+  for (let i = 0; i <= 4; i++) {
+    const v = minV + (i / 4) * (maxV - minV);
+    const y = yf(v).toFixed(1);
+    grid += `<line x1="${padL}" y1="${y}" x2="${VW - padR}" y2="${y}" stroke="rgba(100,180,255,0.07)" stroke-width="1"/>`;
+    grid += `<text x="${padL - 5}" y="${(+y + 3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(100,180,255,0.42)" font-family="monospace">$${v.toFixed(0)}</text>`;
+  }
+
+  const todayDate = actual.length ? actual[actual.length - 1].date : null;
+  const labelSet  = new Set([allDates[0], allDates[allDates.length - 1]]);
+  if (todayDate) labelSet.add(todayDate);
+  if (allDates.length > 4) labelSet.add(allDates[Math.floor(allDates.length * 0.5)]);
+  let xLabels = '';
+  labelSet.forEach(date => {
+    const x = xf(date).toFixed(1);
+    const p = date.split('-');
+    const isToday = date === todayDate;
+    xLabels += `<text x="${x}" y="${(VH - padB + 15).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isToday ? 'rgba(126,200,255,0.75)' : 'rgba(100,180,255,0.40)'}" font-family="monospace">${p[1]}/${p[2]}</text>`;
+  });
+
+  let actualSVG = '';
+  if (actual.length >= 2) {
+    const pts  = actual.map(p => `${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`);
+    const area = `M${xf(actual[0].date).toFixed(1)},${(padT + plotH).toFixed(1)} L${pts.join(' L')} L${xf(actual[actual.length - 1].date).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
+    actualSVG  = `<path d="${area}" fill="url(#lgAct)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#7EC8FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  let projSVG = '';
+  if (projected.length >= 2) {
+    const pts  = projected.map(p => `${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`);
+    const area = `M${xf(projected[0].date).toFixed(1)},${(padT + plotH).toFixed(1)} L${pts.join(' L')} L${xf(projected[projected.length - 1].date).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
+    projSVG   = `<path d="${area}" fill="url(#lgProj)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#3399FF" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round" opacity="0.70"/>`;
+  }
+
+  const todayX = todayDate ? xf(todayDate).toFixed(1) : null;
+  const todayLine = todayX
+    ? `<line x1="${todayX}" y1="${padT}" x2="${todayX}" y2="${padT + plotH}" stroke="rgba(126,200,255,0.28)" stroke-width="1" stroke-dasharray="3,3"/><text x="${(+todayX + 5).toFixed(1)}" y="${padT + 13}" font-size="8" fill="rgba(126,200,255,0.55)" letter-spacing="1" font-family="monospace">NOW</text>`
+    : '';
+
+  const dots = actual.map(p =>
+    `<circle cx="${xf(p.date).toFixed(1)}" cy="${yf(p.value).toFixed(1)}" r="3.5" fill="#7EC8FF" stroke="rgba(0,0,20,0.85)" stroke-width="1.5"/>`
+  ).join('');
+
+  const lastA = actual[actual.length - 1];
+  const lastP = projected[projected.length - 1];
+  const lastALabel = lastA ? `<text x="${(xf(lastA.date) - 10).toFixed(1)}" y="${(yf(lastA.value) - 9).toFixed(1)}" text-anchor="end" font-size="10" fill="#7EC8FF" font-weight="700" font-family="monospace">$${lastA.value.toFixed(2)}</text>` : '';
+  const lastPLabel = lastP ? `<text x="${xf(lastP.date).toFixed(1)}" y="${(yf(lastP.value) - 8).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(51,153,255,0.70)" font-family="monospace">$${lastP.value.toFixed(0)}</text>` : '';
+
+  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lgAct" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7EC8FF" stop-opacity="0.42"/>
+      <stop offset="100%" stop-color="#7EC8FF" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="lgProj" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3399FF" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#3399FF" stop-opacity="0.01"/>
+    </linearGradient>
+  </defs>
+  ${grid}
+  ${projSVG}
+  ${actualSVG}
+  <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
+  <line x1="${padL}" y1="${padT + plotH}" x2="${VW - padR}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
+  ${todayLine}
+  ${dots}
+  ${lastALabel}
+  ${lastPLabel}
+  ${xLabels}
+</svg>`;
+}
+
+/* ─── JOURNEY SECTIONS ─────────────────────────────────────────── */
+
+function buildJourneyDecisions(decisions) {
+  const typeIcon  = { watch:'◎', add:'◈', hold:'◉', build:'◆', sell:'▲', rebalance:'⇄' };
+  const typeColor = { watch:'var(--yellow)', add:'var(--green)', hold:'var(--blue)', build:'var(--magenta)', sell:'var(--red)', rebalance:'var(--orange)' };
+  const items = decisions.map(dec => {
+    const icon  = typeIcon[dec.type]  || '◎';
+    const color = typeColor[dec.type] || 'var(--t3)';
+    return `<div class="jd-item">
+      <div class="jd-head">
+        <span class="jd-icon" style="color:${color}">${icon}</span>
+        <span class="jd-ticker">${escHtml(dec.ticker)}</span>
+        <span class="jd-type" style="color:${color};border-color:${color}">${escHtml((dec.type || '').toUpperCase())}</span>
+      </div>
+      <div class="jd-thesis">${escHtml(dec.thesis)}</div>
+      <div class="jd-trigger"><span class="jd-trigger-label">TRIGGER</span> ${escHtml(dec.trigger)}</div>
+    </div>`;
+  }).join('');
+  return `<div class="card journey-section">
+    <div class="card-title"><span class="card-title-icon">◎</span> Next Likely Decisions</div>
+    <div class="journey-section-body">${items || '<div class="none-label">No decisions queued.</div>'}</div>
+  </div>`;
+}
+
+function buildJourneyEvolution(phases) {
+  const items = phases.map((ph, i) => `
+    <div class="je-phase">
+      <div class="je-phase-num">PHASE ${i + 1}</div>
+      <div class="je-phase-title">${escHtml(ph.phase)}</div>
+      <div class="je-phase-range">${escHtml(ph.date_range)} &middot; ${ph.sessions || 0} sessions</div>
+      <div class="je-phase-summary">${escHtml(ph.summary)}</div>
+      ${ph.key_insight ? `<div class="je-insight"><span class="je-insight-label">KEY INSIGHT</span>${escHtml(ph.key_insight)}</div>` : ''}
+      <div class="je-phase-footer">
+        <span class="je-stat">${ph.patterns_locked || 0} patterns locked</span>
+        ${ph.next_phase ? `<span class="je-next">→ ${escHtml(ph.next_phase)}</span>` : ''}
+      </div>
+    </div>`).join('');
+  return `<div class="card journey-section">
+    <div class="card-title"><span class="card-title-icon">◑</span> Intelligence Evolution</div>
+    <div class="journey-section-body">${items || '<div class="none-label">Building history…</div>'}</div>
+  </div>`;
+}
+
+function buildJourneyDNA(rules) {
+  const statusColor = { locked: 'var(--neon-orange)', active: 'var(--green)', learning: 'var(--blue-mid)' };
+  const statusIcon  = { locked: '🔒', active: '●', learning: '◌' };
+  const items = rules.map(r => {
+    const color = statusColor[r.status] || 'var(--t3)';
+    const icon  = statusIcon[r.status]  || '○';
+    return `<div class="jdna-item">
+      <div class="jdna-head">
+        <span class="jdna-status" style="color:${color}">${icon} ${escHtml((r.status || '').toUpperCase())}</span>
+        <span class="jdna-rule">${escHtml(r.rule)}</span>
+      </div>
+      <div class="jdna-note">${escHtml(r.note)}</div>
+    </div>`;
+  }).join('');
+  return `<div class="card journey-section">
+    <div class="card-title"><span class="card-title-icon">◉</span> Strategy DNA</div>
+    <div class="journey-section-body">${items}</div>
+  </div>`;
+}
+
+function buildJourneyRisk(risk) {
+  if (!risk) return `<div class="card journey-section"><div class="card-title"><span class="card-title-icon">⬡</span> Risk Profile</div><div class="none-label">No data.</div></div>`;
+  const overallColor = risk.overall === 'low' ? 'var(--green)' : risk.overall === 'moderate' ? 'var(--yellow)' : 'var(--neon-orange)';
+  const concColor    = risk.concentration_risk === 'low' ? 'var(--green)' : risk.concentration_risk === 'elevated' ? 'var(--neon-orange)' : 'var(--red)';
+  const divScore = risk.diversification_score || 0;
+  const divMax   = risk.diversification_max   || 10;
+  const divPct   = Math.round((divScore / divMax) * 100);
+  const totalN   = (risk.sector_exposure || []).reduce((a, b) => a + (b.notional || 0), 0);
+  const sectors  = (risk.sector_exposure || []).map(s => {
+    const pct = totalN > 0 ? ((s.notional / totalN) * 100).toFixed(0) : 0;
+    return `<div class="jrisk-sector">
+      <div class="jrisk-sector-head"><span class="jrisk-sector-name">${escHtml(s.sector)}</span><span class="jrisk-sector-tickers">${escHtml(s.tickers)}</span></div>
+      <div class="jrisk-bar-wrap"><div class="jrisk-bar" style="width:${pct}%"></div><span class="jrisk-pct">${pct}%</span></div>
+    </div>`;
+  }).join('');
+  return `<div class="card journey-section">
+    <div class="card-title"><span class="card-title-icon">⬡</span> Risk Profile</div>
+    <div class="journey-section-body">
+      <div class="jrisk-stats">
+        <div class="jrisk-item"><div class="pf-label">Overall Risk</div><div class="jrisk-val" style="color:${overallColor}">${escHtml((risk.overall || '').toUpperCase())}</div></div>
+        <div class="jrisk-item"><div class="pf-label">Concentration</div><div class="jrisk-val" style="color:${concColor}">${escHtml((risk.concentration_risk || '').toUpperCase())}</div></div>
+        <div class="jrisk-item"><div class="pf-label">Cash Buffer</div><div class="jrisk-val" style="color:var(--green)">${risk.cash_buffer_pct || 0}%</div></div>
+        <div class="jrisk-item"><div class="pf-label">Diversification</div><div class="jrisk-val">${divScore}/${divMax}</div><div class="slot-bar" style="margin-top:5px"><div class="slot-fill" style="width:${divPct}%"></div></div></div>
+      </div>
+      ${risk.notes ? `<div class="jrisk-notes">${escHtml(risk.notes)}</div>` : ''}
+      <div class="jrisk-sectors">${sectors}</div>
+    </div>
+  </div>`;
+}
+
+function buildJourneyMilestones(milestones) {
+  const statusColor = { completed: 'var(--green)', upcoming: 'var(--t4)', active: 'var(--blue)' };
+  const statusIcon  = { completed: '✓', upcoming: '○', active: '◈' };
+  const items = milestones.map((m, i) => {
+    const color = statusColor[m.status] || 'var(--t4)';
+    const icon  = statusIcon[m.status]  || '○';
+    return `<div class="jmile-item">
+      <div class="jmile-icon" style="color:${color};border-color:${color}">${icon}</div>
+      ${i < milestones.length - 1 ? '<div class="jmile-connector"></div>' : ''}
+      <div class="jmile-info">
+        <div class="jmile-target" style="color:${color}">${fmtDollar(m.target)}</div>
+        <div class="jmile-label">${escHtml(m.label)}</div>
+        <div class="jmile-date">${escHtml(m.projected_date)}</div>
+        ${m.notes ? `<div class="jmile-notes">${escHtml(m.notes)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="card journey-section">
+    <div class="card-title"><span class="card-title-icon">◆</span> Milestone Targets</div>
+    <div class="journey-section-body"><div class="jmile-list">${items || '<div class="none-label">No milestones set.</div>'}</div></div>
+  </div>`;
+}
+
+function buildJourneyRecap(recap) {
+  if (!recap) return '';
+  const sign     = recap.change_dollars >= 0 ? '+' : '';
+  const pnlColor = recap.change_dollars >= 0 ? 'var(--green)' : 'var(--red)';
+  const best     = recap.best_performer;
+  return `<div class="card journey-recap-card">
+    <div class="card-title"><span class="card-title-icon">◷</span> Week ${recap.week_num || 1} Recap — ${escHtml(recap.week)}</div>
+    <div class="journey-recap-inner">
+      <div class="jrecap-stats">
+        <div class="pf-item"><div class="pf-label">Week Start</div><div class="pf-value small">${fmtDollar(recap.start_value)}</div></div>
+        <div class="pf-item"><div class="pf-label">Week End</div><div class="pf-value small">${fmtDollar(recap.end_value)}</div></div>
+        <div class="pf-item"><div class="pf-label">Change</div><div class="pf-value small" style="color:${pnlColor}">${sign}${fmtDollar(recap.change_dollars)} (${sign}${recap.change_pct.toFixed(2)}%)</div></div>
+        <div class="pf-item"><div class="pf-label">Trades / W / L</div><div class="pf-value small">${recap.trades} / <span style="color:var(--green)">${recap.wins}W</span> / <span style="color:var(--red)">${recap.losses}L</span></div></div>
+        ${best ? `<div class="pf-item"><div class="pf-label">Best Performer</div><div class="pf-value small" style="color:var(--green)">${escHtml(best.ticker)} +${best.pct}%</div></div>` : ''}
+      </div>
+      ${recap.summary ? `<div class="jrecap-summary">${escHtml(recap.summary)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   ARCHIVE
+   ============================================================ */
 
 let archiveLoaded = false;
 
@@ -510,7 +810,7 @@ async function loadArchive() {
     }
     el.innerHTML = index.sort((a, b) => b.date.localeCompare(a.date)).map(entry => `
       <div class="archive-entry" data-date="${entry.date}" data-session="${escHtml(entry.session)}">
-        <span class="archive-entry-date">${formatDateLong(entry.date)}</span>
+        <span class="archive-entry-date">${formatDateLong(entry.date.slice(0,10))}</span>
         <span class="archive-entry-session">${escHtml(entry.session_label || entry.session)}</span>
       </div>
     `).join('');
@@ -593,8 +893,8 @@ function buildMoversHTML(movers) {
     <div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>Price</th><th>Change</th><th>Signal</th><th>Note</th></tr></thead>
     <tbody>${movers.map(m => {
       const price = m.price !== undefined ? m.price : m.ah_price;
-      const sign = m.change_pct >= 0 ? '+' : '';
-      const cls  = m.change_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
+      const sign  = m.change_pct >= 0 ? '+' : '';
+      const cls   = m.change_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
       const sigKey = (m.signal||'neutral').replace(/[^a-z0-9-]/gi,'').toLowerCase();
       return `<tr><td class="col-symbol">${escHtml(m.symbol)}</td><td>${fmtDollar(price)}</td>
         <td class="${cls}">${sign}${m.change_pct.toFixed(1)}%</td>
@@ -610,8 +910,8 @@ function buildEarningsHTML(earnings) {
     <div class="card-title">◎ Earnings &amp; News</div>
     <div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>Event</th><th>Result</th><th>Beat%</th><th>Impact</th></tr></thead>
     <tbody>${earnings.map(e => {
-      const sign = e.beat_pct >= 0 ? '+' : '';
-      const cls  = e.beat_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
+      const sign  = e.beat_pct >= 0 ? '+' : '';
+      const cls   = e.beat_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
       const badge = e.result === 'beat' ? 'beat' : (e.result === 'miss' ? 'miss' : 'inline');
       return `<tr><td class="col-symbol">${escHtml(e.symbol)}</td>
         <td style="font-size:11px;color:var(--text-secondary)">${escHtml(e.event)}</td>
@@ -654,7 +954,9 @@ function buildOpportunitiesHTML(opps) {
   </div>`;
 }
 
-/* ─── UTILS ─────────────────────────────────────────────────── */
+/* ============================================================
+   UTILS
+   ============================================================ */
 
 function fmtDollar(n) {
   if (n === null || n === undefined) return '—';

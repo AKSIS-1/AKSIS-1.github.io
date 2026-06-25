@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.0
+   C.L.U. — Cognitive Logic Unit — Report Renderer v4.1
    "Blade Runner Transmission"
    ============================================================ */
 
@@ -150,9 +150,9 @@ function svgDonut(segments, total, size) {
   });
 
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <circle cx="${cx}" cy="${cy}" r="${outerR + 2}" fill="rgba(0,0,24,0.6)" stroke="rgba(0,229,255,0.12)" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${outerR + 2}" fill="rgba(0,0,24,0.6)" stroke="rgba(184,220,255,0.10)" stroke-width="1"/>
     ${paths}
-    <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="rgba(0,0,20,0.95)" stroke="rgba(0,229,255,0.22)" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="rgba(0,0,20,0.95)" stroke="rgba(184,220,255,0.18)" stroke-width="1"/>
   </svg>`;
 }
 
@@ -161,15 +161,13 @@ function svgDonut(segments, total, size) {
 function renderAccountOverview(p, positions) {
   const invested = Math.max(0, p.total_value - p.cash);
   const pending  = p.pending_deposits || 0;
-  const chartTotal = p.total_value + pending;
 
   const segments = [
-    { label: 'Invested', value: invested, color: '#00e5ff' },
+    { label: 'Invested', value: invested, color: '#B8DCFF' },
     { label: 'Cash',     value: p.cash,   color: '#00ff88' },
-    { label: 'Pending',  value: pending,  color: '#ffdd00' },
   ].filter(function(s) { return s.value > 0; });
 
-  const pie = svgDonut(segments, chartTotal, 96);
+  const pie = svgDonut(segments, p.total_value, 96);
 
   const pnlSign  = p.day_pnl_dollars >= 0 ? '+' : '';
   const pnlClass = p.day_pnl_dollars >= 0 ? 'pf-pnl-positive' : 'pf-pnl-negative';

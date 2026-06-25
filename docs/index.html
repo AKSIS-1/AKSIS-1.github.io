@@ -5,120 +5,154 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>C.L.U. — Cognitive Logic Unit</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="brand">
-        <span class="brand-name">C.L.U.</span>
-        <span class="brand-full">Cognitive Logic Unit</span>
-        <span class="brand-version">v0.51</span>
-      </div>
-      <div class="header-right">
-        <span class="acct-badge">ACCT&nbsp;470878752</span>
-        <span class="status-indicator" id="status-dot" title="Live"></span>
-        <span class="live-clock" id="live-clock"></span>
-      </div>
-    </div>
-  </header>
+  <!-- Viewport background effects (fixed, full-screen) -->
+  <div class="bg-fx"></div>
+  <div class="bg-diag"></div>
+  <div class="bg-grain"></div>
 
-  <nav class="tab-nav">
-    <div class="tab-nav-inner">
-      <button class="tab-btn active" data-tab="today">
-        <span class="tab-icon">◈</span> Today's Report
-      </button>
-      <button class="tab-btn" data-tab="archive">
-        <span class="tab-icon">◷</span> Past Reports
-      </button>
-    </div>
-  </nav>
+  <div class="report-wrap">
 
-  <main class="main-content">
+    <header class="site-header">
+      <div class="header-scan"></div>
 
-    <!-- TODAY'S REPORT TAB -->
-    <div id="tab-today" class="tab-pane active">
-
-      <div id="state-loading" class="empty-state">
-        <div class="loader"></div>
-        <p>Fetching CLU report data…</p>
+      <!-- Ticker tape -->
+      <div class="ticker t-fwd">
+        <div class="ticker-inner">
+          <b>◈</b> CLU v0.51 <b>◈</b> AGENTIC PROTOCOL: ENGAGED <b>◈</b> COGNITIVE LOGIC UNIT <b>◈</b> ALL SYSTEMS NOMINAL <b>◈</b> ACCOUNT 470878752 <b>◈</b> GROWTH INTELLIGENCE: ONLINE <b>◈</b> NO CRYPTO <b>◈</b> MAX 25% POSITION <b>◈</b> GUARDRAILS ALWAYS ACTIVE <b>◈</b> CLU v0.51 <b>◈</b> AGENTIC PROTOCOL: ENGAGED <b>◈</b>
+        </div>
       </div>
 
-      <div id="state-error" class="empty-state hidden">
-        <div class="empty-icon">◌</div>
-        <p class="empty-title">No report available</p>
-        <p class="empty-sub">CLU has not yet published today's report. Check back at the next scheduled session.</p>
+      <!-- Logo row -->
+      <div class="header-inner">
+        <div class="disc">
+          <div class="g1"></div><div class="g2"></div>
+          <div class="r1">
+            <div class="tk t0"></div><div class="tk t1"></div>
+            <div class="tk t2"></div><div class="tk t3"></div>
+          </div>
+          <div class="r2"></div><div class="r3"></div>
+          <div class="core"><div class="icon">◈</div></div>
+        </div>
+
+        <div class="v-div"></div>
+
+        <div class="wm">
+          <div class="wm-bar"><div class="wm-dot"></div><div class="wm-rule"></div></div>
+          <div class="wm-clu">C · L · U</div>
+          <div class="wm-sub">Cognitive Logic Unit</div>
+          <div class="wm-bar"><div class="wm-dot"></div><div class="wm-rule"></div></div>
+        </div>
+
+        <div class="header-right">
+          <span class="acct-badge">ACCT&nbsp;470878752</span>
+          <span class="status-indicator" id="status-dot" title="Live"></span>
+          <span class="live-clock" id="live-clock"></span>
+        </div>
       </div>
 
-      <div id="report-root" class="hidden">
+      <!-- Tab nav -->
+      <nav class="tab-nav">
+        <div class="tab-nav-inner">
+          <button class="tab-btn active" data-tab="today">
+            <span class="tab-icon">◈</span> Today's Report
+          </button>
+          <button class="tab-btn" data-tab="archive">
+            <span class="tab-icon">◷</span> Past Reports
+          </button>
+        </div>
+      </nav>
+    </header>
 
-        <div class="report-header">
-          <div class="report-title-row">
-            <h1 id="rpt-title" class="report-title"></h1>
-            <div class="refresh-chip" id="refresh-chip">
-              <span class="refresh-icon">↻</span>
-              <span id="refresh-label">Refreshes in <strong id="countdown">60</strong>s</span>
+    <main class="main-content">
+
+      <!-- TODAY'S REPORT TAB -->
+      <div id="tab-today" class="tab-pane active">
+
+        <div id="state-loading" class="empty-state">
+          <div class="loader"></div>
+          <p>Fetching CLU report data…</p>
+        </div>
+
+        <div id="state-error" class="empty-state hidden">
+          <div class="empty-icon">◌</div>
+          <p class="empty-title">No report available</p>
+          <p class="empty-sub">CLU has not yet published today's report. Check back at the next scheduled session.</p>
+        </div>
+
+        <div id="report-root" class="hidden">
+
+          <div class="report-header">
+            <div class="report-title-row">
+              <h1 id="rpt-title" class="report-title"></h1>
+              <div class="refresh-chip" id="refresh-chip">
+                <span class="refresh-icon">↻</span>
+                <span id="refresh-label">Refreshes in <strong id="countdown">60</strong>s</span>
+              </div>
+            </div>
+            <div class="report-meta-row">
+              <span id="rpt-date"></span>
+              <span class="meta-sep">·</span>
+              <span>Updated <span id="rpt-generated"></span></span>
+              <span class="meta-sep">·</span>
+              <span>Next: <span id="rpt-next-session"></span></span>
             </div>
           </div>
-          <div class="report-meta-row">
-            <span id="rpt-date"></span>
-            <span class="meta-sep">·</span>
-            <span>Updated <span id="rpt-generated"></span></span>
-            <span class="meta-sep">·</span>
-            <span>Next: <span id="rpt-next-session"></span></span>
+
+          <div id="rpt-alerts"></div>
+
+          <div class="section-grid">
+            <section class="card card-portfolio" id="rpt-portfolio"></section>
+            <section class="card card-positions" id="rpt-positions"></section>
           </div>
+
+          <section class="card" id="rpt-movers"></section>
+          <section class="card" id="rpt-earnings"></section>
+          <section class="card" id="rpt-stoploss"></section>
+          <section class="card" id="rpt-trades"></section>
+          <section class="card" id="rpt-watchlist"></section>
+          <section class="card" id="rpt-opportunities"></section>
+
         </div>
-
-        <div id="rpt-alerts"></div>
-
-        <div class="section-grid">
-          <section class="card card-portfolio" id="rpt-portfolio"></section>
-          <section class="card card-positions" id="rpt-positions"></section>
-        </div>
-
-        <section class="card" id="rpt-movers"></section>
-        <section class="card" id="rpt-earnings"></section>
-        <section class="card" id="rpt-stoploss"></section>
-        <section class="card" id="rpt-trades"></section>
-        <section class="card" id="rpt-watchlist"></section>
-        <section class="card" id="rpt-opportunities"></section>
-
       </div>
-    </div>
 
-    <!-- PAST REPORTS TAB -->
-    <div id="tab-archive" class="tab-pane hidden">
-      <div class="archive-layout">
-        <aside class="archive-sidebar">
-          <div class="archive-sidebar-header">
-            <h2>Archive</h2>
-            <p class="sidebar-sub">All sessions, newest first.</p>
-          </div>
-          <div id="archive-list" class="archive-list">
-            <div class="empty-state small">
-              <div class="loader"></div>
-              <p>Loading…</p>
+      <!-- PAST REPORTS TAB -->
+      <div id="tab-archive" class="tab-pane hidden">
+        <div class="archive-layout">
+          <aside class="archive-sidebar">
+            <div class="archive-sidebar-header">
+              <h2>Archive</h2>
+              <p class="sidebar-sub">All sessions, newest first.</p>
             </div>
+            <div id="archive-list" class="archive-list">
+              <div class="empty-state small">
+                <div class="loader"></div>
+                <p>Loading…</p>
+              </div>
+            </div>
+          </aside>
+          <div class="archive-main">
+            <div id="archive-empty" class="empty-state">
+              <div class="empty-icon">◷</div>
+              <p class="empty-title">Select a report</p>
+              <p class="empty-sub">Choose a date from the archive to view the full session brief.</p>
+            </div>
+            <div id="archive-report-root" class="hidden"></div>
           </div>
-        </aside>
-        <div class="archive-main">
-          <div id="archive-empty" class="empty-state">
-            <div class="empty-icon">◷</div>
-            <p class="empty-title">Select a report</p>
-            <p class="empty-sub">Choose a date from the archive to view the full session brief.</p>
-          </div>
-          <div id="archive-report-root" class="hidden"></div>
         </div>
       </div>
-    </div>
 
-  </main>
+    </main>
 
-  <footer class="site-footer">
-    <span>C.L.U. v0.51 · Account 470878752 · No crypto · Max 25% position · Guardrails always active</span>
-  </footer>
+    <footer class="site-footer">
+      <span>C.L.U. v0.51 · Account 470878752 · No crypto · Max 25% position · Guardrails always active</span>
+    </footer>
+
+  </div><!-- /report-wrap -->
 
   <script src="app.js"></script>
 </body>

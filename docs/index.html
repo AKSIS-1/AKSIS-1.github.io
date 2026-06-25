@@ -10,7 +10,6 @@
 </head>
 <body>
 
-  <!-- Viewport background effects (fixed, full-screen) -->
   <div class="bg-fx"></div>
   <div class="bg-diag"></div>
   <div class="bg-grain"></div>
@@ -20,10 +19,10 @@
     <header class="site-header">
       <div class="header-scan"></div>
 
-      <!-- Ticker tape -->
-      <div class="ticker t-fwd">
+      <!-- TOP TICKER -->
+      <div class="ticker t-top t-fwd">
         <div class="ticker-inner">
-          <b>◈</b> CLU v0.51 <b>◈</b> AGENTIC PROTOCOL: ENGAGED <b>◈</b> COGNITIVE LOGIC UNIT <b>◈</b> ALL SYSTEMS NOMINAL <b>◈</b> ACCOUNT 470878752 <b>◈</b> GROWTH INTELLIGENCE: ONLINE <b>◈</b> NO CRYPTO <b>◈</b> MAX 25% POSITION <b>◈</b> GUARDRAILS ALWAYS ACTIVE <b>◈</b> CLU v0.51 <b>◈</b> AGENTIC PROTOCOL: ENGAGED <b>◈</b>
+          <b>◈</b> CLU — LIVE REPORT <b>◈</b> AGENTIC PROTOCOL: ENGAGED <b>◈</b> COGNITIVE LOGIC UNIT <b>◈</b> ALL SYSTEMS NOMINAL <b>◈</b> GROWTH INTELLIGENCE: ONLINE <b>◈</b> NO CRYPTO <b>◈</b> MAX 25% POSITION <b>◈</b> GUARDRAILS ALWAYS ACTIVE <b>◈</b> AUTONOMOUS INTELLIGENCE: ACTIVE <b>◈</b> CLU — LIVE REPORT <b>◈</b>
         </div>
       </div>
 
@@ -45,12 +44,14 @@
           <div class="wm-bar"><div class="wm-dot"></div><div class="wm-rule"></div></div>
           <div class="wm-clu">C · L · U</div>
           <div class="wm-sub">Cognitive Logic Unit</div>
+          <div class="wm-sep"></div>
+          <div class="wm-tag">Agentic Intelligence System</div>
           <div class="wm-bar"><div class="wm-dot"></div><div class="wm-rule"></div></div>
         </div>
 
         <div class="header-right">
-          <span class="acct-badge">ACCT&nbsp;470878752</span>
-          <span class="status-indicator" id="status-dot" title="Live"></span>
+          <span class="live-badge"><span class="live-dot"></span>LIVE</span>
+          <span class="status-indicator" id="status-dot" title="System Online"></span>
           <span class="live-clock" id="live-clock"></span>
         </div>
       </div>
@@ -59,7 +60,7 @@
       <nav class="tab-nav">
         <div class="tab-nav-inner">
           <button class="tab-btn active" data-tab="today">
-            <span class="tab-icon">◈</span> Today's Report
+            <span class="tab-icon">◈</span> Live Report
           </button>
           <button class="tab-btn" data-tab="archive">
             <span class="tab-icon">◷</span> Past Reports
@@ -70,18 +71,18 @@
 
     <main class="main-content">
 
-      <!-- TODAY'S REPORT TAB -->
+      <!-- LIVE REPORT TAB -->
       <div id="tab-today" class="tab-pane active">
 
         <div id="state-loading" class="empty-state">
           <div class="loader"></div>
-          <p>Fetching CLU report data…</p>
+          <p>Fetching CLU intelligence data…</p>
         </div>
 
         <div id="state-error" class="empty-state hidden">
-          <div class="empty-icon">◌</div>
-          <p class="empty-title">No report available</p>
-          <p class="empty-sub">CLU has not yet published today's report. Check back at the next scheduled session.</p>
+          <div class="empty-icon neon-red">◌</div>
+          <p class="empty-title neon-red">System Offline</p>
+          <p class="empty-sub">CLU has not published a report for this session. Standing by for next transmission.</p>
         </div>
 
         <div id="report-root" class="hidden">
@@ -102,6 +103,9 @@
               <span>Next: <span id="rpt-next-session"></span></span>
             </div>
           </div>
+
+          <!-- CLU's Thoughts -->
+          <div id="rpt-thoughts"></div>
 
           <div id="rpt-alerts"></div>
 
@@ -138,7 +142,7 @@
           <div class="archive-main">
             <div id="archive-empty" class="empty-state">
               <div class="empty-icon">◷</div>
-              <p class="empty-title">Select a report</p>
+              <p class="empty-title">Select a Report</p>
               <p class="empty-sub">Choose a date from the archive to view the full session brief.</p>
             </div>
             <div id="archive-report-root" class="hidden"></div>
@@ -148,8 +152,15 @@
 
     </main>
 
+    <!-- BOTTOM TICKER -->
+    <div class="ticker t-bot t-rev">
+      <div class="ticker-inner">
+        <b>◈</b> END TRANSMISSION <b>◈</b> NEXT SESSION: STANDBY <b>◈</b> AUTONOMOUS PROTOCOL ACTIVE <b>◈</b> CLU AGENTIC INTELLIGENCE SYSTEM <b>◈</b> COGNITIVE LOGIC UNIT <b>◈</b> NO CRYPTO <b>◈</b> GUARDRAILS ALWAYS ACTIVE <b>◈</b> GROWTH INTELLIGENCE: ONLINE <b>◈</b> END TRANSMISSION <b>◈</b>
+      </div>
+    </div>
+
     <footer class="site-footer">
-      <span>C.L.U. v0.51 · Account 470878752 · No crypto · Max 25% position · Guardrails always active</span>
+      <span>C.L.U. — Cognitive Logic Unit · Agentic Intelligence System · No crypto · Max 25% position · Guardrails always active</span>
     </footer>
 
   </div><!-- /report-wrap -->

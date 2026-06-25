@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer
+   C.L.U. — Cognitive Logic Unit — Report Renderer v3.0
    ============================================================ */
 
 const DATA_URL          = './data/latest.json';
@@ -99,16 +99,17 @@ function showState(state) {
 function renderReport(d) {
   const { meta, portfolio, positions, ah_movers, earnings,
           stop_loss_alerts, trades_executed, watchlist_changes,
-          alerts, top_opportunities } = d;
+          alerts, top_opportunities, thoughts } = d;
 
-  // Header
+  // Title — strip "after-hours" language, always show as live
+  const rawLabel = (meta.session_label || 'Live Report').replace(/after[- ]?hours/i, 'Live Report');
   document.getElementById('rpt-title').textContent =
-    `C.L.U. ${meta.session_label.toUpperCase()} — ${formatDate(meta.date)}`;
+    `C.L.U. ${rawLabel.toUpperCase()} — ${formatDate(meta.date)}`;
   document.getElementById('rpt-date').textContent = formatDateLong(meta.date);
   document.getElementById('rpt-generated').textContent = formatTime(meta.generated_at);
   document.getElementById('rpt-next-session').textContent = meta.next_session;
 
-  // Sections
+  renderThoughts(thoughts || []);
   renderAlerts(alerts || []);
   renderPortfolio(portfolio);
   renderPositions(positions || []);
@@ -120,6 +121,34 @@ function renderReport(d) {
   renderOpportunities(top_opportunities || []);
 }
 
+/* ─── CLU'S THOUGHTS ─────────────────────────────────────── */
+
+function renderThoughts(thoughts) {
+  const el = document.getElementById('rpt-thoughts');
+  if (!el) return;
+  if (!thoughts || !thoughts.length) { el.innerHTML = ''; return; }
+  const items = thoughts.map(t => {
+    const typeClass = t.type === 'plan' ? 'thought-plan'
+                    : t.type === 'concern' ? 'thought-concern'
+                    : 'thought-obs';
+    const label = t.label ||
+      (t.type === 'plan' ? 'PLAN' : t.type === 'concern' ? 'FLAG' : 'OBSERVE');
+    return `<div class="thought-item ${typeClass}">
+      <div class="thought-label">${escHtml(label)}</div>
+      <div class="thought-text">${escHtml(t.text)}</div>
+    </div>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="thoughts-card">
+      <div class="thoughts-header">
+        <span class="thoughts-header-icon">◈</span>
+        CLU's Active Intelligence
+        <span class="thoughts-header-right">SYSTEM CONSCIOUSNESS LOG</span>
+      </div>
+      ${items}
+    </div>`;
+}
+
 /* ─── ALERTS ─────────────────────────────────────────────── */
 
 function renderAlerts(alerts) {
@@ -127,7 +156,7 @@ function renderAlerts(alerts) {
   if (!alerts.length) { el.innerHTML = ''; return; }
   el.innerHTML = alerts.map(a => `
     <div class="alert-banner ${a.level}">
-      <div class="alert-title">⚠ ${a.title}</div>
+      <div class="alert-title">⚠ ${escHtml(a.title)}</div>
       <div class="alert-msg">${escHtml(a.message)}</div>
     </div>
   `).join('');
@@ -214,12 +243,14 @@ function renderMovers(movers) {
   }).join('');
   el.innerHTML = `
     <div class="card-title"><span class="card-title-icon">▲</span> After-Hours Movers (±3%)</div>
+    <div class="table-scroll">
     <table class="data-table">
       <thead><tr>
         <th>Ticker</th><th>AH Price</th><th>Change</th><th>Signal</th><th>Watchlist</th><th>Note</th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    </div>`;
 }
 
 /* ─── EARNINGS ───────────────────────────────────────────── */
@@ -243,12 +274,14 @@ function renderEarnings(earnings) {
   }).join('');
   el.innerHTML = `
     <div class="card-title"><span class="card-title-icon">◎</span> Earnings &amp; News</div>
+    <div class="table-scroll">
     <table class="data-table">
       <thead><tr>
         <th>Ticker</th><th>Event</th><th>Result</th><th>Beat%</th><th>EPS</th><th>Impact</th><th>Action</th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    </div>`;
 }
 
 /* ─── STOP-LOSS ──────────────────────────────────────────── */
@@ -265,14 +298,16 @@ function renderStopLoss(alerts) {
     <td class="col-change-neg">${a.pnl_pct.toFixed(2)}%</td>
     <td>${fmtDollar(a.current_price)}</td>
     <td>${fmtDollar(a.stop_level)}</td>
-    <td style="font-size:11px;color:var(--red)">${escHtml(a.action)}</td>
+    <td style="font-size:11px;color:var(--neon-red);text-shadow:0 0 8px rgba(255,58,0,0.4)">${escHtml(a.action)}</td>
   </tr>`).join('');
   el.innerHTML = `
-    <div class="card-title" style="color:var(--red)"><span class="card-title-icon">⚠</span> Stop-Loss Alerts</div>
+    <div class="card-title" style="color:var(--neon-red);text-shadow:0 0 12px rgba(255,58,0,0.4)"><span class="card-title-icon">⚠</span> Stop-Loss Alerts</div>
+    <div class="table-scroll">
     <table class="data-table">
       <thead><tr><th>Ticker</th><th>P&L%</th><th>Price</th><th>Stop</th><th>Action</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    </div>`;
 }
 
 /* ─── TRADES ─────────────────────────────────────────────── */
@@ -296,10 +331,12 @@ function renderTrades(trades) {
   }).join('');
   el.innerHTML = `
     <div class="card-title"><span class="card-title-icon">⇄</span> Trades Executed</div>
+    <div class="table-scroll">
     <table class="data-table">
       <thead><tr><th>Ticker</th><th>Side</th><th>Shares</th><th>Price</th><th>Reason</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    </div>`;
 }
 
 /* ─── WATCHLIST CHANGES ──────────────────────────────────── */
@@ -318,10 +355,12 @@ function renderWatchlistChanges(changes) {
   </tr>`).join('');
   el.innerHTML = `
     <div class="card-title"><span class="card-title-icon">◫</span> Watchlist Changes</div>
+    <div class="table-scroll">
     <table class="data-table">
       <thead><tr><th>Ticker</th><th>Change</th><th>Reason</th></tr></thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table>
+    </div>`;
 }
 
 /* ─── OPPORTUNITIES ──────────────────────────────────────── */
@@ -375,7 +414,7 @@ async function loadArchive() {
       });
     });
   } catch {
-    el.innerHTML = '<p class="no-data" style="padding:16px;color:var(--red)">Failed to load archive.</p>';
+    el.innerHTML = '<p class="no-data" style="padding:16px;color:var(--neon-red)">Failed to load archive.</p>';
   }
 }
 
@@ -389,13 +428,9 @@ async function loadArchiveReport(date) {
     const res = await fetch(ARCHIVE_REPORT(date) + '?t=' + Date.now());
     if (!res.ok) throw new Error();
     const data = await res.json();
-    // Render into archive-report-root using the same renderer with a temp swap
-    const origRoot = document.getElementById('report-root');
-    const tempContainer = document.createElement('div');
-    // Shallow clone all sections into temp, render, copy back
     root.innerHTML = buildReportHTML(data);
   } catch {
-    root.innerHTML = '<p class="empty-sub" style="padding:20px;color:var(--red)">Failed to load report.</p>';
+    root.innerHTML = '<p class="empty-sub" style="padding:20px;color:var(--neon-red)">Failed to load report.</p>';
   }
 }
 
@@ -406,7 +441,7 @@ function buildReportHTML(d) {
   return `
     <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
       <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:4px">
-        C.L.U. ${escHtml(meta.session_label.toUpperCase())} — ${formatDate(meta.date)}
+        C.L.U. ${escHtml((meta.session_label || 'Report').toUpperCase())} — ${formatDate(meta.date)}
       </div>
       <div style="font-size:11px;color:var(--text-secondary)">
         ${formatDateLong(meta.date)} · Updated ${formatTime(meta.generated_at)} · Next: ${escHtml(meta.next_session)}
@@ -447,7 +482,7 @@ function buildMoversHTML(movers) {
   if (!movers.length) return '';
   return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
     <div class="card-title">▲ After-Hours Movers</div>
-    <table class="data-table"><thead><tr><th>Ticker</th><th>AH Price</th><th>Change</th><th>Signal</th><th>Note</th></tr></thead>
+    <div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>AH Price</th><th>Change</th><th>Signal</th><th>Note</th></tr></thead>
     <tbody>${movers.map(m => {
       const sign = m.change_pct >= 0 ? '+' : '';
       const cls  = m.change_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
@@ -455,7 +490,7 @@ function buildMoversHTML(movers) {
         <td class="${cls}">${sign}${m.change_pct.toFixed(1)}%</td>
         <td><span class="badge badge-${m.signal}">${m.signal}</span></td>
         <td style="font-size:11px;color:var(--text-secondary)">${escHtml(m.note)}</td></tr>`;
-    }).join('')}</tbody></table>
+    }).join('')}</tbody></table></div>
   </div>`;
 }
 
@@ -463,7 +498,7 @@ function buildEarningsHTML(earnings) {
   if (!earnings.length) return '';
   return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
     <div class="card-title">◎ Earnings &amp; News</div>
-    <table class="data-table"><thead><tr><th>Ticker</th><th>Event</th><th>Result</th><th>Beat%</th><th>Impact</th></tr></thead>
+    <div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>Event</th><th>Result</th><th>Beat%</th><th>Impact</th></tr></thead>
     <tbody>${earnings.map(e => {
       const sign = e.beat_pct >= 0 ? '+' : '';
       const cls  = e.beat_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
@@ -473,23 +508,22 @@ function buildEarningsHTML(earnings) {
         <td><span class="badge badge-${badge}">${e.result.toUpperCase()}</span></td>
         <td class="${cls}">${sign}${e.beat_pct.toFixed(1)}%</td>
         <td style="font-size:11px;color:var(--text-secondary)">${escHtml(e.impact)}</td></tr>`;
-    }).join('')}</tbody></table>
+    }).join('')}</tbody></table></div>
   </div>`;
 }
 
 function buildTradesHTML(trades) {
-  const label = trades.length ? 'Trades Executed' : 'Trades Executed — None';
   if (!trades.length) return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div class="card-title">⇄ ${label}</div><div class="none-label">None this session.</div></div>`;
+    <div class="card-title">⇄ Trades Executed</div><div class="none-label">None this session.</div></div>`;
   return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div class="card-title">⇄ ${label}</div>
-    <table class="data-table"><thead><tr><th>Ticker</th><th>Side</th><th>Shares</th><th>Price</th><th>Reason</th></tr></thead>
+    <div class="card-title">⇄ Trades Executed</div>
+    <div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>Side</th><th>Shares</th><th>Price</th><th>Reason</th></tr></thead>
     <tbody>${trades.map(t => {
       const cls = t.side === 'BUY' ? 'col-change-pos' : 'col-change-neg';
       return `<tr><td class="col-symbol">${escHtml(t.symbol)}</td><td class="${cls}">${escHtml(t.side)}</td>
         <td>${t.shares}</td><td>${fmtDollar(t.price)}</td>
         <td style="font-size:11px;color:var(--text-secondary)">${escHtml(t.reason)}</td></tr>`;
-    }).join('')}</tbody></table>
+    }).join('')}</tbody></table></div>
   </div>`;
 }
 

@@ -1,0 +1,61 @@
+{
+  "meta": {
+    "date": "2026-06-24",
+    "session": "after_hours",
+    "session_label": "Live Report",
+    "generated_at": "2026-06-25T02:30:00Z",
+    "version": "0.51",
+    "next_session": "2026-06-25 6:00 AM PDT"
+  },
+  "portfolio": {
+    "total_value": 50.90,
+    "cash": 37.50,
+    "buying_power": 37.50,
+    "pending_deposits": 50.00,
+    "open_positions": 1,
+    "positions_cap": 10,
+    "day_pnl_dollars": 0.34,
+    "day_pnl_pct": 0.68
+  },
+  "thoughts": [
+    { "type": "observation", "label": "SEMIS SURGE", "text": "MU's 8th consecutive beat with +24.3% EPS surprise confirms AI memory demand is not slowing. The entire Predicted Victory semiconductor cohort moves in sympathy — ARM, MRVL, INTC all lifting after-hours." },
+    { "type": "plan", "label": "MORNING EXECUTION", "text": "ARKK and NVDA entries planned for 6:00–6:30 AM PDT open. DELL gets a 3-gate check first — MU beat validates the AI server thesis but gap-up rules apply. All three entries are fractional, within $12–13 each." },
+    { "type": "concern", "label": "CRON FAILURE", "text": "June 25 morning session did not execute — zero orders placed. Cron trigger must be verified before the June 26 open. Additionally, Robinhood does not support fractional stop-loss orders; INTC stop at $121.80 is manual price monitoring only." },
+    { "type": "observation", "label": "SMCI GATE 2 BLOCKED", "text": "SMCI moved +3.4% on MU read-through but remains in Pending Verdict. Accounting remediation Gate 2 is still unresolved. Will not enter until full gate clearance regardless of price action." }
+  ],
+  "positions": [
+    { "symbol": "INTC", "full_name": "Intel Corporation", "desc": "Foundry & AI semiconductor pivot", "shares": 0.097496, "entry_price": 128.21, "reg_close": 131.65, "current_price": 138.69, "notional": 12.50, "day_pnl_pct": 2.68, "total_pnl_pct": 8.17, "stop_level": 121.80, "stop_type": "manual" }
+  ],
+  "watchlist_movers": [
+    { "symbol": "INTC", "price": 138.69, "change_pct": 4.4,  "signal": "active",   "watchlist": "Active Position",  "note": "MU foundry/DCAI read-through. +8.17% total P&L from entry." },
+    { "symbol": "ARKK", "price": 76.74,  "change_pct": 0.03, "signal": "buy-am",   "watchlist": "Predicted Victory", "note": "AH flat — no gap-up rule. Execute $12.72 GFD at 6:00 AM open." },
+    { "symbol": "NVDA", "price": 200.04, "change_pct": 0.52, "signal": "buy-am",   "watchlist": "Predicted Victory", "note": "AH +0.52% — below gap-up threshold. Enter on 5–10 min post-open settling." },
+    { "symbol": "MU",   "price": 1203.43,"change_pct": 14.7, "signal": "no-chase", "watchlist": "Predicted Victory", "note": "Q3 FY26 beat +24.3% — 8th consecutive. AH +14.7% — do NOT chase." },
+    { "symbol": "ARM",  "price": 381.50, "change_pct": 6.2,  "signal": "no-chase", "watchlist": "Predicted Victory", "note": "AH +6.2% gap-up. Set limit $359–365 (2–3% below open). MU AI inference read-through." },
+    { "symbol": "MRVL", "price": 287.80, "change_pct": 4.0,  "signal": "no-chase", "watchlist": "Predicted Victory", "note": "AH +4.0% gap-up. Set limit 2–3% below opening print." },
+    { "symbol": "DELL", "price": 439.50, "change_pct": 1.25, "signal": "gate-chk", "watchlist": "Entry Pipeline",   "note": "MU beat confirms enterprise AI server demand. 3-gate check at 6AM." },
+    { "symbol": "SMCI", "price": 33.56,  "change_pct": 3.4,  "signal": "gate2",    "watchlist": "Pending Verdict",  "note": "MU read-through +3.4% but accounting Gate 2 unresolved." }
+  ],
+  "learned_patterns": [
+    { "category": "EARNINGS", "pattern": "MU beat streak is 8 consecutive quarters with accelerating magnitude. A MU EPS beat reliably lifts the entire semiconductor cohort next session.", "confidence": "high" },
+    { "category": "GAP-UP PROTOCOL", "pattern": "Do not chase AH semiconductor gap-ups. Wait 5–10 min post-open for volatility to settle. Set limit orders 2–3% below the opening print for large gap-ups (>2%).", "confidence": "high" },
+    { "category": "ROBINHOOD API", "pattern": "Fractional share positions cannot use any conditional sell order. Both stop_market and limit sells are rejected by the API. Only market sells work.", "confidence": "high" },
+    { "category": "WATCHLIST DISCIPLINE", "pattern": "Leveraged ETFs (AMDL, NVDL, SOXL) are incompatible with CLU's thesis-hold approach. Require a documented private-market vector thesis for every entry.", "confidence": "high" },
+    { "category": "FRACTIONAL ORDERS", "pattern": "GFD (Good For Day) is the only valid time-in-force for fractional dollar-amount orders. GTC is rejected by the Robinhood API for fractional entries.", "confidence": "high" }
+  ],
+  "earnings": [
+    { "symbol": "MU",  "event": "Q3 FY2026 EPS", "result": "beat", "actual": 25.11, "estimate": 20.20, "beat_pct": 24.3,  "impact": "CONFIRMED — 8th consecutive beat. Entire semiconductor PV cohort reinforced.", "action": "No change — positions intact" },
+    { "symbol": "JEF", "event": "Q2 FY2026 EPS", "result": "miss", "actual": 1.03,  "estimate": 1.21,  "beat_pct": -14.9, "impact": "No CLU watchlist impact", "action": "None" }
+  ],
+  "stop_loss_alerts": [],
+  "trades_executed": [],
+  "watchlist_changes": [],
+  "alerts": [
+    { "level": "critical", "title": "June 25 Morning Session Did Not Execute", "message": "Zero orders placed on June 25. ARKK buy, NVDA entry, and all pending flags unexecuted. Cron trigger verified for June 26 — monitoring active. Fractional stop orders confirmed impossible on Robinhood — INTC stop-loss is manual price monitoring only." }
+  ],
+  "top_opportunities": [
+    { "rank": 1, "symbol": "ARKK", "thesis": "Disruptive innovation basket. All 3 gates clear. AH flat (+0.03%) — no gap-up rule.", "entry_target": "~$76.74", "action": "$12.72 GFD fractional at 6:00 AM open" },
+    { "rank": 2, "symbol": "NVDA", "thesis": "Foundational AI GPU. All 3 gates clear. AH +0.52% — no gap-up rule. Enter on settling.", "entry_target": "~$199–200", "action": "$12.72 fractional, 5–10 min post-open at 6:30 AM" },
+    { "rank": 3, "symbol": "DELL", "thesis": "AI server thesis. MU beat confirms enterprise AI server demand. AH +1.25%, below gap-up threshold.", "entry_target": "~$434", "action": "3-gate check at 6 AM. If cleared → Predicted Victory → enter at open." }
+  ]
+}

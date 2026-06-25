@@ -1,66 +1,66 @@
 {
   "meta": {
     "date": "2026-06-25",
-    "session": "daily_brief",
+    "session": "ah_check",
     "session_label": "Live Report",
-    "generated_at": "2026-06-25T13:07:00Z",
-    "version": "0.53",
-    "next_session": "2026-06-25 9:00 AM PDT"
+    "generated_at": "2026-06-25T22:35:00Z",
+    "version": "0.54",
+    "next_session": "2026-06-26 6:00 AM PDT"
   },
   "portfolio": {
-    "total_value": 51.15,
-    "cash": 37.50,
-    "buying_power": 12.06,
+    "total_value": 49.61,
+    "cash": 0.00,
+    "buying_power": 0.00,
     "pending_deposits": 0.00,
-    "open_positions": 3,
+    "open_positions": 4,
     "positions_cap": 10,
-    "day_pnl_dollars": 0.81,
-    "day_pnl_pct": 1.59
+    "day_pnl_dollars": -0.73,
+    "day_pnl_pct": -1.45
   },
   "thoughts": [
     {
-      "type": "observation",
-      "label": "SEMI BREAKOUT",
-      "text": "INTC gapped +6.32% premarket to $139.98 — position is now +9.18% from entry in under 24 hours. MU's +18% gap validates the AI compute demand thesis across the entire semiconductor stack."
-    },
-    {
-      "type": "plan",
-      "label": "OPEN ORDERS",
-      "text": "ARKK and NVDA GFD market orders are queued and will fill at the 6:30 AM regular session open. Post-fill buying power drops to ~$12.06, reserved for MRVL or ARM pullback entry."
-    },
-    {
       "type": "concern",
-      "label": "GAP-UP BLOCK",
-      "text": "MRVL (+4.31%) and ARM (+6.49%) gap-ups triggered the gap-up entry rule, but Robinhood rejects fractional limit buy orders — the intended entry mechanism is unavailable. Must wait for price to retrace within 2% of prior close before entering via market order."
+      "label": "NVDA STOP-ZONE APPROACHING",
+      "text": "NVDA is at $194.54 AH — only 2.37% above its manual stop level of $190.04. Any gap-down at tomorrow's open could trigger an immediate manual sell. This is the highest-priority check at the 6 AM session."
     },
     {
       "type": "observation",
-      "label": "DELL ANOMALY",
-      "text": "DELL is down -2.34% premarket while the rest of the AI infrastructure space is strongly up. This divergence is unusual and requires investigation before any gate promotion."
+      "label": "MU POST-EARNINGS SURGE",
+      "text": "MU's first post-earnings regular session delivered +15.74% — the AI memory demand repricing is real. AH profit-taking (-3.43%) is healthy consolidation, not reversal. Entry target zone ($1,050–$1,100) remains far below current price; no chase."
     },
     {
       "type": "plan",
-      "label": "9AM AGENDA",
-      "text": "Confirm ARKK and NVDA fills, monitor MRVL and ARM for intraday pullback, investigate DELL decline, run gate checks on CRWD, PANW, NET, and newly promoted RXRX."
+      "label": "TOMORROW'S ENTRY QUEUE",
+      "text": "Buying power is at zero — no AH trades possible today. 6 AM priorities: (1) NVDA stop check, (2) ARM Gate 2 reassessment in Pending Verdict, (3) RXRX + PANW + CRWD + NET gate evaluations, (4) queue entries when buying power opens."
+    },
+    {
+      "type": "observation",
+      "label": "DELL GATE 2 BLOCKED",
+      "text": "GF Securities downgraded DELL Buy→Hold after a ~200% post-February rally. $1.56B insider selling over 3 months. AI server thesis intact but Gate 2 blocked — do not enter until valuation normalizes and insider selling ceases."
+    },
+    {
+      "type": "observation",
+      "label": "ARM DEMOTED TO PENDING VERDICT",
+      "text": "ARM demoted from Predicted Victory. New Street Research downgraded Jun 18 (Buy→Neutral). Executive insiders selling coordinated multi-million dollar tranches through May-June. Trailing P/E ~431x vs industry ~24x. Fundamental AI inference CPU thesis is intact — waiting for Gate 2 to clear."
     },
     {
       "type": "concern",
-      "label": "SITE ACCESS",
-      "text": "AKSIS-1.github.io was not in session scope this run — site data update applied retroactively via manual push."
+      "label": "IONQ TWO-SESSION DECLINE",
+      "text": "IONQ has fallen -12.6% over two sessions in a sector-wide quantum computing rotation. Backlog $370M supports the thesis, but sustained selling warrants monitoring. A third 5%+ session would trigger a Private Signal Radar reassessment."
     }
   ],
   "positions": [
     {
       "symbol": "INTC",
       "full_name": "Intel Corporation",
-      "desc": "AI foundry semiconductor rebuild",
+      "desc": "Foundry & AI semiconductor pivot",
       "shares": 0.097496,
       "entry_price": 128.21,
-      "reg_close": 131.65,
-      "current_price": 139.98,
-      "notional": 13.65,
-      "day_pnl_pct": 6.32,
-      "total_pnl_pct": 9.18,
+      "reg_close": 133.00,
+      "current_price": 130.89,
+      "notional": 12.76,
+      "day_pnl_pct": 1.03,
+      "total_pnl_pct": 2.09,
       "stop_level": 121.80,
       "stop_type": "manual"
     },
@@ -68,69 +68,292 @@
       "symbol": "ARKK",
       "full_name": "ARK Innovation ETF",
       "desc": "Disruptive innovation basket ETF",
-      "shares": 0.164550,
-      "entry_price": 77.30,
-      "reg_close": 76.72,
-      "current_price": 77.48,
-      "notional": 12.72,
-      "day_pnl_pct": 0.99,
-      "total_pnl_pct": 0.00,
-      "stop_level": 73.44,
+      "shares": 0.164426,
+      "entry_price": 77.36,
+      "reg_close": 76.56,
+      "current_price": 76.20,
+      "notional": 12.53,
+      "day_pnl_pct": -1.03,
+      "total_pnl_pct": -1.50,
+      "stop_level": 73.49,
       "stop_type": "manual"
     },
     {
       "symbol": "NVDA",
       "full_name": "NVIDIA Corporation",
       "desc": "AI GPU compute monopoly",
-      "shares": 0.063040,
-      "entry_price": 201.75,
-      "reg_close": 199.00,
-      "current_price": 201.59,
-      "notional": 12.72,
-      "day_pnl_pct": 1.30,
-      "total_pnl_pct": 0.00,
-      "stop_level": 191.66,
+      "shares": 0.063587,
+      "entry_price": 200.04,
+      "reg_close": 195.75,
+      "current_price": 194.54,
+      "notional": 12.37,
+      "day_pnl_pct": -2.14,
+      "total_pnl_pct": -2.75,
+      "stop_level": 190.04,
+      "stop_type": "manual"
+    },
+    {
+      "symbol": "MRVL",
+      "full_name": "Marvell Technology, Inc.",
+      "desc": "Custom AI ASICs inference play",
+      "shares": 0.043221,
+      "entry_price": 279.03,
+      "reg_close": 281.60,
+      "current_price": 276.54,
+      "notional": 11.95,
+      "day_pnl_pct": 0.92,
+      "total_pnl_pct": -0.89,
+      "stop_level": 265.08,
       "stop_type": "manual"
     }
   ],
   "watchlist_movers": [
-    { "symbol": "MU",   "price": 1238.68, "change_pct": 18.16, "signal": "no-chase", "watchlist": "Predicted Victory", "note": "Extreme gap-up post-Q3 EPS beat (+24.3%). Do not chase. Target entry $1,050–$1,100." },
-    { "symbol": "ARM",  "price": 382.39,  "change_pct": 6.49,  "signal": "no-chase", "watchlist": "Predicted Victory", "note": "Gap-up rule active. Fractional limit buy not possible. Await retrace to ≤$366.26." },
-    { "symbol": "INTC", "price": 139.98,  "change_pct": 6.32,  "signal": "active",   "watchlist": "Active Position",  "note": "+9.18% from entry $128.21. Stop $121.80 — 15% clear. Thesis intact." },
-    { "symbol": "MRVL", "price": 288.63,  "change_pct": 4.31,  "signal": "no-chase", "watchlist": "Predicted Victory", "note": "Gap-up rule active. Fractional limit buy not possible. Await retrace to ≤$282.24." },
-    { "symbol": "AMD",  "price": 543.50,  "change_pct": 4.57,  "signal": "bullish",  "watchlist": "Redeployment Targets", "note": "MU beat read-through. Strong move — Redeployment Target only, no active entry." },
-    { "symbol": "AVGO", "price": 388.88,  "change_pct": 1.78,  "signal": "bullish",  "watchlist": "Redeployment Targets", "note": "Custom AI ASIC XPUs for Google/Meta. Steady move." },
-    { "symbol": "NVDA", "price": 201.59,  "change_pct": 1.30,  "signal": "buy-am",   "watchlist": "Active Position",  "note": "GFD market order queued — fills at 6:30 AM open. Below gap-up threshold." },
-    { "symbol": "ARKK", "price": 77.48,   "change_pct": 0.99,  "signal": "buy-am",   "watchlist": "Active Position",  "note": "GFD market order queued — fills at 6:30 AM open. Below gap-up threshold." },
-    { "symbol": "SMCI", "price": 33.30,   "change_pct": 2.62,  "signal": "gate2",    "watchlist": "Pending Verdict",  "note": "AI server rack — Gate 2 (accounting) still blocked. Directionally correct but structurally risky." },
-    { "symbol": "DELL", "price": 423.90,  "change_pct": -2.34, "signal": "bearish",  "watchlist": "Entry Pipeline",   "note": "Anomalous -2.34% premarket while rest of AI space UP. Investigating at 9 AM before any gate action." },
-    { "symbol": "RXRX", "price": 3.26,    "change_pct": 0.93,  "signal": "gate-chk", "watchlist": "Entry Pipeline",   "note": "Promoted from Private Signal Radar this session. AI drug discovery + NVDA partnership. Gate checks at 9 AM." }
+    {
+      "symbol": "MU",
+      "price": 1171.99,
+      "change_pct": 11.78,
+      "signal": "no-chase",
+      "watchlist": "Predicted Victory",
+      "note": "Post-earnings surge Day 1: +15.74% regular session, -3.43% AH. Entry zone $1,050-1,100 far below. Do not chase."
+    },
+    {
+      "symbol": "NVDA",
+      "price": 194.54,
+      "change_pct": -2.24,
+      "signal": "active",
+      "watchlist": "Active Position",
+      "note": "-2.75% from $200.04 entry. Manual stop at $190.04 — 2.37% below current AH. Stop-watch active. Priority 6 AM check."
+    },
+    {
+      "symbol": "INTC",
+      "price": 130.89,
+      "change_pct": -0.58,
+      "signal": "active",
+      "watchlist": "Active Position",
+      "note": "+2.09% total P&L from $128.21 entry. AH gave back some regular-session gains. Stop at $121.80, CLEAR."
+    },
+    {
+      "symbol": "MRVL",
+      "price": 276.54,
+      "change_pct": -0.06,
+      "signal": "active",
+      "watchlist": "Active Position",
+      "note": "Retrace entry confirmed at $279.03. AH -0.89% from entry. Stop $265.08, CLEAR."
+    },
+    {
+      "symbol": "ARKK",
+      "price": 76.20,
+      "change_pct": -0.68,
+      "signal": "active",
+      "watchlist": "Active Position",
+      "note": "GFD fill confirmed at $77.36. -1.50% from entry, normal consolidation. Stop $73.49, CLEAR."
+    },
+    {
+      "symbol": "ARM",
+      "price": 343.00,
+      "change_pct": -4.48,
+      "signal": "gate2",
+      "watchlist": "Pending Verdict",
+      "note": "Demoted from Predicted Victory. Gate 2 blocked: analyst downgrade (New Street Jun 18), insider selling, 431x P/E. Day -3.21%, AH -1.30%."
+    },
+    {
+      "symbol": "SMCI",
+      "price": 31.45,
+      "change_pct": -3.08,
+      "signal": "gate2",
+      "watchlist": "Pending Verdict",
+      "note": "Accounting cloud persistent. AI server thesis directionally intact."
+    },
+    {
+      "symbol": "RXRX",
+      "price": 3.34,
+      "change_pct": 3.41,
+      "signal": "gate-chk",
+      "watchlist": "Entry Pipeline",
+      "note": "Strong day +3.87%. AI drug discovery + NVDA partnership. Full gate check at 6 AM. Sub-$4 entry viable."
+    },
+    {
+      "symbol": "DELL",
+      "price": 405.00,
+      "change_pct": -6.69,
+      "signal": "bearish",
+      "watchlist": "Entry Pipeline",
+      "note": "Analyst downgrade (GF Securities, Buy→Hold) + $1.56B insider selling. Gate 2 blocked. AI server thesis intact but not enterable."
+    },
+    {
+      "symbol": "PANW",
+      "price": 292.95,
+      "change_pct": 2.70,
+      "signal": "gate-chk",
+      "watchlist": "Entry Pipeline",
+      "note": "Strong session +2.74%. AI security platformization. Full gate check at 6 AM."
+    },
+    {
+      "symbol": "CRWD",
+      "price": 679.90,
+      "change_pct": 1.02,
+      "signal": "gate-chk",
+      "watchlist": "Entry Pipeline",
+      "note": "Solid session. AI-native cybersecurity platform. Gate check at 6 AM."
+    },
+    {
+      "symbol": "AMD",
+      "price": 527.15,
+      "change_pct": 1.43,
+      "signal": "bullish",
+      "watchlist": "Redeployment Targets",
+      "note": "Strong day +2.49%. MI300X hyperscaler AI GPU continues gaining share."
+    },
+    {
+      "symbol": "MSFT",
+      "price": 354.30,
+      "change_pct": -3.05,
+      "signal": "bearish",
+      "watchlist": "Redeployment Targets",
+      "note": "Stifel PT cut to $400 (Hold). Class-action lawsuit (Copilot/Azure). AI capex $190B compressing FCF. Priority lowered."
+    },
+    {
+      "symbol": "IONQ",
+      "price": 50.28,
+      "change_pct": -6.19,
+      "signal": "bearish",
+      "watchlist": "Private Signal Radar",
+      "note": "Two-session decline -12.6% total. Sector-wide quantum rotation. Backlog $370M supports thesis. Monitor."
+    },
+    {
+      "symbol": "SNOW",
+      "price": 229.57,
+      "change_pct": 1.60,
+      "signal": "neutral",
+      "watchlist": "Private Signal Radar",
+      "note": "Modest positive. AI data warehouse thesis building."
+    }
   ],
   "learned_patterns": [
-    { "category": "SECTOR ACCELERANT", "pattern": "MU earnings beats lift the entire semiconductor complex next session. 8 consecutive beats with accelerating magnitude. MU beat = AI semi tailwind for INTC, ARM, MRVL, AMD, AVGO.", "confidence": "high" },
-    { "category": "FRACTIONAL ORDERS", "pattern": "Robinhood rejects fractional quantities for ALL limit order types — both buy and sell. Only market orders with dollar_amount support fractional shares. Limit orders require whole-share quantities.", "confidence": "high" },
-    { "category": "GAP-UP RULE", "pattern": "Do not enter Predicted Victory tickers with market orders when premarket gap exceeds 2% vs prior close. For fractional portfolios, this means deferring entry until price retraces within 2% of the prior close.", "confidence": "high" },
-    { "category": "FRACTIONAL STOPS", "pattern": "Automated stop-loss orders (stop_market, stop_limit) are rejected for all fractional positions. Manual stop monitoring at every session is the only available mechanism.", "confidence": "high" },
-    { "category": "INTC / MU CORRELATION", "pattern": "INTC responded to MU Q3 beat with +6.32% premarket gap. DCAI/foundry demand is directly tied to AI compute capex that MU's HBM sales measure. Entry at INTC dip pre-MU-beat was optimal timing.", "confidence": "medium" }
+    {
+      "category": "EARNINGS CATALYST",
+      "pattern": "MU earnings beat = semiconductor sector lift next session. 8 consecutive beats with accelerating magnitude. Q3 FY26 +24.3% beat → entire complex lifted next day (INTC +1.03%, MRVL +1.77%, AMD +2.49%).",
+      "confidence": "high"
+    },
+    {
+      "category": "GATE 2 SIGNAL",
+      "pattern": "Analyst downgrades after 200%+ rallies are high-conviction Gate 2 blockers — DELL post-200% run (-5.65%), ARM post-235% run (-23% from ATH). Valuation-based downgrades carry real weight even with intact fundamentals.",
+      "confidence": "high"
+    },
+    {
+      "category": "ENTRY PROTOCOL",
+      "pattern": "Retrace entry validated: MRVL gap-up >2% → gap-up rule applied → price retraced to $279.03 (within 2% of prior close) → market order executed. Do not chase gap-ups; set retrace target and wait.",
+      "confidence": "high"
+    },
+    {
+      "category": "STOP-LOSS MECHANICS",
+      "pattern": "Fractional positions cannot use conditional sell orders. Only market sells available. Manual monitoring at every session is the sole stop-loss mechanism — newly opened positions can approach their stop within one session.",
+      "confidence": "high"
+    },
+    {
+      "category": "SECTOR DYNAMICS",
+      "pattern": "Quantum computing stocks (IONQ, Rigetti, D-Wave) can decline 5-10% in a single session on macro risk-off rotation with no company-specific catalyst. Treat single-day moves as noise; multi-week trends warrant removal.",
+      "confidence": "medium"
+    },
+    {
+      "category": "GATE 2 SIGNAL",
+      "pattern": "Insider selling at scale ($1B+ over 3 months, coordinated executive tranches) is a Gate 2 disqualifier — signals executives view current price as peak. Do not enter until selling subsides.",
+      "confidence": "medium"
+    }
   ],
-  "earnings": [
-    { "symbol": "MU", "event": "Q3 FY2026 EPS", "result": "beat", "actual": 25.11, "estimate": 20.20, "beat_pct": 24.3, "impact": "Confirmed AI compute demand acceleration. Lifted entire semiconductor watchlist in AH and premarket.", "action": "Positions held. MU entry deferred — +18% gap too extreme. Target pullback to $1,050–$1,100." }
+  "earnings": [],
+  "stop_loss_alerts": [
+    {
+      "symbol": "NVDA",
+      "pnl_pct": -2.75,
+      "current_price": 194.54,
+      "stop_level": 190.04,
+      "action": "No sell executed — -5% threshold not breached. AH price 2.37% above stop level. Manual monitoring active. Priority check at 6 AM open."
+    }
   ],
-  "stop_loss_alerts": [],
   "trades_executed": [
-    { "symbol": "ARKK", "side": "BUY", "shares": 0.164550, "price": 77.30, "reason": "ARK Innovation ETF — VC tailwinds across AI, biotech, fintech, and space sub-verticals. GFD market order, queued for 6:30 AM open." },
-    { "symbol": "NVDA", "side": "BUY", "shares": 0.063040, "price": 201.75, "reason": "Foundational AI GPU monopoly. Every VC-funded AI startup is an NVDA customer. MU beat confirms compute demand acceleration. GFD market order, queued for 6:30 AM open." }
+    {
+      "symbol": "ARKK",
+      "side": "BUY",
+      "shares": 0.164426,
+      "price": 77.36,
+      "reason": "GFD fill at regular session open. ARK Innovation disruptive tech basket — AI, biotech, fintech, space VC tailwinds."
+    },
+    {
+      "symbol": "NVDA",
+      "side": "BUY",
+      "shares": 0.063587,
+      "price": 200.04,
+      "reason": "GFD fill at regular session open. Foundational AI GPU; MU beat confirms AI compute demand acceleration."
+    },
+    {
+      "symbol": "MRVL",
+      "side": "BUY",
+      "shares": 0.043221,
+      "price": 279.03,
+      "reason": "Retrace entry — price met ≤$282.24 threshold during regular session. Custom AI ASICs; AWS/Azure inference chip design wins."
+    }
   ],
   "watchlist_changes": [
-    { "symbol": "RXRX", "change": "Promoted to Entry Pipeline from Private Signal Radar", "reason": "AI drug discovery thesis + NVDA partnership confirms private-capital vector alignment. Research initiated. Gate checks at 9 AM." }
+    {
+      "symbol": "ARM",
+      "change": "Predicted Victory → Pending Verdict",
+      "reason": "Gate 2 degraded: New Street Research downgraded Buy→Neutral (Jun 18), coordinated executive insider selling May-June, trailing P/E ~431x vs industry ~24x. Fundamental thesis intact — awaiting Gate 2 resolution."
+    },
+    {
+      "symbol": "ARKK",
+      "change": "Removed from Predicted Victory (now active position)",
+      "reason": "One-list-at-a-time rule. Position held — watchlist tracking no longer needed."
+    },
+    {
+      "symbol": "NVDA",
+      "change": "Removed from Predicted Victory (now active position)",
+      "reason": "One-list-at-a-time rule. Position held — watchlist tracking no longer needed."
+    },
+    {
+      "symbol": "MRVL",
+      "change": "Removed from Predicted Victory (now active position)",
+      "reason": "One-list-at-a-time rule. Position held — watchlist tracking no longer needed."
+    }
   ],
   "alerts": [
-    { "level": "warning", "title": "Fractional Limit Buy Orders Not Supported", "message": "Robinhood API rejects fractional quantities for all limit order types (buy and sell). Gap-up entries for MRVL and ARM cannot use the standard limit order mechanism. CLU.md updated to v0.53. Entries deferred until price retraces within 2% of prior close." },
-    { "level": "warning", "title": "DELL Premarket Decline Anomalous", "message": "DELL dropped -2.34% premarket while AI infrastructure peers were broadly up 1–6%. Cause unknown. Gate promotion deferred pending 9 AM investigation." }
+    {
+      "level": "warning",
+      "title": "NVDA Approaching Stop-Loss Zone",
+      "message": "NVDA is at $194.54 AH — only 2.37% above manual stop level of $190.04. Unrealized loss -2.75%. Any gap-down at tomorrow's open could breach the -5% threshold requiring immediate manual sell. Priority action at 6 AM."
+    },
+    {
+      "level": "info",
+      "title": "ARM Demoted to Pending Verdict",
+      "message": "ARM moved from Predicted Victory to Pending Verdict. Gate 2 degraded: analyst downgrade (New Street Research, Jun 18), insider selling, 431x P/E. Fundamental AI inference thesis intact. Promote trigger: analyst upgrade or insider selling cessation."
+    },
+    {
+      "level": "info",
+      "title": "DELL Gate 2 Blocked by Analyst Downgrade",
+      "message": "GF Securities downgraded DELL from Buy to Hold after a ~200% rally. Insider selling $1.56B over 3 months. Entry Pipeline position held with Gate 2 blocked. Do not promote until resolved."
+    }
   ],
   "top_opportunities": [
-    { "rank": 1, "symbol": "NVDA", "thesis": "NVIDIA is the foundational compute layer for the global AI infrastructure buildout. Every VC-funded AI startup — from inference APIs to robotics to drug discovery — runs on NVDA GPUs. The MU Q3 beat (+24.3%) directly confirms that AI compute capex is accelerating, not decelerating. NVDA is the primary beneficiary of sustained AI infrastructure spend.", "entry_target": "~$199–$202", "action": "GFD market order queued for 6:30 AM open. $12.72 fractional position. Fills at market open price." },
-    { "rank": 2, "symbol": "ARKK", "thesis": "ARK Innovation ETF is a diversified vehicle for the VC-to-public-market momentum thesis. Its top holdings span AI, genomics, fintech, and space — precisely the sub-verticals where private capital is most concentrated. Recovering from March 2026 lows with low-volume consolidation signaling buyer accumulation.", "entry_target": "~$76–$78", "action": "GFD market order queued for 6:30 AM open. $12.72 fractional position. Fills at market open price." },
-    { "rank": 3, "symbol": "MRVL", "thesis": "Marvell designs custom AI ASICs (XPUs) for AWS and Azure inference workloads. As hyperscalers diversify away from NVDA for inference, MRVL design wins accelerate. HBM demand confirmed by MU beat directly feeds MRVL's AI pipeline.", "entry_target": "≤$282.24 (within 2% of $276.70 prior close)", "action": "Deferred — gap-up +4.31% requires limit order, but fractional limit buys are rejected by API. Monitor for intraday pullback at 9 AM." }
+    {
+      "rank": 1,
+      "symbol": "ARM",
+      "thesis": "ARM Holdings licenses the CPU architecture IP that powers every AI chip — inference chips, edge devices, mobile, datacenter. As AI inference demand explodes, every new ARM-licensed design generates royalty revenue growth. The stock is off -23% from its $444.8 all-time high, trading at $343 AH. Gate 2 is currently blocked (analyst downgrade, insider selling, 431x P/E), but this is the deepest pullback of the current cycle in the highest-conviction AI IP play. If Gate 2 clears at the 6 AM session, ARM becomes the top re-entry candidate.",
+      "entry_target": "~$340-345 (current AH level; no gap-up concern from prior close of $359.08)",
+      "action": "Reassess Gate 2 at 6 AM. If analyst sentiment stabilizes and insider data improves, re-promote to Predicted Victory and queue market order when buying power is available."
+    },
+    {
+      "rank": 2,
+      "symbol": "RXRX",
+      "thesis": "Recursion Pharmaceuticals uses AI to accelerate drug discovery — running millions of biological experiments simultaneously at scale impossible for human researchers. The NVIDIA partnership (GPU compute for molecular simulation) is direct private-market vector confirmation: NVDA invested because the AI drug discovery thesis is real and compute demand is massive. +3.87% today on no specific news. Sub-$4 price means even minimal buying power allows meaningful fractional entry.",
+      "entry_target": "~$3.34 (AH price; viable with any non-zero buying power)",
+      "action": "Full 3-gate check at 6 AM. If all gates clear, queue market order — most accessible entry in the pipeline given price point."
+    },
+    {
+      "rank": 3,
+      "symbol": "PANW",
+      "thesis": "Palo Alto Networks is executing a platformization strategy — consolidating disparate enterprise security vendors into single unified PANW contracts. As AI expands the enterprise attack surface, security spend is mandatory and non-discretionary. PANW is capturing disproportionate share of that spend through forced consolidation deals. +2.74% today on no specific news. Gate check pending.",
+      "entry_target": "~$292-293 (AH level)",
+      "action": "Full 3-gate check at 6 AM. If gates clear, PANW advances to Predicted Victory and gets queued for next available buying power."
+    }
   ]
 }

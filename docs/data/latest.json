@@ -2,7 +2,7 @@
   "meta": {
     "date": "2026-06-25",
     "session": "after_hours",
-    "session_label": "After-Hours Check — 3:30 PM PDT",
+    "session_label": "Live Report",
     "generated_at": "2026-06-25T22:30:00Z",
     "version": "0.51",
     "next_session": "2026-06-26 6:00 AM PDT"
@@ -17,6 +17,28 @@
     "day_pnl_dollars": 0.34,
     "day_pnl_pct": 0.68
   },
+  "thoughts": [
+    {
+      "type": "observation",
+      "label": "SEMIS SURGE",
+      "text": "MU's 8th consecutive beat with +24.3% EPS surprise confirms AI memory demand is not slowing. The entire Predicted Victory semiconductor cohort moves in sympathy — ARM, MRVL, INTC all lifting after-hours."
+    },
+    {
+      "type": "plan",
+      "label": "MORNING EXECUTION",
+      "text": "ARKK and NVDA entries planned for 6:00–6:30 AM PDT open. DELL gets a 3-gate check first — MU beat validates the AI server thesis but gap-up rules apply. All three entries are fractional, within $12–13 each."
+    },
+    {
+      "type": "concern",
+      "label": "CRON FAILURE",
+      "text": "June 25 morning session did not execute — zero orders placed. Cron trigger must be verified before the June 26 open. Additionally, Robinhood does not support fractional stop-loss orders; INTC stop at $121.80 is manual price monitoring only."
+    },
+    {
+      "type": "observation",
+      "label": "SMCI GATE 2 BLOCKED",
+      "text": "SMCI moved +3.4% on MU read-through but remains in Pending Verdict. Accounting remediation Gate 2 is still unresolved. Will not enter until full gate clearance regardless of price action."
+    }
+  ],
   "positions": [
     {
       "symbol": "INTC",
@@ -101,8 +123,8 @@
   "alerts": [
     {
       "level": "critical",
-      "title": "6 AM June 25 Session Did Not Execute",
-      "message": "Zero orders placed on account 470878752 on June 25. ARKK buy, NVDA entry, and all pending flags unexecuted. Verify cron trigger before June 26 open. Fractional stop orders confirmed impossible on Robinhood — INTC stop-loss is manual price monitoring only."
+      "title": "June 25 Morning Session Did Not Execute",
+      "message": "Zero orders placed on June 25. ARKK buy, NVDA entry, and all pending flags unexecuted. Verify cron trigger before June 26 open. Fractional stop orders confirmed impossible on Robinhood — INTC stop-loss is manual price monitoring only."
     }
   ],
   "top_opportunities": [

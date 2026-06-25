@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "date": "2026-06-25",
+    "session": "after_hours",
+    "session_label": "After-Hours Check — 3:30 PM PDT",
+    "generated_at": "2026-06-25T22:30:00Z",
+    "version": "0.51",
+    "next_session": "2026-06-26 6:00 AM PDT"
+  },
+  "portfolio": {
+    "total_value": 50.90,
+    "cash": 37.50,
+    "buying_power": 37.50,
+    "pending_deposits": 50.00,
+    "open_positions": 1,
+    "positions_cap": 10,
+    "day_pnl_dollars": 0.34,
+    "day_pnl_pct": 0.68
+  },
+  "positions": [
+    {
+      "symbol": "INTC",
+      "shares": 0.097496,
+      "entry_price": 128.21,
+      "reg_close": 131.65,
+      "current_price": 138.69,
+      "notional": 12.50,
+      "day_pnl_pct": 2.68,
+      "total_pnl_pct": 8.17,
+      "stop_level": 121.80,
+      "stop_type": "manual"
+    }
+  ],
+  "ah_movers": [
+    {
+      "symbol": "MU",
+      "ah_price": 1203.43,
+      "change_pct": 14.7,
+      "signal": "bullish",
+      "watchlist": "Predicted Victory",
+      "note": "Q3 FY26 beat +24.3% — 8th consecutive beat"
+    },
+    {
+      "symbol": "ARM",
+      "ah_price": 381.50,
+      "change_pct": 6.2,
+      "signal": "bullish",
+      "watchlist": "Predicted Victory",
+      "note": "MU AI inference read-through"
+    },
+    {
+      "symbol": "INTC",
+      "ah_price": 138.69,
+      "change_pct": 4.4,
+      "signal": "bullish",
+      "watchlist": "Active Position",
+      "note": "MU foundry/DCAI read-through"
+    },
+    {
+      "symbol": "MRVL",
+      "ah_price": 287.80,
+      "change_pct": 4.0,
+      "signal": "bullish",
+      "watchlist": "Predicted Victory",
+      "note": "MU HBM demand validates ASIC pipeline"
+    },
+    {
+      "symbol": "SMCI",
+      "ah_price": 33.56,
+      "change_pct": 3.4,
+      "signal": "neutral",
+      "watchlist": "Pending Verdict",
+      "note": "MU read-through; Gate 2 accounting still blocked"
+    }
+  ],
+  "earnings": [
+    {
+      "symbol": "MU",
+      "event": "Q3 FY2026 EPS",
+      "result": "beat",
+      "actual": 25.11,
+      "estimate": 20.20,
+      "beat_pct": 24.3,
+      "impact": "CONFIRMED — 8th consecutive beat. Entire semiconductor PV cohort reinforced.",
+      "action": "No change — positions intact"
+    },
+    {
+      "symbol": "JEF",
+      "event": "Q2 FY2026 EPS",
+      "result": "miss",
+      "actual": 1.03,
+      "estimate": 1.21,
+      "beat_pct": -14.9,
+      "impact": "No CLU watchlist impact",
+      "action": "None"
+    }
+  ],
+  "stop_loss_alerts": [],
+  "trades_executed": [],
+  "watchlist_changes": [],
+  "alerts": [
+    {
+      "level": "critical",
+      "title": "6 AM June 25 Session Did Not Execute",
+      "message": "Zero orders placed on account 470878752 on June 25. ARKK buy, NVDA entry, and all pending flags unexecuted. Verify cron trigger before June 26 open. Fractional stop orders confirmed impossible on Robinhood — INTC stop-loss is manual price monitoring only."
+    }
+  ],
+  "top_opportunities": [
+    {
+      "rank": 1,
+      "symbol": "ARKK",
+      "thesis": "Disruptive innovation basket. All 3 gates clear. AH flat (+0.03%) — no gap-up rule.",
+      "entry_target": "~$76.74",
+      "action": "$12.72 GFD fractional at 6:00 AM open"
+    },
+    {
+      "rank": 2,
+      "symbol": "NVDA",
+      "thesis": "Foundational AI GPU. All 3 gates clear. AH +0.52% — no gap-up rule. Enter on settling.",
+      "entry_target": "~$199–200",
+      "action": "$12.72 fractional, 5–10 min post-open at 6:30 AM"
+    },
+    {
+      "rank": 3,
+      "symbol": "DELL",
+      "thesis": "AI server thesis. MU beat confirms enterprise AI server demand. AH +1.25%, below gap-up threshold.",
+      "entry_target": "~$434",
+      "action": "3-gate check at 6 AM. If cleared → Predicted Victory → enter at open."
+    }
+  ]
+}

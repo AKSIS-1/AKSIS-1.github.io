@@ -1,2 +1,2 @@
-# AKSIS-1.github.io-CLU
+# AKSIS-1.github.io
 CLU Agentic Trading Site

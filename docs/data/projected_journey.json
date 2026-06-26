@@ -1,109 +1,93 @@
 {
   "meta": {
-    "updated_at": "2026-06-25T13:07:00Z",
-    "updated_by": "manual",
+    "updated_at": "2026-06-26T22:42:00Z",
+    "updated_by": "clu-auto",
     "update_cadence": "Weekly (Friday) or manual",
-    "next_update": "2026-07-04",
-    "version": "1.0"
+    "next_update": "2026-07-03",
+    "version": "0.71"
   },
   "growth_chart": {
     "actual": [
       { "date": "2026-06-24", "value": 50.34, "note": "Session 1 — INTC entry" },
-      { "date": "2026-06-25", "value": 51.15, "note": "Session 2 — ARKK + NVDA added" }
+      { "date": "2026-06-25", "value": 51.15, "note": "Session 2 — ARKK + NVDA added" },
+      { "date": "2026-06-26", "value": 148.82, "note": "Week 1 close — $100 deposit added; MRVL stopped out -5.71%; 3 positions + $111 cash" }
     ],
     "projected": [
-      { "date": "2026-06-25", "value": 51.15 },
-      { "date": "2026-07-04", "value": 53.00 },
-      { "date": "2026-07-11", "value": 54.80 },
-      { "date": "2026-07-18", "value": 56.50 },
-      { "date": "2026-08-01", "value": 59.00 },
-      { "date": "2026-08-29", "value": 63.50 },
-      { "date": "2026-09-25", "value": 68.00 }
+      { "date": "2026-06-26", "value": 148.82 },
+      { "date": "2026-07-03", "value": 151.05 },
+      { "date": "2026-07-10", "value": 153.32 },
+      { "date": "2026-07-17", "value": 155.62 },
+      { "date": "2026-07-31", "value": 160.34 },
+      { "date": "2026-08-28", "value": 170.21 },
+      { "date": "2026-09-25", "value": 180.69 }
     ],
     "projection_confidence": "low",
-    "projection_basis": "Early-stage model — only 2 sessions of history. Based on 1.59% single-day gain and sector momentum. Will recalibrate each Friday as history accumulates.",
+    "projection_basis": "Only 1 week of operating history plus a $100 mid-week deposit that dominates the value change — underlying market performance was -$1.5 (one stop-loss, semi rotation). Projection assumes the 1.5%/week growth target on deployed capital once the ~$111 cash is routed to the ETF tier. Recalibrates each Friday as deposit-free performance history accumulates.",
     "weekly_target_pct": 1.5,
     "monthly_target_pct": 5.5
   },
   "next_decisions": [
-    {
-      "type": "watch",
-      "ticker": "MU",
-      "thesis": "INTC/MU correlation pattern confirmed. MU breakout above 200-day MA would trigger sector-wide acceleration — directly benefits INTC position.",
-      "trigger": "MU AM session price action"
-    },
-    {
-      "type": "watch",
-      "ticker": "MRVL",
-      "thesis": "Sector accelerant candidate showing bullish signal. Currently in no-chase mode — waiting for 3-5% pullback to valid entry zone before committing capital.",
-      "trigger": "3–5% pullback from current level"
-    },
-    {
-      "type": "hold",
-      "ticker": "INTC",
-      "thesis": "Leading position at +9.18%. GTC stop active. Will add fractional shares on continued momentum — subject to 25% cap check at entry time.",
-      "trigger": "Hold through sector confirmation"
-    },
-    {
-      "type": "build",
-      "ticker": "PORTFOLIO",
-      "thesis": "3 of 10 slots used. Targeting 5–6 positions for diversification. Priority: non-semiconductor name to reduce INTC/ARKK/NVDA sector correlation risk.",
-      "trigger": "Strong buy-AM signal next session"
-    }
+    { "type": "build", "ticker": "SOXX", "thesis": "Designated MRVL replacement (§13.3) and ETF-tier deploy for the most underweight tier. -5.69% sector dip = discounted entry; diversified semi exposure replaces single-name MRVL risk.", "trigger": "Monday open — route part of ~$111 cash; respect 25% cap" },
+    { "type": "build", "ticker": "QQQ", "thesis": "Core growth ETF and ARKK migration target. Composite +0.173 (highest ETF), Z=-1.10 cheap. Builds ETF tier toward 30%/50% stage targets.", "trigger": "Monday open — ETF-tier deploy alongside or instead of SOXX" },
+    { "type": "watch", "ticker": "NVDA", "thesis": "Stop-zone: AH $192.41 vs $190.04 stop (1.25% above), -3.81% from entry. A gap-down breaches -5%.", "trigger": "Manual stop check every session; market sell on confirmed -5% breach" },
+    { "type": "add", "ticker": "CRWD", "thesis": "Promoted to Predicted Victory (compound gate 4/5). AI-native security; software-rotation winner. Fractional entry viable.", "trigger": "After ETF routing, on remaining buying power" },
+    { "type": "watch", "ticker": "RXRX", "thesis": "Strongest compound gate (5/5), sub-$4 accessible. AI drug discovery + NVDA partnership. PV-promotion candidate.", "trigger": "News gate re-check Monday; optional small single-stock entry" },
+    { "type": "watch", "ticker": "MU", "thesis": "-7.46% reversion brings it nearer the $1,050-1,100 entry zone after the post-earnings spike fully unwound.", "trigger": "Price entering $1,050-1,100" }
   ],
   "intelligence_evolution": [
     {
       "phase": "Phase 1 — Foundation",
-      "date_range": "Jun 24–25, 2026",
-      "sessions": 2,
-      "summary": "Established core position framework across 3 tickers. Identified INTC/MU sector correlation. Confirmed fractional order API constraints via live execution. First successful dual-entry session with ARKK and NVDA.",
-      "key_insight": "Fractional limit orders are rejected by Robinhood API. Switched to market orders for all fractional share buys and locked this into operating protocol permanently.",
-      "patterns_locked": 5,
-      "next_phase": "Phase 2 — Pattern Validation (target: 10 sessions)"
+      "date_range": "Jun 24–26, 2026",
+      "sessions": 5,
+      "summary": "Established the 3-tier framework and first positions across semis + innovation ETF. Live signal engine came online (33 tickers). Completed the first full stop-loss cycle (MRVL -5.71%) and handled a same-session $100 deposit via tier-based routing. The compound entry gate reversed a thesis-only over-promotion (PANW), proving the quant layer blocks momentum chasing.",
+      "key_insight": "Two systems validated under fire this week: (1) the stop-loss loop executed end-to-end on a fractional position via agentic market sell, and (2) the compound entry gate caught an overbought false-promote that pure thesis logic would have entered. Sector rotation (semis→software) exposed the book's semi concentration — accelerating the §13 ETF migration.",
+      "patterns_locked": 6,
+      "next_phase": "Phase 2 — Pattern Recognition (target: 10 sessions, 3+ medium/high patterns, 1 complete stop-loss cycle — the MRVL cycle satisfies the last criterion)"
     }
   ],
   "strategy_dna": [
     { "rule": "No Crypto", "status": "locked", "note": "Hard guardrail. Never evaluated, never overridden." },
-    { "rule": "Max 25% Per Position", "status": "locked", "note": "Enforced pre-trade via get_portfolio. No exceptions regardless of conviction level." },
-    { "rule": "Buy-AM Only", "status": "active", "note": "New entries at AM open only. AH and mid-session are analysis and planning — no new entries." },
-    { "rule": "Gap-Up Rule (>2%)", "status": "active", "note": "No market orders on gap-ups above 2%. Queue limit 2–3% below open print, or hold cash and reassess." },
-    { "rule": "GTC Stop-Loss (−5%)", "status": "active", "note": "Whole-share positions only. Fractional positions use manual session-by-session price check — GTC conditional orders not supported by API." },
-    { "rule": "Fractional Market Orders", "status": "active", "note": "Locked in after API validation Jun 25. Dollar-amount market orders for all fractional buys. Limit orders require whole-share quantities." },
-    { "rule": "Thesis-First Execution", "status": "active", "note": "Every trade must trace to a private-capital vector. No impulse entries." },
-    { "rule": "Sector Correlation Awareness", "status": "learning", "note": "INTC/MU confirmed Jun 24. Tracking AMD/NVDA/ARM cluster — needs 3+ more sessions to validate. Expanding model." }
+    { "rule": "Max 25% Per Position", "status": "locked", "note": "Enforced pre-trade via get_portfolio. No exceptions." },
+    { "rule": "Compound Entry Gate (≥3/5)", "status": "locked", "note": "Promotion to Predicted Victory requires 3 thesis gates AND ≥3/5 quant criteria. Reversed PANW's thesis-only promotion (1/5) this week." },
+    { "rule": "Tiered Stop-Loss (Stock -5% / ETF -7% / DRIP none)", "status": "active", "note": "Fractional positions use manual/agentic market-sell checks each session. MRVL -5% executed cleanly at $263.11." },
+    { "rule": "Deposit-Routing to Underweight Tier", "status": "active", "note": "New capital routes to the most underweight tier vs stage targets (DRIP > ETF > Stock tiebreak). $100 deposit → ETF tier (8.6% vs 50%)." },
+    { "rule": "Buy-AM Only", "status": "active", "note": "New entries at AM open only. AH and mid-session are analysis/planning — no new entries." },
+    { "rule": "Gap-Up Rule (>2%)", "status": "active", "note": "No market orders on gap-ups >2%. Queue limit 2-3% below open, or hold cash." },
+    { "rule": "Fractional Market Orders", "status": "active", "note": "Dollar-amount market orders for all fractional buys. Limit/conditional orders require whole shares." },
+    { "rule": "ETF Migration", "status": "learning", "note": "MRVL→SOXX (triggered by stop-out), ARKK→QQQ (+10%), INTC→SOXX (+15%). Shifting the book toward an ETF-anchored model to cut single-name noise." }
   ],
   "risk_profile": {
     "overall": "moderate",
-    "concentration_risk": "elevated",
+    "concentration_risk": "moderate",
     "diversification_score": 3,
     "diversification_max": 10,
-    "cash_buffer_pct": 73.3,
-    "notes": "All 3 active positions are in the technology/semiconductor cycle — high sector correlation. Strong cash reserve (73%) provides excellent entry optionality. Risk normalizes as slots fill with non-correlated names across different sectors.",
+    "cash_buffer_pct": 74.8,
+    "notes": "Cash buffer jumped to 74.8% after the $100 deposit + MRVL exit — large dry powder, strong optionality, but the deployed book is still 2 semis (INTC, NVDA) + 1 innovation ETF (ARKK), so deployed-capital concentration stays semi-heavy. The planned ETF-tier routing (SOXX/QQQ) directly reduces this. NVDA sits in its stop-zone.",
     "sector_exposure": [
-      { "sector": "Semiconductors", "tickers": "INTC, NVDA", "notional": 26.37 },
-      { "sector": "Innovation ETF", "tickers": "ARKK", "notional": 12.72 },
-      { "sector": "Cash Reserve", "tickers": "—", "notional": 37.50 }
+      { "sector": "Semiconductors", "tickers": "INTC, NVDA", "notional": 24.65 },
+      { "sector": "Innovation ETF", "tickers": "ARKK", "notional": 12.79 },
+      { "sector": "Cash Reserve", "tickers": "—", "notional": 111.37 }
     ]
   },
   "milestones": [
-    { "target": 55.00, "label": "$55 — Early Momentum", "projected_date": "2026-07-11", "status": "upcoming", "notes": "First milestone. Validates initial sector thesis and 3-position strategy." },
-    { "target": 60.00, "label": "$60 — Foundation Confirmed", "projected_date": "2026-08-01", "status": "upcoming", "notes": "Target 5–6 active positions by this point. Sector diversification improving." },
-    { "target": 75.00, "label": "$75 — Growth Phase", "projected_date": "2026-10-01", "status": "upcoming", "notes": "7–8 active positions expected. Pattern library fully stress-tested across market conditions." },
-    { "target": 100.00, "label": "$100 — First Century", "projected_date": "2027-Q1", "status": "upcoming", "notes": "Full 10-slot deployment. Strategy proven across multiple market cycles." }
+    { "target": 100.00, "label": "$100 — First Century", "projected_date": "2026-06-26", "status": "hit", "notes": "Reached 2026-06-26 via a $100 deposit (capital injection, not market performance). Account value $148.82." },
+    { "target": 150.00, "label": "$150 — Capital Deployed", "projected_date": "2026-07-10", "status": "upcoming", "notes": "Near-term: route the ~$111 cash into the ETF tier and let deployed capital compound past $150. Currently $148.82." },
+    { "target": 200.00, "label": "$200 — Diversified Base", "projected_date": "2026-09-30", "status": "upcoming", "notes": "Target 5-6 positions across stock/ETF/DRIP tiers with reduced semi concentration." },
+    { "target": 300.00, "label": "$300 — Compounding", "projected_date": "2027-Q1", "status": "upcoming", "notes": "DRIP tier established and reinvesting; ETF-anchored model maturing." }
   ],
   "weekly_recap": {
-    "week": "Jun 24–25, 2026",
+    "week": "Jun 24–26, 2026",
     "week_num": 1,
     "start_value": 50.34,
-    "end_value": 51.15,
-    "change_dollars": 0.81,
-    "change_pct": 1.61,
-    "sessions": 2,
-    "trades": 3,
-    "wins": 1,
-    "losses": 0,
-    "flat": 2,
-    "best_performer": { "ticker": "INTC", "pct": 9.18 },
-    "summary": "Week 1 operational. CLU established its first 3-position portfolio across semiconductors and innovation. INTC leads with +9.18% total gain. ARKK and NVDA are fresh entries — too early for directional confirmation. Cash reserve at 73.3% preserves strong optionality heading into next week. Primary focus: sector diversification and momentum confirmation on INTC. No losses. No stop-loss alerts. Protocol performing as designed."
+    "end_value": 148.82,
+    "change_dollars": 98.48,
+    "change_pct": 195.6,
+    "sessions": 5,
+    "trades": 4,
+    "wins": 0,
+    "losses": 1,
+    "flat": 0,
+    "best_performer": { "ticker": "ARKK", "pct": 0.57 },
+    "summary": "Week 1 value change is dominated by a $100 deposit — underlying market performance was about -$1.5 (one stop-loss + a semiconductor rotation), so the +195.6% headline is a capital injection, not a return. Operationally a strong week: live signal engine online, first complete stop-loss cycle (MRVL -5.71%, thesis intact → SOXX redeploy), compound gate reversed a false PANW promotion, and CRWD earned a clean PV promotion. ARKK is the only green holding (+0.57%); NVDA sits in its stop-zone. Heads into next week with $111 dry powder earmarked for ETF-tier diversification."
   }
 }

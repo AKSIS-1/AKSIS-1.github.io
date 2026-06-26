@@ -103,7 +103,8 @@ function showState(state) {
 function renderReport(d) {
   const { meta, portfolio, positions, earnings,
           stop_loss_alerts, trades_executed, watchlist_changes,
-          alerts, top_opportunities, thoughts, learned_patterns } = d;
+          alerts, top_opportunities, thoughts, learned_patterns,
+          signal_matrix, accuracy } = d;
 
   const movers = d.watchlist_movers || d.ah_movers || [];
 
@@ -118,13 +119,52 @@ function renderReport(d) {
   renderAlerts(alerts || []);
   renderAccountOverview(portfolio, positions || []);
   renderPositions(positions || []);
+  renderSignalMatrix(signal_matrix || [], meta);
   renderMovers(movers);
   renderLearnedPatterns(learned_patterns || []);
+  renderAccuracy(accuracy);
   renderEarnings(earnings || []);
   renderStopLoss(stop_loss_alerts || []);
   renderTrades(trades_executed || []);
   renderWatchlistChanges(watchlist_changes || []);
   renderOpportunities(top_opportunities || []);
+}
+
+/* ─── COMPOSITE SCORE HELPERS ─────────────────────────────────────────── */
+
+/* Signal class for a composite score in [-1, +1] */
+function compositeClass(score) {
+  if (score === null || score === undefined) return 'neutral';
+  if (score >  0.3) return 'bullish';
+  if (score < -0.3) return 'bearish';
+  return 'neutral';
+}
+
+/* A horizontal -1..+1 gauge with a center axis; fill grows right (green) or left (red). */
+function compositeBar(score) {
+  if (score === null || score === undefined) return '';
+  const s = Math.max(-1, Math.min(1, Number(score)));
+  const cls = compositeClass(s);
+  const halfPct = Math.abs(s) * 50;          // 0..50% of the bar width
+  const side = s >= 0
+    ? `left:50%;width:${halfPct}%`
+    : `right:50%;width:${halfPct}%`;
+  return `<span class="cscore-bar cscore-${cls}" title="Composite score ${s.toFixed(2)}">
+    <span class="cscore-fill" style="${side}"></span>
+    <span class="cscore-axis"></span>
+  </span>`;
+}
+
+/* Inline chip: score number + BULLISH/NEUTRAL/BEARISH badge */
+function compositeChip(score, signal) {
+  if (score === null || score === undefined) return '';
+  const cls = compositeClass(score);
+  const sig = signal || cls.toUpperCase();
+  const sign = score >= 0 ? '+' : '';
+  return `<span class="cscore-chip cscore-${cls}">
+    <span class="cscore-num">S ${sign}${Number(score).toFixed(2)}</span>
+    <span class="badge badge-${cls}">${escHtml(sig)}</span>
+  </span>`;
 }
 
 /* ─── PIE CHART (SVG donut) ────────────────────────────────────────── */
@@ -315,6 +355,7 @@ function renderPositions(positions) {
           ${pos.desc      ? `<span class="pos-desc">${escHtml(pos.desc)}</span>` : ''}
           <span class="pos-detail">${pos.shares} sh &middot; entry ${fmtDollar(pos.entry_price)} &middot; notional ${fmtDollar(pos.notional)}</span>
           <span class="pos-stop">${stopLabel}</span>
+          ${pos.composite_score !== undefined ? `<span class="pos-cscore">${compositeChip(pos.composite_score, pos.composite_signal)}</span>` : ''}
         </div>
         <div class="pos-right">
           <div class="pos-pnl ${pnlClass}">${pnlSign}${pos.total_pnl_pct.toFixed(2)}%</div>
@@ -324,6 +365,131 @@ function renderPositions(positions) {
       </div>`;
   }).join('');
   el.innerHTML = `<div class="card-title"><span class="card-title-icon">◉</span> Active Positions</div>${rows}`;
+}
+
+/* ─── SIGNAL MATRIX (quant engine output) ─────────────────────────────── */
+
+function renderSignalMatrix(matrix, meta) {
+  const el = document.getElementById('rpt-signal-matrix');
+  if (!el) return;
+  if (!matrix || !matrix.length) { el.innerHTML = ''; return; }
+
+  const computedAt = (meta && meta.signal_computed_at)
+    ? formatTime(meta.signal_computed_at) : null;
+
+  const rows = matrix.map(s => {
+    const cls    = compositeClass(s.composite_score);
+    const sign   = s.composite_score >= 0 ? '+' : '';
+    const rsiCls = s.rsi_signal === 'Oversold' ? 'col-change-pos'
+                 : s.rsi_signal === 'Overbought' ? 'col-change-neg' : '';
+    const zCls   = s.z_signal === 'OVERSOLD' ? 'col-change-pos'
+                 : s.z_signal === 'OVERBOUGHT' ? 'col-change-neg' : '';
+    const macdCls = s.macd === 'Bullish' ? 'col-change-pos' : 'col-change-neg';
+    const trendCls = s.trend_50d === 'Up' ? 'col-change-pos'
+                   : s.trend_50d === 'Down' ? 'col-change-neg' : '';
+    return `<tr>
+      <td class="col-symbol">${escHtml(s.symbol)}</td>
+      <td class="${rsiCls}">${s.rsi_14 ?? '—'}<span class="sm-sub">${escHtml(s.rsi_signal || '')}</span></td>
+      <td class="${macdCls}">${escHtml(s.macd || '—')}</td>
+      <td class="${zCls}">${s.z_score ?? '—'}<span class="sm-sub">${escHtml(s.z_signal || '')}</span></td>
+      <td>${escHtml(s.vol_signal || '—')}</td>
+      <td class="${trendCls}">${escHtml(s.trend_50d || '—')}</td>
+      <td class="sm-score-cell">
+        <div class="sm-score-row">${compositeBar(s.composite_score)}<span class="sm-score-num cscore-${cls}">${sign}${Number(s.composite_score).toFixed(2)}</span></div>
+      </td>
+      <td><span class="badge badge-${cls}">${escHtml(s.composite_signal || cls.toUpperCase())}</span></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card-title">
+      <span class="card-title-icon">⚙</span> Quant Signal Matrix
+      <span class="card-title-right">${computedAt ? 'COMPUTED ' + computedAt : 'LOCAL PYTHON ENGINE'}</span>
+    </div>
+    <p class="sm-caption">Computed locally before each session — RSI, MACD, Z-score, volume &amp; trend collapse into one composite score S ∈ [−1,+1]. Claude reads only this, not raw prices.</p>
+    <div class="table-scroll">
+    <table class="data-table sm-table">
+      <thead><tr>
+        <th>Ticker</th><th>RSI</th><th>MACD</th><th>Z-Score</th><th>Vol</th><th>Trend50</th><th>Composite S</th><th>Signal</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>`;
+}
+
+/* ─── ACCURACY & SELF-CORRECTION (learning loop) ──────────────────────── */
+
+function renderAccuracy(acc) {
+  const el = document.getElementById('rpt-accuracy');
+  if (!el) return;
+  if (!acc) { el.innerHTML = ''; return; }
+
+  const wr      = (acc.win_rate_pct !== undefined && acc.win_rate_pct !== null)
+                  ? acc.win_rate_pct : null;
+  const wrColor = wr === null ? 'var(--t3)'
+                : wr >= 60 ? 'var(--green)'
+                : wr >= 45 ? 'var(--yellow)' : 'var(--red)';
+  const evaluated = acc.trades_evaluated ?? 0;
+  const pending   = acc.trades_pending ?? 0;
+  const phase     = acc.phase || null;
+
+  const blocked = (acc.do_not_trade || []).map(c =>
+    `<div class="dnt-chip" title="${escHtml(c.notes || '')}">
+       <span class="dnt-x">⛔</span>
+       <span class="dnt-cond">${escHtml(c.condition)}</span>
+       <span class="dnt-delta">${c.cumulative_delta}</span>
+     </div>`).join('');
+
+  const ledger = (acc.recent_ledger || []).map(r => {
+    const d = r.accuracy_delta;
+    const dCls = (d === null || d === undefined || d === 'TBD') ? 'col-change-neu'
+               : Number(d) > 0 ? 'col-change-pos' : 'col-change-neg';
+    const dVal = (d === null || d === undefined) ? 'TBD' : d;
+    return `<tr>
+      <td class="col-symbol">${escHtml(r.ticker)}</td>
+      <td>${escHtml(r.action || 'BUY')}</td>
+      <td>${escHtml(r.outcome || 'TBD')}</td>
+      <td class="${dCls}">${escHtml(String(dVal))}</td>
+      <td style="font-size:10px;color:var(--text-dim)">${escHtml(r.conditions || '')}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="acc-card">
+      <div class="acc-header">
+        <span class="acc-header-icon">◎</span>
+        Accuracy &amp; Self-Correction
+        <span class="acc-header-right">CLOSED-LOOP LEARNING</span>
+      </div>
+      <div class="acc-stats">
+        <div class="acc-stat">
+          <div class="acc-stat-val" style="color:${wrColor}">${wr === null ? '—' : wr + '%'}</div>
+          <div class="acc-stat-label">Win Rate</div>
+        </div>
+        <div class="acc-stat">
+          <div class="acc-stat-val">${evaluated}</div>
+          <div class="acc-stat-label">Trades Graded</div>
+        </div>
+        <div class="acc-stat">
+          <div class="acc-stat-val" style="color:var(--yellow)">${pending}</div>
+          <div class="acc-stat-label">Awaiting 5-Day</div>
+        </div>
+        ${phase ? `<div class="acc-stat">
+          <div class="acc-stat-val" style="color:var(--blue);font-size:13px">${escHtml(phase)}</div>
+          <div class="acc-stat-label">Intel Phase</div>
+        </div>` : ''}
+      </div>
+      ${blocked ? `<div class="dnt-block">
+        <div class="dnt-title">⛔ DO-NOT-TRADE CONDITIONS <span class="dnt-sub">auto-learned from losing setups</span></div>
+        <div class="dnt-list">${blocked}</div>
+      </div>` : `<div class="dnt-block"><div class="dnt-title" style="color:var(--green)">✓ No blocked conditions — no losing pattern has crossed the −1.5 threshold.</div></div>`}
+      ${ledger ? `<div class="table-scroll" style="margin-top:12px">
+        <table class="data-table">
+          <thead><tr><th>Ticker</th><th>Action</th><th>5-Day Outcome</th><th>Δ</th><th>Entry Conditions</th></tr></thead>
+          <tbody>${ledger}</tbody>
+        </table>
+      </div>` : ''}
+    </div>`;
 }
 
 /* ─── WATCHLIST MOVERS ─────────────────────────────────────────── */
@@ -338,10 +504,14 @@ function renderMovers(movers) {
     const sign   = chg > 0 ? '+' : '';
     const sigKey = (m.signal || 'neutral').replace(/[^a-z0-9-]/gi, '').toLowerCase();
     const sigLabel = (m.signal || 'neutral').replace(/-/g, ' ').toUpperCase();
+    const cScore = (m.composite_score !== undefined && m.composite_score !== null)
+      ? `<span class="cscore-num cscore-${compositeClass(m.composite_score)}">${m.composite_score >= 0 ? '+' : ''}${Number(m.composite_score).toFixed(2)}</span>`
+      : '<span style="color:var(--t4)">—</span>';
     return `<tr>
       <td class="col-symbol">${escHtml(m.symbol)}</td>
       <td class="col-price">${fmtDollar(price)}</td>
       <td class="${chgCls}">${sign}${chg.toFixed(1)}%</td>
+      <td>${cScore}</td>
       <td><span class="badge badge-${sigKey}">${sigLabel}</span></td>
       <td class="wl-tag">${escHtml(m.watchlist)}</td>
       <td style="color:var(--text-secondary);font-size:11px">${escHtml(m.note)}</td>
@@ -352,7 +522,7 @@ function renderMovers(movers) {
     <div class="table-scroll">
     <table class="data-table">
       <thead><tr>
-        <th>Ticker</th><th>Price</th><th>Change</th><th>Signal</th><th>Watchlist</th><th>Note</th>
+        <th>Ticker</th><th>Price</th><th>Change</th><th>S</th><th>Signal</th><th>Watchlist</th><th>Note</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -477,8 +647,12 @@ function renderOpportunities(opps) {
   const cards = opps.map(o => `
     <div class="opp-card">
       <div class="opp-rank">#${o.rank} Opportunity</div>
-      <div class="opp-ticker">${escHtml(o.symbol)}</div>
+      <div class="opp-ticker-row">
+        <span class="opp-ticker">${escHtml(o.symbol)}</span>
+        ${o.composite_score !== undefined ? compositeChip(o.composite_score, o.composite_signal) : ''}
+      </div>
       <div class="opp-thesis">${escHtml(o.thesis)}</div>
+      ${o.quant_gate_status ? `<div class="opp-gate"><span class="opp-gate-label">QUANT GATE</span> ${escHtml(o.quant_gate_status)}</div>` : ''}
       <div class="opp-footer">
         <div class="opp-entry">Entry: ${escHtml(o.entry_target)}</div>
         <div class="opp-action">${escHtml(o.action)}</div>

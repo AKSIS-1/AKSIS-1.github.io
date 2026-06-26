@@ -105,7 +105,7 @@ function renderReport(d) {
   const { meta, portfolio, positions, earnings,
           stop_loss_alerts, trades_executed, watchlist_changes,
           alerts, top_opportunities, thoughts, learned_patterns,
-          signal_matrix, accuracy } = d;
+          signal_matrix, dividend_matrix, accuracy } = d;
 
   const movers = d.watchlist_movers || d.ah_movers || [];
 
@@ -123,6 +123,7 @@ function renderReport(d) {
   renderAccountOverview(portfolio, positions || []);
   renderPositions(positions || []);
   renderSignalMatrix(signal_matrix || [], meta);
+  renderDividendMatrix(dividend_matrix || []);
   renderMovers(movers);
   renderLearnedPatterns(learned_patterns || []);
   renderAccuracy(cachedAccuracy);
@@ -347,13 +348,20 @@ function renderPositions(positions) {
     const dayColor = dayPos ? 'var(--green)' : 'var(--red)';
     const daySign  = dayPos ? '+' : '';
     const accentColor = POS_COLORS[i % POS_COLORS.length];
-    const stopLabel = pos.stop_type === 'manual'
-      ? `stop ${fmtDollar(pos.stop_level)} ⚡ manual`
-      : `stop ${fmtDollar(pos.stop_level)} GTC`;
+    const tierKey   = (pos.tier || 'stock').toLowerCase();
+    const tierLabel = tierKey === 'drip' ? 'DRIP' : tierKey === 'etf' ? 'ETF' : 'STOCK';
+    const stopLabel = pos.stop_type === 'none' || tierKey === 'drip'
+      ? 'stop: none (DRIP — hold forever)'
+      : pos.stop_type === 'manual'
+        ? `stop ${fmtDollar(pos.stop_level)} ⚡ manual${pos.stop_trail_pct ? ' trail ' + pos.stop_trail_pct + '%' : ''}`
+        : `stop ${fmtDollar(pos.stop_level)} GTC trailing ${pos.stop_trail_pct || 5}%`;
     return `
       <div class="pos-row" style="animation-delay:${i * 0.12}s">
         <div class="pos-left">
-          <span class="pos-ticker" style="color:${accentColor};text-shadow:0 0 16px ${accentColor}88">${escHtml(pos.symbol)}</span>
+          <div class="pos-ticker-row">
+            <span class="pos-ticker" style="color:${accentColor};text-shadow:0 0 16px ${accentColor}88">${escHtml(pos.symbol)}</span>
+            <span class="tier-badge tier-${tierKey}">${tierLabel}</span>
+          </div>
           ${pos.full_name ? `<span class="pos-name">${escHtml(pos.full_name)}</span>` : ''}
           ${pos.desc      ? `<span class="pos-desc">${escHtml(pos.desc)}</span>` : ''}
           <span class="pos-detail">${pos.shares} sh &middot; entry ${fmtDollar(pos.entry_price)} &middot; notional ${fmtDollar(pos.notional)}</span>
@@ -381,22 +389,32 @@ function renderSignalMatrix(matrix, meta) {
     ? formatTime(meta.signal_computed_at) : null;
 
   const rows = matrix.map(s => {
-    const cls    = compositeClass(s.composite_score);
-    const sign   = s.composite_score >= 0 ? '+' : '';
-    const rsiCls = s.rsi_signal === 'Oversold' ? 'col-change-pos'
-                 : s.rsi_signal === 'Overbought' ? 'col-change-neg' : '';
-    const zCls   = s.z_signal === 'OVERSOLD' ? 'col-change-pos'
-                 : s.z_signal === 'OVERBOUGHT' ? 'col-change-neg' : '';
+    const cls     = compositeClass(s.composite_score);
+    const sign    = s.composite_score >= 0 ? '+' : '';
+    const rsiCls  = s.rsi_signal === 'Oversold' ? 'col-change-pos'
+                  : s.rsi_signal === 'Overbought' ? 'col-change-neg' : '';
+    const zCls    = s.z_signal === 'OVERSOLD' ? 'col-change-pos'
+                  : s.z_signal === 'OVERBOUGHT' ? 'col-change-neg' : '';
     const macdCls = s.macd === 'Bullish' ? 'col-change-pos' : 'col-change-neg';
     const trendCls = s.trend_50d === 'Up' ? 'col-change-pos'
                    : s.trend_50d === 'Down' ? 'col-change-neg' : '';
+    const divgTag  = s.rsi_divergence && s.rsi_divergence !== 'None'
+      ? `<span class="sm-divg sm-divg-${s.rsi_divergence.toLowerCase()}">${escHtml(s.rsi_divergence)}</span>` : '';
+    const bbVal    = s.bb_pct !== undefined && s.bb_pct !== null
+      ? `<span class="sm-bb" title="Bollinger %B">${Number(s.bb_pct).toFixed(2)}</span>` : '—';
+    const macdHistVal = s.macd_hist !== undefined
+      ? `<span class="sm-sub">${s.macd_hist > 0 ? '+' : ''}${Number(s.macd_hist).toFixed(3)}</span>` : '';
+    const atrVal   = s.atr_pct !== undefined && s.atr_pct !== null
+      ? `<span class="sm-atr" title="ATR as % of price">${s.atr_pct}%</span>` : '—';
     return `<tr>
       <td class="col-symbol">${escHtml(s.symbol)}</td>
-      <td class="${rsiCls}">${s.rsi_14 ?? '—'}<span class="sm-sub">${escHtml(s.rsi_signal || '')}</span></td>
-      <td class="${macdCls}">${escHtml(s.macd || '—')}</td>
+      <td class="${rsiCls}">${s.rsi_14 ?? '—'}<span class="sm-sub">${escHtml(s.rsi_signal || '')}</span>${divgTag}</td>
+      <td class="${macdCls}">${escHtml(s.macd || '—')}${macdHistVal}</td>
+      <td>${bbVal}</td>
       <td class="${zCls}">${s.z_score ?? '—'}<span class="sm-sub">${escHtml(s.z_signal || '')}</span></td>
       <td>${escHtml(s.vol_signal || '—')}</td>
       <td class="${trendCls}">${escHtml(s.trend_50d || '—')}</td>
+      <td>${atrVal}</td>
       <td class="sm-score-cell">
         <div class="sm-score-row">${compositeBar(s.composite_score)}<span class="sm-score-num cscore-${cls}">${sign}${Number(s.composite_score).toFixed(2)}</span></div>
       </td>
@@ -409,11 +427,61 @@ function renderSignalMatrix(matrix, meta) {
       <span class="card-title-icon">⚙</span> Quant Signal Matrix
       <span class="card-title-right">${computedAt ? 'COMPUTED ' + computedAt : 'LOCAL PYTHON ENGINE'}</span>
     </div>
-    <p class="sm-caption">Computed locally before each session — RSI, MACD, Z-score, volume &amp; trend collapse into one composite score S ∈ [−1,+1]. Claude reads only this, not raw prices.</p>
+    <p class="sm-caption">Computed locally before each session — RSI, MACD, BB%B, Z-score, volume, trend &amp; ATR collapse into one composite score S ∈ [−1,+1]. Claude reads only this output.</p>
     <div class="table-scroll">
     <table class="data-table sm-table">
       <thead><tr>
-        <th>Ticker</th><th>RSI</th><th>MACD</th><th>Z-Score</th><th>Vol</th><th>Trend50</th><th>Composite S</th><th>Signal</th>
+        <th>Ticker</th><th>RSI</th><th>MACD</th><th>BB%B</th><th>Z-Score</th><th>Vol</th><th>Trend50</th><th>ATR%</th><th>Composite S</th><th>Signal</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>`;
+}
+
+/* ─── DIVIDEND MATRIX (DRIP tier) ─────────────────────────────────────── */
+
+function renderDividendMatrix(matrix) {
+  const el = document.getElementById('rpt-dividend-matrix');
+  if (!el) return;
+  if (!matrix || !matrix.length) { el.innerHTML = ''; return; }
+
+  const rows = matrix.map(d => {
+    const yieldVal  = d.dividend_yield_pct !== null && d.dividend_yield_pct !== undefined
+      ? `${Number(d.dividend_yield_pct).toFixed(2)}%` : '—';
+    const yieldCls  = d.dividend_yield_pct >= 4 ? 'col-change-pos' : d.dividend_yield_pct >= 2 ? '' : 'col-change-neg';
+    const payoutVal = d.payout_ratio_pct !== null && d.payout_ratio_pct !== undefined
+      ? `${Number(d.payout_ratio_pct).toFixed(0)}%` : '—';
+    const payoutCls = d.payout_ratio_pct > 80 ? 'col-change-neg' : d.payout_ratio_pct < 60 ? 'col-change-pos' : '';
+    const annDiv    = d.annual_dividend ? `$${Number(d.annual_dividend).toFixed(2)}` : '—';
+    const exDate    = d.ex_dividend_date ? escHtml(d.ex_dividend_date) : '—';
+    const streak    = d.dividend_growth_streak ?? 0;
+    const streakCls = streak >= 10 ? 'col-change-pos' : streak >= 5 ? '' : 'col-change-neg';
+    const safety    = d.dividend_safety_score;
+    const safetyCls = safety >= 70 ? 'col-change-pos' : safety >= 50 ? '' : 'col-change-neg';
+    const safetyBar = safety !== null && safety !== undefined
+      ? `<div class="div-safety-bar"><div class="div-safety-fill" style="width:${safety}%;background:${safety >= 70 ? 'var(--green)' : safety >= 50 ? 'var(--yellow)' : 'var(--red)'}"></div></div>`
+      : '';
+    return `<tr>
+      <td class="col-symbol">${escHtml(d.symbol)}</td>
+      <td class="${yieldCls}" style="font-weight:700">${yieldVal}</td>
+      <td class="${payoutCls}">${payoutVal}</td>
+      <td style="color:var(--t2)">${annDiv}</td>
+      <td style="font-size:11px;color:var(--t3)">${exDate}</td>
+      <td class="${streakCls}">${streak}yr</td>
+      <td><div style="display:flex;align-items:center;gap:8px"><span class="${safetyCls}">${safety ?? '—'}</span>${safetyBar}</div></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card-title">
+      <span class="card-title-icon">◈</span> Dividend Matrix
+      <span class="card-title-right">DRIP TIER · HOLD FOREVER · NO STOP-LOSS</span>
+    </div>
+    <p class="sm-caption">DRIP tier assets held indefinitely — dividends auto-reinvest. Safety score combines yield, payout ratio, and dividend growth streak.</p>
+    <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr>
+        <th>Ticker</th><th>Yield</th><th>Payout%</th><th>Ann. Div</th><th>Ex-Date</th><th>Growth Streak</th><th>Safety (0–100)</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>

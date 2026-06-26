@@ -740,6 +740,31 @@ body {
 .opp-gate { font-family: var(--mono); font-size: 10px; color: var(--text-dim); background: rgba(0,1,24,0.6); border: 1px solid rgba(100,180,255,0.12); border-radius: var(--radius-sm); padding: 7px 10px; margin: 8px 0; line-height: 1.5; }
 .opp-gate-label { color: var(--blue-mid); font-weight: 700; letter-spacing: 1px; margin-right: 6px; }
 
+/* ── Tier badges (stock / etf / drip) ──────────────────────────────── */
+.pos-ticker-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tier-badge {
+  font-family: var(--display); font-size: 7.5px; font-weight: 700;
+  letter-spacing: 1.5px; padding: 2px 8px; border-radius: 2px;
+  text-transform: uppercase; vertical-align: middle; flex-shrink: 0;
+}
+.tier-stock { color: var(--blue);    background: rgba(126,200,255,0.08); border: 1px solid rgba(126,200,255,0.28); }
+.tier-etf   { color: var(--magenta); background: var(--magenta-bg);       border: 1px solid var(--magenta-bd);       }
+.tier-drip  { color: var(--green);   background: var(--green-bg);          border: 1px solid var(--green-bd);          }
+
+/* ── Signal Matrix — new v1.2 cells ──────────────────────────────────── */
+.sm-divg { font-size: 8px; letter-spacing: 0.5px; font-weight: 700; display: block; margin-top: 2px; text-transform: uppercase; }
+.sm-divg-bearish { color: var(--red);   }
+.sm-divg-bullish { color: var(--green); }
+.sm-bb  { font-family: var(--mono); font-size: 11px; color: var(--t2); }
+.sm-atr { font-family: var(--mono); font-size: 11px; color: var(--yellow); }
+
+/* ── Dividend Matrix ─────────────────────────────────────────────────── */
+.div-safety-bar {
+  flex: 1; height: 5px; background: rgba(100,180,255,0.08);
+  border: 1px solid rgba(100,180,255,0.12); border-radius: 3px; overflow: hidden; min-width: 50px;
+}
+.div-safety-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+
 /* ── Journey intelligence status banner ──────────────────────────── */
 .journey-intel-banner {
   display: flex; align-items: center; justify-content: center; flex-wrap: wrap;

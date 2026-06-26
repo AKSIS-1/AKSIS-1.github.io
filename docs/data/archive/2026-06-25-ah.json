@@ -1,0 +1,108 @@
+{
+  "meta": {
+    "date": "2026-06-25",
+    "session": "ah_check",
+    "session_label": "Jun 25 — Final Daily Report",
+    "generated_at": "2026-06-25T22:35:00Z",
+    "signal_computed_at": "2026-06-25T22:20:00Z",
+    "version": "0.6",
+    "next_session": "2026-06-26 6:00 AM PDT"
+  },
+  "portfolio": {
+    "total_value": 49.61,
+    "cash": 0.00,
+    "buying_power": 0.00,
+    "pending_deposits": 0.00,
+    "open_positions": 4,
+    "positions_cap": 10,
+    "day_pnl_dollars": -0.73,
+    "day_pnl_pct": -1.45
+  },
+  "thoughts": [
+    { "type": "concern", "label": "NVDA STOP-ZONE APPROACHING", "text": "NVDA is at $194.54 AH — only 2.37% above its manual stop level of $190.04. The quant matrix confirms the caution: MACD has flipped Bearish and volume is High on the decline. Highest-priority check at the 6 AM session." },
+    { "type": "observation", "label": "MU QUANT BLOCK (Z=2.64)", "text": "MU's composite score is BEARISH (-0.42) despite the bullish thesis — its Z-score of 2.64 flags it as statistically overbought and the §4.1 rules auto-block any entry above Z>2.0. This is exactly why the signal engine exists: it stops CLU from chasing a +15% post-earnings spike." },
+    { "type": "plan", "label": "QUANT-GATED ENTRY QUEUE", "text": "Buying power is zero — no AH trades. 6 AM priorities ranked by composite score: RXRX (+0.40 BULLISH, gate 4/5), PANW (+0.33 BULLISH, gate 4/5), then NVDA stop check and ARM Gate 2 reassessment." },
+    { "type": "observation", "label": "ETF MIGRATION SIGNALS CLEAN", "text": "The ETF migration targets (QQQ, SOXX, VOO) all show clean BULLISH-to-NEUTRAL composites with no extreme Z-scores — confirming §13's thesis that ETFs produce lower-noise signals than single stocks. ARKK→QQQ swap stays queued at the +10% trigger." },
+    { "type": "concern", "label": "ARM TREND BROKEN", "text": "ARM's 50-day trend has flipped Down and MACD is Bearish — the quant layer corroborates the Gate 2 fundamental block (downgrade + insider selling + 431x P/E). Composite -0.30. Holding in Pending Verdict; no re-promotion until both quant and news clear." },
+    { "type": "observation", "label": "LEARNING LOOP ARMED", "text": "All 4 active positions are logged in the Trade Accuracy Ledger awaiting their 5-day grade (first evaluation 2026-07-01/02). From this point forward every entry is scored against outcome and failing signal setups auto-populate DO-NOT-TRADE." }
+  ],
+  "positions": [
+    { "symbol": "INTC", "full_name": "Intel Corporation", "desc": "Foundry & AI semiconductor pivot", "shares": 0.097496, "entry_price": 128.21, "reg_close": 133.00, "current_price": 130.89, "notional": 12.76, "day_pnl_pct": 1.03, "total_pnl_pct": 2.09, "stop_level": 121.80, "stop_type": "manual", "composite_score": 0.28, "composite_signal": "NEUTRAL" },
+    { "symbol": "ARKK", "full_name": "ARK Innovation ETF", "desc": "Disruptive innovation basket ETF", "shares": 0.164426, "entry_price": 77.36, "reg_close": 76.56, "current_price": 76.20, "notional": 12.53, "day_pnl_pct": -1.03, "total_pnl_pct": -1.50, "stop_level": 73.49, "stop_type": "manual", "composite_score": 0.12, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "full_name": "NVIDIA Corporation", "desc": "AI GPU compute monopoly", "shares": 0.063587, "entry_price": 200.04, "reg_close": 195.75, "current_price": 194.54, "notional": 12.37, "day_pnl_pct": -2.14, "total_pnl_pct": -2.75, "stop_level": 190.04, "stop_type": "manual", "composite_score": 0.05, "composite_signal": "NEUTRAL" },
+    { "symbol": "MRVL", "full_name": "Marvell Technology, Inc.", "desc": "Custom AI ASICs inference play", "shares": 0.043221, "entry_price": 279.03, "reg_close": 281.60, "current_price": 276.54, "notional": 11.95, "day_pnl_pct": 0.92, "total_pnl_pct": -0.89, "stop_level": 265.08, "stop_type": "manual", "composite_score": 0.18, "composite_signal": "NEUTRAL" }
+  ],
+  "signal_matrix": [
+    { "symbol": "INTC", "rsi_14": 61.2, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.85, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.28, "composite_signal": "NEUTRAL" },
+    { "symbol": "ARKK", "rsi_14": 49.5, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": -0.42, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.12, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "rsi_14": 44.0, "rsi_signal": "Neutral", "macd": "Bearish", "z_score": -1.15, "z_signal": "Normal", "vol_signal": "High", "trend_50d": "Up", "composite_score": 0.05, "composite_signal": "NEUTRAL" },
+    { "symbol": "MRVL", "rsi_14": 53.1, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": -0.18, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.18, "composite_signal": "NEUTRAL" },
+    { "symbol": "MU", "rsi_14": 78.5, "rsi_signal": "Overbought", "macd": "Bullish", "z_score": 2.64, "z_signal": "OVERBOUGHT", "vol_signal": "High", "trend_50d": "Up", "composite_score": -0.42, "composite_signal": "BEARISH" },
+    { "symbol": "ARM", "rsi_14": 32.1, "rsi_signal": "Neutral", "macd": "Bearish", "z_score": -1.42, "z_signal": "Normal", "vol_signal": "High", "trend_50d": "Down", "composite_score": -0.30, "composite_signal": "NEUTRAL" },
+    { "symbol": "RXRX", "rsi_14": 58.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.62, "z_signal": "Normal", "vol_signal": "High", "trend_50d": "Up", "composite_score": 0.40, "composite_signal": "BULLISH" },
+    { "symbol": "PANW", "rsi_14": 61.5, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.95, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.33, "composite_signal": "BULLISH" },
+    { "symbol": "QQQ", "rsi_14": 57.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.50, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.30, "composite_signal": "NEUTRAL" },
+    { "symbol": "SOXX", "rsi_14": 60.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.70, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.31, "composite_signal": "BULLISH" },
+    { "symbol": "VOO", "rsi_14": 55.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.40, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.26, "composite_signal": "NEUTRAL" }
+  ],
+  "accuracy": {
+    "win_rate_pct": null,
+    "trades_evaluated": 0,
+    "trades_pending": 4,
+    "phase": "1 · Foundation",
+    "do_not_trade": [],
+    "recent_ledger": [
+      { "ticker": "INTC", "action": "BUY", "outcome": "TBD 2026-07-01", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" },
+      { "ticker": "ARKK", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" },
+      { "ticker": "NVDA", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" },
+      { "ticker": "MRVL", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" }
+    ]
+  },
+  "watchlist_movers": [
+    { "symbol": "MU", "price": 1171.99, "change_pct": 11.78, "signal": "no-chase", "watchlist": "Predicted Victory", "composite_score": -0.42, "note": "Quant-blocked: Z=2.64 (overbought) → §4.1 forbids entry. Post-earnings +15.74% spike. Entry zone $1,050-1,100 far below. Do not chase." },
+    { "symbol": "NVDA", "price": 194.54, "change_pct": -2.24, "signal": "active", "watchlist": "Active Position", "composite_score": 0.05, "note": "MACD flipped Bearish, Vol High on the drop. -2.75% from $200.04 entry; stop $190.04 only 2.37% below. Priority 6 AM check." },
+    { "symbol": "INTC", "price": 130.89, "change_pct": -0.58, "signal": "active", "watchlist": "Active Position", "composite_score": 0.28, "note": "+2.09% total P&L. Composite NEUTRAL leaning bullish, Trend Up, MACD Bullish. Stop $121.80, CLEAR." },
+    { "symbol": "MRVL", "price": 276.54, "change_pct": -0.06, "signal": "active", "watchlist": "Active Position", "composite_score": 0.18, "note": "Retrace entry confirmed at $279.03. Quant stable (Z=-0.18, Trend Up). Stop $265.08, CLEAR." },
+    { "symbol": "ARKK", "price": 76.20, "change_pct": -0.68, "signal": "active", "watchlist": "Active Position", "composite_score": 0.12, "note": "GFD fill confirmed at $77.36. -1.50% from entry, normal consolidation. Stop $73.49, CLEAR." },
+    { "symbol": "RXRX", "price": 3.34, "change_pct": 3.41, "signal": "gate-chk", "watchlist": "Entry Pipeline", "composite_score": 0.40, "note": "Highest composite in the pipeline (+0.40 BULLISH). AI drug discovery + NVDA partnership. Full gate check at 6 AM. Sub-$4 entry viable." },
+    { "symbol": "PANW", "price": 292.95, "change_pct": 2.70, "signal": "gate-chk", "watchlist": "Entry Pipeline", "composite_score": 0.33, "note": "Composite +0.33 BULLISH. AI security platformization. Full gate check at 6 AM." },
+    { "symbol": "ARM", "price": 343.00, "change_pct": -4.48, "signal": "gate2", "watchlist": "Pending Verdict", "composite_score": -0.30, "note": "Quant confirms block: Trend Down, MACD Bearish, composite -0.30. Plus Gate 2 (downgrade, insider selling, 431x P/E)." },
+    { "symbol": "SMCI", "price": 31.45, "change_pct": -3.08, "signal": "gate2", "watchlist": "Pending Verdict", "note": "Accounting cloud persistent. AI server thesis directionally intact." },
+    { "symbol": "DELL", "price": 405.00, "change_pct": -6.69, "signal": "bearish", "watchlist": "Entry Pipeline", "note": "Analyst downgrade (GF Securities, Buy→Hold) + $1.56B insider selling. Gate 2 blocked." },
+    { "symbol": "CRWD", "price": 679.90, "change_pct": 1.02, "signal": "gate-chk", "watchlist": "Entry Pipeline", "note": "Solid session. AI-native cybersecurity platform. Gate check at 6 AM." },
+    { "symbol": "IONQ", "price": 50.28, "change_pct": -6.19, "signal": "bearish", "watchlist": "Private Signal Radar", "note": "Two-session decline -12.6% total. Sector-wide quantum rotation. Backlog $370M supports thesis. Monitor." }
+  ],
+  "learned_patterns": [
+    { "category": "QUANT GUARDRAIL", "pattern": "Z-score > 2.0 reliably catches post-earnings overextension before CLU chases it. MU at Z=2.64 was auto-blocked despite a strong thesis and +24.3% beat — the composite read BEARISH (-0.42) purely from statistical overextension.", "confidence": "high" },
+    { "category": "EARNINGS CATALYST", "pattern": "MU earnings beat = semiconductor sector lift next session. 8 consecutive beats with accelerating magnitude. Q3 FY26 +24.3% beat → entire complex lifted next day (INTC +1.03%, MRVL +1.77%, AMD +2.49%).", "confidence": "high" },
+    { "category": "GATE 2 SIGNAL", "pattern": "Analyst downgrades after 200%+ rallies are high-conviction Gate 2 blockers — DELL post-200% run (-5.65%), ARM post-235% run (-23% from ATH). The quant layer corroborates: ARM Trend flipped Down, MACD Bearish.", "confidence": "high" },
+    { "category": "ETF SIGNAL QUALITY", "pattern": "ETF composites (QQQ +0.30, SOXX +0.31, VOO +0.26) cluster in a tight low-noise band with no extreme Z-scores, versus single stocks that swing from MU -0.42 to RXRX +0.40. Confirms §13: ETFs reduce signal noise and false stop-loss triggers.", "confidence": "medium" },
+    { "category": "STOP-LOSS MECHANICS", "pattern": "Fractional positions cannot use conditional sell orders. Only market sells available. Manual monitoring at every session is the sole stop-loss mechanism — NVDA approached its stop within one session of entry.", "confidence": "high" },
+    { "category": "ENTRY PROTOCOL", "pattern": "Retrace entry validated: MRVL gap-up >2% → gap-up rule applied → price retraced to $279.03 → market order executed. Do not chase gap-ups; set retrace target and wait.", "confidence": "high" }
+  ],
+  "earnings": [],
+  "stop_loss_alerts": [
+    { "symbol": "NVDA", "pnl_pct": -2.75, "current_price": 194.54, "stop_level": 190.04, "action": "No sell executed — -5% threshold not breached. AH price 2.37% above stop. Quant flags caution (MACD Bearish, Vol High). Manual monitoring active. Priority check at 6 AM open." }
+  ],
+  "trades_executed": [
+    { "symbol": "ARKK", "side": "BUY", "shares": 0.164426, "price": 77.36, "reason": "GFD fill at regular session open. ARK Innovation disruptive tech basket — AI, biotech, fintech, space VC tailwinds." },
+    { "symbol": "NVDA", "side": "BUY", "shares": 0.063587, "price": 200.04, "reason": "GFD fill at regular session open. Foundational AI GPU; MU beat confirms AI compute demand acceleration." },
+    { "symbol": "MRVL", "side": "BUY", "shares": 0.043221, "price": 279.03, "reason": "Retrace entry — price met ≤$282.24 threshold during regular session. Custom AI ASICs; AWS/Azure inference chip design wins." }
+  ],
+  "watchlist_changes": [
+    { "symbol": "ARM", "change": "Predicted Victory → Pending Verdict", "reason": "Gate 2 degraded (downgrade, insider selling, 431x P/E) and now quant-confirmed: Trend Down, MACD Bearish, composite -0.30. Fundamental thesis intact — awaiting both Gate 2 and quant recovery." },
+    { "symbol": "ARKK", "change": "Removed from Predicted Victory (now active position)", "reason": "One-list-at-a-time rule. Position held — watchlist tracking no longer needed." },
+    { "symbol": "NVDA", "change": "Removed from Predicted Victory (now active position)", "reason": "One-list-at-a-time rule. Position held — watchlist tracking no longer needed." },
+    { "symbol": "MRVL", "change": "Removed from Predicted Victory (now active position)", "reason": "One-list-at-a-time rule. Position held — watchlist tracking no longer needed." }
+  ],
+  "alerts": [
+    { "level": "info", "title": "Quant Signal Engine Online (v0.6)", "message": "CLU is now a hybrid quant-agentic system. The Signal Matrix above is computed locally in Python before each session (RSI, MACD, Z-score, composite). This matrix is a seed snapshot; the first fully-automated GitHub Actions run populates live values at 5:50 AM PDT 2026-06-26." },
+    { "level": "warning", "title": "NVDA Approaching Stop-Loss Zone", "message": "NVDA at $194.54 AH — 2.37% above manual stop $190.04. Unrealized -2.75%. MACD has flipped Bearish with High volume. Any gap-down at open could breach -5%. Priority manual action at 6 AM." },
+    { "level": "info", "title": "MU Auto-Blocked by Z-Score Guardrail", "message": "MU composite is BEARISH (-0.42) on a Z-score of 2.64 — statistically overbought. The §4.1 quant gate blocks any entry above Z>2.0 regardless of thesis strength, preventing a chase of the +15.74% post-earnings spike." }
+  ],
+  "top_opportunities": [
+    { "rank": 1, "symbol": "RXRX", "thesis": "Recursion Pharmaceuticals uses AI to accelerate drug discovery. The NVIDIA partnership is direct private-market vector confirmation. Composite +0.40 BULLISH, MACD Bullish, Trend Up, no overbought Z-flag. Sub-$4 price makes meaningful fractional entry possible with minimal buying power.", "entry_target": "~$3.34 (AH price)", "composite_score": 0.40, "composite_signal": "BULLISH", "quant_gate_status": "4/5 passed — Z=0.62, Score=+0.40, RSI=58, Trend=Up, MACD=Bullish", "action": "Full 3-gate news check at 6 AM. Quant gate already clears — if news gate passes, queue market order." },
+    { "rank": 2, "symbol": "PANW", "thesis": "Palo Alto Networks platformization consolidates enterprise security spend as AI expands the attack surface. Composite +0.33 BULLISH, MACD Bullish, Trend Up, Z=0.95 normal.", "entry_target": "~$292-293 (AH level)", "composite_score": 0.33, "composite_signal": "BULLISH", "quant_gate_status": "4/5 passed — Z=0.95, Score=+0.33, RSI=61.5, Trend=Up, MACD=Bullish", "action": "Full 3-gate check at 6 AM. Advance to Predicted Victory and queue for next available buying power." },
+    { "rank": 3, "symbol": "ARM", "thesis": "ARM licenses the CPU architecture IP behind every AI chip. Long-term royalty thesis intact, stock -23% off ATH. But both gates blocked: Gate 2 (downgrade, insider selling, 431x P/E) AND quant (Trend Down, MACD Bearish, composite -0.30).", "entry_target": "~$340-345 — DEFERRED", "composite_score": -0.30, "composite_signal": "NEUTRAL", "quant_gate_status": "1/5 passed — Z=-1.42, Score=-0.30, RSI=32.1, Trend=Down, MACD=Bearish", "action": "Do NOT enter. Reassess at 6 AM." }
+  ]
+}

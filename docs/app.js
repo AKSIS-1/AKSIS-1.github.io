@@ -16,6 +16,7 @@ let countdownVal  = REFRESH_SECS;
 let countdownTick = null;
 let currentTab    = 'today';
 let journeyLoaded = false;
+let cachedAccuracy = null;
 
 /* ─── INIT ───────────────────────────────────────────── */
 
@@ -115,6 +116,8 @@ function renderReport(d) {
   document.getElementById('rpt-generated').textContent = formatTime(meta.generated_at);
   document.getElementById('rpt-next-session').textContent = meta.next_session;
 
+  cachedAccuracy = accuracy || null;
+
   renderThoughts(thoughts || []);
   renderAlerts(alerts || []);
   renderAccountOverview(portfolio, positions || []);
@@ -122,7 +125,7 @@ function renderReport(d) {
   renderSignalMatrix(signal_matrix || [], meta);
   renderMovers(movers);
   renderLearnedPatterns(learned_patterns || []);
-  renderAccuracy(accuracy);
+  renderAccuracy(cachedAccuracy);
   renderEarnings(earnings || []);
   renderStopLoss(stop_loss_alerts || []);
   renderTrades(trades_executed || []);
@@ -691,6 +694,7 @@ function renderProjectedJourney(d) {
   const root = document.getElementById('journey-root');
   root.innerHTML =
     buildJourneyHeader(d.meta, d.growth_chart) +
+    buildJourneyIntelBanner(cachedAccuracy) +
     `<div class="card journey-chart-card">` +
       `<div class="card-title"><span class="card-title-icon">◈</span> Growth Projection</div>` +
       `<div class="journey-chart-wrap">` +
@@ -708,11 +712,14 @@ function renderProjectedJourney(d) {
       buildJourneyEvolution(d.intelligence_evolution || []) +
       buildJourneyDNA(d.strategy_dna || []) +
     `</div>` +
+    `<section class="card" id="rpt-accuracy"></section>` +
     `<div class="journey-grid-2">` +
       buildJourneyRisk(d.risk_profile) +
       buildJourneyMilestones(d.milestones || []) +
     `</div>` +
     buildJourneyRecap(d.weekly_recap);
+
+  if (cachedAccuracy) renderAccuracy(cachedAccuracy);
 }
 
 function buildJourneyHeader(meta, chart) {
@@ -730,6 +737,45 @@ function buildJourneyHeader(meta, chart) {
       <span>Target ${escHtml(weeklyTgt)} · ${escHtml(monthTgt)}</span>
       <span class="meta-sep">·</span>
       <span class="journey-cadence">${escHtml(meta.update_cadence || 'Weekly — Friday')}</span>
+    </div>
+  </div>`;
+}
+
+/* ─── JOURNEY INTELLIGENCE STATUS BANNER ────────────────────────────── */
+
+function buildJourneyIntelBanner(acc) {
+  if (!acc) return '';
+  const phase = acc.phase || 'Phase 1 · Foundation';
+  const wr = (acc.win_rate_pct !== undefined && acc.win_rate_pct !== null) ? acc.win_rate_pct : null;
+  const evaluated = acc.trades_evaluated ?? 0;
+  const pending   = acc.trades_pending ?? 0;
+  const dnt       = (acc.do_not_trade || []).length;
+  const wrColor   = wr === null ? 'var(--t3)' : wr >= 60 ? 'var(--green)' : wr >= 45 ? 'var(--yellow)' : 'var(--red)';
+  const dntColor  = dnt > 0 ? 'var(--neon-orange)' : 'var(--green)';
+  return `<div class="journey-intel-banner">
+    <div class="jib-item">
+      <div class="jib-label">INTELLIGENCE PHASE</div>
+      <div class="jib-val" style="color:var(--blue)">${escHtml(phase)}</div>
+    </div>
+    <div class="jib-sep"></div>
+    <div class="jib-item">
+      <div class="jib-label">WIN RATE</div>
+      <div class="jib-val" style="color:${wrColor}">${wr === null ? '—' : wr + '%'}</div>
+    </div>
+    <div class="jib-sep"></div>
+    <div class="jib-item">
+      <div class="jib-label">TRADES GRADED</div>
+      <div class="jib-val">${evaluated}</div>
+    </div>
+    <div class="jib-sep"></div>
+    <div class="jib-item">
+      <div class="jib-label">AWAITING 5-DAY</div>
+      <div class="jib-val" style="color:var(--yellow)">${pending}</div>
+    </div>
+    <div class="jib-sep"></div>
+    <div class="jib-item">
+      <div class="jib-label">BLOCKED CONDITIONS</div>
+      <div class="jib-val" style="color:${dntColor}">${dnt > 0 ? dnt + ' active' : 'None'}</div>
     </div>
   </div>`;
 }

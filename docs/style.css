@@ -663,3 +663,79 @@ body {
   .acct-stats    { grid-template-columns: 1fr 1fr; }
   .tab-btn       { padding: 10px 12px; font-size: 10px; letter-spacing: 1px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   CLU v0.6 — Quant Signal Matrix · Composite Scores · Learning Loop
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Card title right-aligned meta ──────────────────────────────── */
+.card-title-right { margin-left: auto; font-size: 8px; color: var(--t4); letter-spacing: 1.5px; font-weight: 400; }
+
+/* ── Composite score: color classes ─────────────────────────────── */
+.cscore-bullish { color: var(--green); }
+.cscore-neutral { color: var(--t3); }
+.cscore-bearish { color: var(--red); }
+.cscore-num { font-family: var(--mono); font-weight: 700; font-size: 12px; }
+
+/* ── Composite score: -1..+1 gauge bar ──────────────────────────── */
+.cscore-bar {
+  position: relative; display: inline-block;
+  width: 80px; height: 8px; vertical-align: middle;
+  background: rgba(100,180,255,0.06);
+  border: 1px solid rgba(100,180,255,0.14); border-radius: 4px; overflow: hidden;
+}
+.cscore-fill { position: absolute; top: 0; bottom: 0; opacity: 0.85; }
+.cscore-bullish .cscore-fill { background: var(--green); box-shadow: 0 0 8px rgba(0,255,136,0.5); }
+.cscore-bearish .cscore-fill { background: var(--red);   box-shadow: 0 0 8px rgba(255,90,122,0.5); }
+.cscore-neutral .cscore-fill { background: var(--t3); }
+.cscore-axis { position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1px; background: rgba(126,200,255,0.40); }
+
+/* ── Composite chip (positions / opportunities) ─────────────────── */
+.cscore-chip { display: inline-flex; align-items: center; gap: 7px; margin-top: 6px; }
+.cscore-chip .cscore-num { font-size: 11px; }
+.pos-cscore { display: block; }
+
+/* ── Signal Matrix table ────────────────────────────────────────── */
+.sm-caption { padding: 10px var(--card-pad) 0; font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+.sm-table td { vertical-align: middle; }
+.sm-sub { display: block; font-size: 8px; letter-spacing: 0.5px; color: var(--t4); text-transform: uppercase; margin-top: 1px; }
+.sm-score-cell { min-width: 130px; }
+.sm-score-row { display: flex; align-items: center; gap: 9px; }
+.sm-score-num { font-family: var(--mono); font-weight: 700; font-size: 12px; }
+
+/* ── Accuracy & Self-Correction card ────────────────────────────── */
+.acc-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 18px; }
+.acc-header {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-header); border-bottom: 1px solid rgba(100,180,255,0.12);
+  font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase; color: var(--blue-mid);
+  padding: 11px 20px;
+}
+.acc-header-icon { font-size: 12px; }
+.acc-header-right { margin-left: auto; font-size: 8px; color: var(--t4); letter-spacing: 1.5px; font-weight: 400; }
+.acc-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 16px var(--card-pad); }
+@media (max-width: 600px) { .acc-stats { grid-template-columns: repeat(2, 1fr); } }
+.acc-stat { text-align: center; background: rgba(0,1,24,0.6); border: 1px solid rgba(100,180,255,0.10); border-radius: var(--radius-sm); padding: 12px 6px; }
+.acc-stat-val { font-family: var(--display); font-size: 24px; font-weight: 900; color: var(--t1); }
+.acc-stat-label { font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--t4); margin-top: 4px; }
+
+/* ── DO-NOT-TRADE conditions ────────────────────────────────────── */
+.dnt-block { padding: 0 var(--card-pad) 16px; }
+.dnt-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--neon-orange); text-transform: uppercase; margin-bottom: 10px; }
+.dnt-sub { font-weight: 400; color: var(--t4); letter-spacing: 0.5px; text-transform: none; margin-left: 6px; }
+.dnt-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.dnt-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--neon-ora-bg); border: 1px solid var(--neon-ora-bd);
+  border-radius: var(--radius-sm); padding: 6px 10px; font-family: var(--mono); font-size: 10px;
+}
+.dnt-x { font-size: 10px; }
+.dnt-cond { color: var(--text-secondary); }
+.dnt-delta { color: var(--neon-red); font-weight: 700; }
+
+/* ── Opportunity card: ticker row + quant gate ──────────────────── */
+.opp-ticker-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
+.opp-ticker-row .opp-ticker { margin-bottom: 0; }
+.opp-gate { font-family: var(--mono); font-size: 10px; color: var(--text-dim); background: rgba(0,1,24,0.6); border: 1px solid rgba(100,180,255,0.12); border-radius: var(--radius-sm); padding: 7px 10px; margin: 8px 0; line-height: 1.5; }
+.opp-gate-label { color: var(--blue-mid); font-weight: 700; letter-spacing: 1px; margin-right: 6px; }

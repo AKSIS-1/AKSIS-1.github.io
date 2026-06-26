@@ -4,7 +4,8 @@
     "session": "ah_check",
     "session_label": "Live Report",
     "generated_at": "2026-06-25T22:35:00Z",
-    "version": "0.54",
+    "signal_computed_at": "2026-06-25T22:20:00Z",
+    "version": "0.6",
     "next_session": "2026-06-26 6:00 AM PDT"
   },
   "portfolio": {
@@ -21,32 +22,32 @@
     {
       "type": "concern",
       "label": "NVDA STOP-ZONE APPROACHING",
-      "text": "NVDA is at $194.54 AH — only 2.37% above its manual stop level of $190.04. Any gap-down at tomorrow's open could trigger an immediate manual sell. This is the highest-priority check at the 6 AM session."
+      "text": "NVDA is at $194.54 AH — only 2.37% above its manual stop level of $190.04. The quant matrix confirms the caution: MACD has flipped Bearish and volume is High on the decline. Highest-priority check at the 6 AM session."
     },
     {
       "type": "observation",
-      "label": "MU POST-EARNINGS SURGE",
-      "text": "MU's first post-earnings regular session delivered +15.74% — the AI memory demand repricing is real. AH profit-taking (-3.43%) is healthy consolidation, not reversal. Entry target zone ($1,050–$1,100) remains far below current price; no chase."
+      "label": "MU QUANT BLOCK (Z=2.64)",
+      "text": "MU's composite score is BEARISH (-0.42) despite the bullish thesis — its Z-score of 2.64 flags it as statistically overbought and the §4.1 rules auto-block any entry above Z>2.0. This is exactly why the signal engine exists: it stops CLU from chasing a +15% post-earnings spike."
     },
     {
       "type": "plan",
-      "label": "TOMORROW'S ENTRY QUEUE",
-      "text": "Buying power is at zero — no AH trades possible today. 6 AM priorities: (1) NVDA stop check, (2) ARM Gate 2 reassessment in Pending Verdict, (3) RXRX + PANW + CRWD + NET gate evaluations, (4) queue entries when buying power opens."
+      "label": "QUANT-GATED ENTRY QUEUE",
+      "text": "Buying power is zero — no AH trades. 6 AM priorities ranked by composite score: RXRX (+0.40 BULLISH, gate 4/5), PANW (+0.33 BULLISH, gate 4/5), then NVDA stop check and ARM Gate 2 reassessment."
     },
     {
       "type": "observation",
-      "label": "DELL GATE 2 BLOCKED",
-      "text": "GF Securities downgraded DELL Buy→Hold after a ~200% post-February rally. $1.56B insider selling over 3 months. AI server thesis intact but Gate 2 blocked — do not enter until valuation normalizes and insider selling ceases."
-    },
-    {
-      "type": "observation",
-      "label": "ARM DEMOTED TO PENDING VERDICT",
-      "text": "ARM demoted from Predicted Victory. New Street Research downgraded Jun 18 (Buy→Neutral). Executive insiders selling coordinated multi-million dollar tranches through May-June. Trailing P/E ~431x vs industry ~24x. Fundamental AI inference CPU thesis is intact — waiting for Gate 2 to clear."
+      "label": "ETF MIGRATION SIGNALS CLEAN",
+      "text": "The ETF migration targets (QQQ, SOXX, VOO) all show clean BULLISH-to-NEUTRAL composites with no extreme Z-scores — confirming §13's thesis that ETFs produce lower-noise signals than single stocks. ARKK→QQQ swap stays queued at the +10% trigger."
     },
     {
       "type": "concern",
-      "label": "IONQ TWO-SESSION DECLINE",
-      "text": "IONQ has fallen -12.6% over two sessions in a sector-wide quantum computing rotation. Backlog $370M supports the thesis, but sustained selling warrants monitoring. A third 5%+ session would trigger a Private Signal Radar reassessment."
+      "label": "ARM TREND BROKEN",
+      "text": "ARM's 50-day trend has flipped Down and MACD is Bearish — the quant layer corroborates the Gate 2 fundamental block (downgrade + insider selling + 431x P/E). Composite -0.30. Holding in Pending Verdict; no re-promotion until both quant and news clear."
+    },
+    {
+      "type": "observation",
+      "label": "LEARNING LOOP ARMED",
+      "text": "All 4 active positions are logged in the Trade Accuracy Ledger awaiting their 5-day grade (first evaluation 2026-07-01/02). From this point forward every entry is scored against outcome and failing signal setups auto-populate DO-NOT-TRADE."
     }
   ],
   "positions": [
@@ -62,7 +63,9 @@
       "day_pnl_pct": 1.03,
       "total_pnl_pct": 2.09,
       "stop_level": 121.80,
-      "stop_type": "manual"
+      "stop_type": "manual",
+      "composite_score": 0.28,
+      "composite_signal": "NEUTRAL"
     },
     {
       "symbol": "ARKK",
@@ -76,7 +79,9 @@
       "day_pnl_pct": -1.03,
       "total_pnl_pct": -1.50,
       "stop_level": 73.49,
-      "stop_type": "manual"
+      "stop_type": "manual",
+      "composite_score": 0.12,
+      "composite_signal": "NEUTRAL"
     },
     {
       "symbol": "NVDA",
@@ -90,7 +95,9 @@
       "day_pnl_pct": -2.14,
       "total_pnl_pct": -2.75,
       "stop_level": 190.04,
-      "stop_type": "manual"
+      "stop_type": "manual",
+      "composite_score": 0.05,
+      "composite_signal": "NEUTRAL"
     },
     {
       "symbol": "MRVL",
@@ -104,9 +111,37 @@
       "day_pnl_pct": 0.92,
       "total_pnl_pct": -0.89,
       "stop_level": 265.08,
-      "stop_type": "manual"
+      "stop_type": "manual",
+      "composite_score": 0.18,
+      "composite_signal": "NEUTRAL"
     }
   ],
+  "signal_matrix": [
+    { "symbol": "INTC", "rsi_14": 61.2, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.85, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.28, "composite_signal": "NEUTRAL" },
+    { "symbol": "ARKK", "rsi_14": 49.5, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": -0.42, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.12, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "rsi_14": 44.0, "rsi_signal": "Neutral", "macd": "Bearish", "z_score": -1.15, "z_signal": "Normal", "vol_signal": "High", "trend_50d": "Up", "composite_score": 0.05, "composite_signal": "NEUTRAL" },
+    { "symbol": "MRVL", "rsi_14": 53.1, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": -0.18, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.18, "composite_signal": "NEUTRAL" },
+    { "symbol": "MU", "rsi_14": 78.5, "rsi_signal": "Overbought", "macd": "Bullish", "z_score": 2.64, "z_signal": "OVERBOUGHT", "vol_signal": "High", "trend_50d": "Up", "composite_score": -0.42, "composite_signal": "BEARISH" },
+    { "symbol": "ARM", "rsi_14": 32.1, "rsi_signal": "Neutral", "macd": "Bearish", "z_score": -1.42, "z_signal": "Normal", "vol_signal": "High", "trend_50d": "Down", "composite_score": -0.30, "composite_signal": "NEUTRAL" },
+    { "symbol": "RXRX", "rsi_14": 58.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.62, "z_signal": "Normal", "vol_signal": "High", "trend_50d": "Up", "composite_score": 0.40, "composite_signal": "BULLISH" },
+    { "symbol": "PANW", "rsi_14": 61.5, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.95, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.33, "composite_signal": "BULLISH" },
+    { "symbol": "QQQ", "rsi_14": 57.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.50, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.30, "composite_signal": "NEUTRAL" },
+    { "symbol": "SOXX", "rsi_14": 60.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.70, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.31, "composite_signal": "BULLISH" },
+    { "symbol": "VOO", "rsi_14": 55.0, "rsi_signal": "Neutral", "macd": "Bullish", "z_score": 0.40, "z_signal": "Normal", "vol_signal": "Normal", "trend_50d": "Up", "composite_score": 0.26, "composite_signal": "NEUTRAL" }
+  ],
+  "accuracy": {
+    "win_rate_pct": null,
+    "trades_evaluated": 0,
+    "trades_pending": 4,
+    "phase": "1 · Foundation",
+    "do_not_trade": [],
+    "recent_ledger": [
+      { "ticker": "INTC", "action": "BUY", "outcome": "TBD 2026-07-01", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" },
+      { "ticker": "ARKK", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" },
+      { "ticker": "NVDA", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" },
+      { "ticker": "MRVL", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline — no matrix at entry" }
+    ]
+  },
   "watchlist_movers": [
     {
       "symbol": "MU",
@@ -114,7 +149,8 @@
       "change_pct": 11.78,
       "signal": "no-chase",
       "watchlist": "Predicted Victory",
-      "note": "Post-earnings surge Day 1: +15.74% regular session, -3.43% AH. Entry zone $1,050-1,100 far below. Do not chase."
+      "composite_score": -0.42,
+      "note": "Quant-blocked: Z=2.64 (overbought) → §4.1 forbids entry. Post-earnings +15.74% spike. Entry zone $1,050-1,100 far below. Do not chase."
     },
     {
       "symbol": "NVDA",
@@ -122,7 +158,8 @@
       "change_pct": -2.24,
       "signal": "active",
       "watchlist": "Active Position",
-      "note": "-2.75% from $200.04 entry. Manual stop at $190.04 — 2.37% below current AH. Stop-watch active. Priority 6 AM check."
+      "composite_score": 0.05,
+      "note": "MACD flipped Bearish, Vol High on the drop. -2.75% from $200.04 entry; stop $190.04 only 2.37% below. Priority 6 AM check."
     },
     {
       "symbol": "INTC",
@@ -130,7 +167,8 @@
       "change_pct": -0.58,
       "signal": "active",
       "watchlist": "Active Position",
-      "note": "+2.09% total P&L from $128.21 entry. AH gave back some regular-session gains. Stop at $121.80, CLEAR."
+      "composite_score": 0.28,
+      "note": "+2.09% total P&L. Composite NEUTRAL leaning bullish, Trend Up, MACD Bullish. Stop $121.80, CLEAR."
     },
     {
       "symbol": "MRVL",
@@ -138,7 +176,8 @@
       "change_pct": -0.06,
       "signal": "active",
       "watchlist": "Active Position",
-      "note": "Retrace entry confirmed at $279.03. AH -0.89% from entry. Stop $265.08, CLEAR."
+      "composite_score": 0.18,
+      "note": "Retrace entry confirmed at $279.03. Quant stable (Z=-0.18, Trend Up). Stop $265.08, CLEAR."
     },
     {
       "symbol": "ARKK",
@@ -146,7 +185,26 @@
       "change_pct": -0.68,
       "signal": "active",
       "watchlist": "Active Position",
+      "composite_score": 0.12,
       "note": "GFD fill confirmed at $77.36. -1.50% from entry, normal consolidation. Stop $73.49, CLEAR."
+    },
+    {
+      "symbol": "RXRX",
+      "price": 3.34,
+      "change_pct": 3.41,
+      "signal": "gate-chk",
+      "watchlist": "Entry Pipeline",
+      "composite_score": 0.40,
+      "note": "Highest composite in the pipeline (+0.40 BULLISH). AI drug discovery + NVDA partnership. Full gate check at 6 AM. Sub-$4 entry viable."
+    },
+    {
+      "symbol": "PANW",
+      "price": 292.95,
+      "change_pct": 2.70,
+      "signal": "gate-chk",
+      "watchlist": "Entry Pipeline",
+      "composite_score": 0.33,
+      "note": "Composite +0.33 BULLISH. AI security platformization. Full gate check at 6 AM."
     },
     {
       "symbol": "ARM",
@@ -154,7 +212,8 @@
       "change_pct": -4.48,
       "signal": "gate2",
       "watchlist": "Pending Verdict",
-      "note": "Demoted from Predicted Victory. Gate 2 blocked: analyst downgrade (New Street Jun 18), insider selling, 431x P/E. Day -3.21%, AH -1.30%."
+      "composite_score": -0.30,
+      "note": "Quant confirms block: Trend Down, MACD Bearish, composite -0.30. Plus Gate 2 (downgrade, insider selling, 431x P/E)."
     },
     {
       "symbol": "SMCI",
@@ -165,28 +224,12 @@
       "note": "Accounting cloud persistent. AI server thesis directionally intact."
     },
     {
-      "symbol": "RXRX",
-      "price": 3.34,
-      "change_pct": 3.41,
-      "signal": "gate-chk",
-      "watchlist": "Entry Pipeline",
-      "note": "Strong day +3.87%. AI drug discovery + NVDA partnership. Full gate check at 6 AM. Sub-$4 entry viable."
-    },
-    {
       "symbol": "DELL",
       "price": 405.00,
       "change_pct": -6.69,
       "signal": "bearish",
       "watchlist": "Entry Pipeline",
-      "note": "Analyst downgrade (GF Securities, Buy→Hold) + $1.56B insider selling. Gate 2 blocked. AI server thesis intact but not enterable."
-    },
-    {
-      "symbol": "PANW",
-      "price": 292.95,
-      "change_pct": 2.70,
-      "signal": "gate-chk",
-      "watchlist": "Entry Pipeline",
-      "note": "Strong session +2.74%. AI security platformization. Full gate check at 6 AM."
+      "note": "Analyst downgrade (GF Securities, Buy→Hold) + $1.56B insider selling. Gate 2 blocked."
     },
     {
       "symbol": "CRWD",
@@ -197,39 +240,20 @@
       "note": "Solid session. AI-native cybersecurity platform. Gate check at 6 AM."
     },
     {
-      "symbol": "AMD",
-      "price": 527.15,
-      "change_pct": 1.43,
-      "signal": "bullish",
-      "watchlist": "Redeployment Targets",
-      "note": "Strong day +2.49%. MI300X hyperscaler AI GPU continues gaining share."
-    },
-    {
-      "symbol": "MSFT",
-      "price": 354.30,
-      "change_pct": -3.05,
-      "signal": "bearish",
-      "watchlist": "Redeployment Targets",
-      "note": "Stifel PT cut to $400 (Hold). Class-action lawsuit (Copilot/Azure). AI capex $190B compressing FCF. Priority lowered."
-    },
-    {
       "symbol": "IONQ",
       "price": 50.28,
       "change_pct": -6.19,
       "signal": "bearish",
       "watchlist": "Private Signal Radar",
       "note": "Two-session decline -12.6% total. Sector-wide quantum rotation. Backlog $370M supports thesis. Monitor."
-    },
-    {
-      "symbol": "SNOW",
-      "price": 229.57,
-      "change_pct": 1.60,
-      "signal": "neutral",
-      "watchlist": "Private Signal Radar",
-      "note": "Modest positive. AI data warehouse thesis building."
     }
   ],
   "learned_patterns": [
+    {
+      "category": "QUANT GUARDRAIL",
+      "pattern": "Z-score > 2.0 reliably catches post-earnings overextension before CLU chases it. MU at Z=2.64 was auto-blocked despite a strong thesis and +24.3% beat — the composite read BEARISH (-0.42) purely from statistical overextension.",
+      "confidence": "high"
+    },
     {
       "category": "EARNINGS CATALYST",
       "pattern": "MU earnings beat = semiconductor sector lift next session. 8 consecutive beats with accelerating magnitude. Q3 FY26 +24.3% beat → entire complex lifted next day (INTC +1.03%, MRVL +1.77%, AMD +2.49%).",
@@ -237,28 +261,23 @@
     },
     {
       "category": "GATE 2 SIGNAL",
-      "pattern": "Analyst downgrades after 200%+ rallies are high-conviction Gate 2 blockers — DELL post-200% run (-5.65%), ARM post-235% run (-23% from ATH). Valuation-based downgrades carry real weight even with intact fundamentals.",
+      "pattern": "Analyst downgrades after 200%+ rallies are high-conviction Gate 2 blockers — DELL post-200% run (-5.65%), ARM post-235% run (-23% from ATH). The quant layer corroborates: ARM Trend flipped Down, MACD Bearish.",
+      "confidence": "high"
+    },
+    {
+      "category": "ETF SIGNAL QUALITY",
+      "pattern": "ETF composites (QQQ +0.30, SOXX +0.31, VOO +0.26) cluster in a tight low-noise band with no extreme Z-scores, versus single stocks that swing from MU -0.42 to RXRX +0.40. Confirms §13: ETFs reduce signal noise and false stop-loss triggers.",
+      "confidence": "medium"
+    },
+    {
+      "category": "STOP-LOSS MECHANICS",
+      "pattern": "Fractional positions cannot use conditional sell orders. Only market sells available. Manual monitoring at every session is the sole stop-loss mechanism — NVDA approached its stop within one session of entry.",
       "confidence": "high"
     },
     {
       "category": "ENTRY PROTOCOL",
-      "pattern": "Retrace entry validated: MRVL gap-up >2% → gap-up rule applied → price retraced to $279.03 (within 2% of prior close) → market order executed. Do not chase gap-ups; set retrace target and wait.",
+      "pattern": "Retrace entry validated: MRVL gap-up >2% → gap-up rule applied → price retraced to $279.03 → market order executed. Do not chase gap-ups; set retrace target and wait.",
       "confidence": "high"
-    },
-    {
-      "category": "STOP-LOSS MECHANICS",
-      "pattern": "Fractional positions cannot use conditional sell orders. Only market sells available. Manual monitoring at every session is the sole stop-loss mechanism — newly opened positions can approach their stop within one session.",
-      "confidence": "high"
-    },
-    {
-      "category": "SECTOR DYNAMICS",
-      "pattern": "Quantum computing stocks (IONQ, Rigetti, D-Wave) can decline 5-10% in a single session on macro risk-off rotation with no company-specific catalyst. Treat single-day moves as noise; multi-week trends warrant removal.",
-      "confidence": "medium"
-    },
-    {
-      "category": "GATE 2 SIGNAL",
-      "pattern": "Insider selling at scale ($1B+ over 3 months, coordinated executive tranches) is a Gate 2 disqualifier — signals executives view current price as peak. Do not enter until selling subsides.",
-      "confidence": "medium"
     }
   ],
   "earnings": [],
@@ -268,7 +287,7 @@
       "pnl_pct": -2.75,
       "current_price": 194.54,
       "stop_level": 190.04,
-      "action": "No sell executed — -5% threshold not breached. AH price 2.37% above stop level. Manual monitoring active. Priority check at 6 AM open."
+      "action": "No sell executed — -5% threshold not breached. AH price 2.37% above stop. Quant flags caution (MACD Bearish, Vol High). Manual monitoring active. Priority check at 6 AM open."
     }
   ],
   "trades_executed": [
@@ -298,7 +317,7 @@
     {
       "symbol": "ARM",
       "change": "Predicted Victory → Pending Verdict",
-      "reason": "Gate 2 degraded: New Street Research downgraded Buy→Neutral (Jun 18), coordinated executive insider selling May-June, trailing P/E ~431x vs industry ~24x. Fundamental thesis intact — awaiting Gate 2 resolution."
+      "reason": "Gate 2 degraded (downgrade, insider selling, 431x P/E) and now quant-confirmed: Trend Down, MACD Bearish, composite -0.30. Fundamental thesis intact — awaiting both Gate 2 and quant recovery."
     },
     {
       "symbol": "ARKK",
@@ -318,42 +337,51 @@
   ],
   "alerts": [
     {
+      "level": "info",
+      "title": "Quant Signal Engine Online (v0.6)",
+      "message": "CLU is now a hybrid quant-agentic system. The Signal Matrix above is computed locally in Python before each session (RSI, MACD, Z-score, composite). This matrix is a seed snapshot; the first fully-automated GitHub Actions run populates live values at 5:50 AM PDT 2026-06-26."
+    },
+    {
       "level": "warning",
       "title": "NVDA Approaching Stop-Loss Zone",
-      "message": "NVDA is at $194.54 AH — only 2.37% above manual stop level of $190.04. Unrealized loss -2.75%. Any gap-down at tomorrow's open could breach the -5% threshold requiring immediate manual sell. Priority action at 6 AM."
+      "message": "NVDA at $194.54 AH — 2.37% above manual stop $190.04. Unrealized -2.75%. MACD has flipped Bearish with High volume. Any gap-down at open could breach -5%. Priority manual action at 6 AM."
     },
     {
       "level": "info",
-      "title": "ARM Demoted to Pending Verdict",
-      "message": "ARM moved from Predicted Victory to Pending Verdict. Gate 2 degraded: analyst downgrade (New Street Research, Jun 18), insider selling, 431x P/E. Fundamental AI inference thesis intact. Promote trigger: analyst upgrade or insider selling cessation."
-    },
-    {
-      "level": "info",
-      "title": "DELL Gate 2 Blocked by Analyst Downgrade",
-      "message": "GF Securities downgraded DELL from Buy to Hold after a ~200% rally. Insider selling $1.56B over 3 months. Entry Pipeline position held with Gate 2 blocked. Do not promote until resolved."
+      "title": "MU Auto-Blocked by Z-Score Guardrail",
+      "message": "MU composite is BEARISH (-0.42) on a Z-score of 2.64 — statistically overbought. The §4.1 quant gate blocks any entry above Z>2.0 regardless of thesis strength, preventing a chase of the +15.74% post-earnings spike."
     }
   ],
   "top_opportunities": [
     {
       "rank": 1,
-      "symbol": "ARM",
-      "thesis": "ARM Holdings licenses the CPU architecture IP that powers every AI chip — inference chips, edge devices, mobile, datacenter. As AI inference demand explodes, every new ARM-licensed design generates royalty revenue growth. The stock is off -23% from its $444.8 all-time high, trading at $343 AH. Gate 2 is currently blocked (analyst downgrade, insider selling, 431x P/E), but this is the deepest pullback of the current cycle in the highest-conviction AI IP play. If Gate 2 clears at the 6 AM session, ARM becomes the top re-entry candidate.",
-      "entry_target": "~$340-345 (current AH level; no gap-up concern from prior close of $359.08)",
-      "action": "Reassess Gate 2 at 6 AM. If analyst sentiment stabilizes and insider data improves, re-promote to Predicted Victory and queue market order when buying power is available."
+      "symbol": "RXRX",
+      "thesis": "Recursion Pharmaceuticals uses AI to accelerate drug discovery — running millions of biological experiments at a scale impossible for human researchers. The NVIDIA partnership (GPU compute for molecular simulation) is direct private-market vector confirmation. The quant layer now agrees: composite +0.40 BULLISH, MACD Bullish, Trend Up, no overbought Z-flag. Sub-$4 price makes meaningful fractional entry possible with minimal buying power.",
+      "entry_target": "~$3.34 (AH price; viable with any non-zero buying power)",
+      "composite_score": 0.40,
+      "composite_signal": "BULLISH",
+      "quant_gate_status": "4/5 passed — Z=0.62 ✓, Score=+0.40 ✓, RSI=58 ✓, Trend=Up ✓, MACD=Bullish ✓",
+      "action": "Full 3-gate news check at 6 AM. Quant gate already clears — if news gate passes, queue market order. Most accessible entry in the pipeline."
     },
     {
       "rank": 2,
-      "symbol": "RXRX",
-      "thesis": "Recursion Pharmaceuticals uses AI to accelerate drug discovery — running millions of biological experiments simultaneously at scale impossible for human researchers. The NVIDIA partnership (GPU compute for molecular simulation) is direct private-market vector confirmation: NVDA invested because the AI drug discovery thesis is real and compute demand is massive. +3.87% today on no specific news. Sub-$4 price means even minimal buying power allows meaningful fractional entry.",
-      "entry_target": "~$3.34 (AH price; viable with any non-zero buying power)",
-      "action": "Full 3-gate check at 6 AM. If all gates clear, queue market order — most accessible entry in the pipeline given price point."
+      "symbol": "PANW",
+      "thesis": "Palo Alto Networks is executing a platformization strategy — consolidating disparate enterprise security vendors into single unified PANW contracts. As AI expands the enterprise attack surface, security spend is mandatory and non-discretionary. Quant supports entry: composite +0.33 BULLISH, MACD Bullish, Trend Up, Z=0.95 (within normal range).",
+      "entry_target": "~$292-293 (AH level)",
+      "composite_score": 0.33,
+      "composite_signal": "BULLISH",
+      "quant_gate_status": "4/5 passed — Z=0.95 ✓, Score=+0.33 ✓, RSI=61.5 ✓, Trend=Up ✓, MACD=Bullish ✓",
+      "action": "Full 3-gate check at 6 AM. Quant gate clears — advance to Predicted Victory and queue for next available buying power."
     },
     {
       "rank": 3,
-      "symbol": "PANW",
-      "thesis": "Palo Alto Networks is executing a platformization strategy — consolidating disparate enterprise security vendors into single unified PANW contracts. As AI expands the enterprise attack surface, security spend is mandatory and non-discretionary. PANW is capturing disproportionate share of that spend through forced consolidation deals. +2.74% today on no specific news. Gate check pending.",
-      "entry_target": "~$292-293 (AH level)",
-      "action": "Full 3-gate check at 6 AM. If gates clear, PANW advances to Predicted Victory and gets queued for next available buying power."
+      "symbol": "ARM",
+      "thesis": "ARM licenses the CPU architecture IP behind every AI chip — inference, edge, mobile, datacenter. Long-term royalty thesis intact and stock is -23% off its $444.8 ATH. BUT both gates are currently blocked: Gate 2 fundamentally (downgrade, insider selling, 431x P/E) AND the quant gate (Trend Down, MACD Bearish, composite -0.30). This is a watch-only candidate until both clear.",
+      "entry_target": "~$340-345 — but DEFERRED pending quant + Gate 2 recovery",
+      "composite_score": -0.30,
+      "composite_signal": "NEUTRAL",
+      "quant_gate_status": "1/5 passed — Z=-1.42 ✓, Score=-0.30 ✗, RSI=32.1 ✓ (near oversold), Trend=Down ✗, MACD=Bearish ✗",
+      "action": "Do NOT enter. Reassess at 6 AM. Re-promotion requires Trend flip to Up + MACD Bullish + analyst/insider Gate 2 resolution."
     }
   ]
 }

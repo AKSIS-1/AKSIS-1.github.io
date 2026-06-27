@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.6
+   C.L.U. — Cognitive Logic Unit — Report Renderer v4.7
    "Blade Runner Transmission"
    ============================================================ */
 
@@ -11,9 +11,8 @@ const JOURNEY_URL       = './data/projected_journey.json';
 /* Per-position slice colors: icy blue, magenta, orange, yellow, red, lime, violet, teal */
 const POS_COLORS = ['#7EC8FF','#e040fb','#ff9a44','#ffdd00','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];
 
-/* Ticker Engine — free Twelve Data key. Get your own (free, no card) at https://twelvedata.com.
-   'demo' only returns sample symbols (e.g. AAPL). Replace to unlock any ticker. */
-const TD_API_KEY = 'demo';
+/* Ticker Engine — free Twelve Data key (read-only market data; public by design on a static site). */
+const TD_API_KEY = '87d9ba92240d465fb2500e093b78b10a';
 const TD_BASE    = 'https://api.twelvedata.com';
 const ENGINE_TTL = 10 * 60 * 1000;
 const ENGINE_CACHE = {};

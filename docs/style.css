@@ -765,6 +765,24 @@ body {
 }
 .div-safety-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
 
+/* ── Stop protection audit ───────────────────────────────────────── */
+.audit-banner {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  padding: 8px 12px; border-radius: 3px; margin: 4px 0 12px;
+  letter-spacing: 0.3px;
+}
+.audit-ok  { color: var(--green);    background: var(--green-bg); border: 1px solid var(--green-bd); }
+.audit-bad { color: var(--neon-red); background: rgba(255,58,0,0.07); border: 1px solid rgba(255,58,0,0.30); }
+.audit-pill {
+  font-family: var(--display); font-size: 7.5px; font-weight: 700;
+  letter-spacing: 1px; padding: 2px 8px; border-radius: 2px;
+  text-transform: uppercase; white-space: nowrap;
+}
+.audit-pill-ok    { color: var(--green);    background: var(--green-bg);          border: 1px solid var(--green-bd); }
+.audit-pill-bad   { color: var(--neon-red); background: rgba(255,58,0,0.08);       border: 1px solid rgba(255,58,0,0.30); }
+.audit-pill-warn  { color: var(--yellow);   background: rgba(255,221,0,0.07);      border: 1px solid rgba(255,221,0,0.28); }
+.audit-pill-muted { color: var(--t2);       background: rgba(100,180,255,0.05);    border: 1px solid rgba(100,180,255,0.14); }
+
 /* ── Journey intelligence status banner ──────────────────────────── */
 .journey-intel-banner {
   display: flex; align-items: center; justify-content: center; flex-wrap: wrap;

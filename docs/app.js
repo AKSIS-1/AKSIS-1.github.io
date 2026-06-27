@@ -103,7 +103,7 @@ function showState(state) {
 
 function renderReport(d) {
   const { meta, portfolio, positions, earnings,
-          stop_loss_alerts, trades_executed, watchlist_changes,
+          stop_loss_alerts, stop_audit, trades_executed, watchlist_changes,
           alerts, top_opportunities, thoughts, learned_patterns,
           signal_matrix, dividend_matrix, accuracy } = d;
 
@@ -128,6 +128,7 @@ function renderReport(d) {
   renderLearnedPatterns(learned_patterns || []);
   renderAccuracy(cachedAccuracy);
   renderEarnings(earnings || []);
+  renderStopAudit(stop_audit || null);
   renderStopLoss(stop_loss_alerts || []);
   renderTrades(trades_executed || []);
   renderWatchlistChanges(watchlist_changes || []);
@@ -652,6 +653,56 @@ function renderStopLoss(alerts) {
     <div class="table-scroll">
     <table class="data-table">
       <thead><tr><th>Ticker</th><th>P&L%</th><th>Price</th><th>Stop</th><th>Action</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </div>`;
+}
+
+/* ─── STOP AUDIT ─────────────────────────────────────────────── */
+
+function renderStopAudit(audit) {
+  const el = document.getElementById('rpt-stop-audit');
+  if (!audit || !audit.summary) {
+    el.innerHTML = `<div class="card-title"><span class="card-title-icon">⬡</span> Stop Protection Audit</div>
+      <div class="none-label">Not yet audited this session.</div>`;
+    return;
+  }
+
+  const s = audit.summary;
+  const ok = audit.all_protected;
+  const bannerCls = ok ? 'audit-banner audit-ok' : 'audit-banner audit-bad';
+  const bannerTxt = ok
+    ? `All ${s.whole_share_positions} whole-share position${s.whole_share_positions === 1 ? '' : 's'} protected by live stops`
+    : `${s.unprotected} unprotected · ${s.partial} partial · ${s.drip_violations} DRIP violation${s.drip_violations === 1 ? '' : 's'}`;
+
+  const STATUS = {
+    protected:          ['PROTECTED', 'audit-pill-ok'],
+    unprotected:        ['UNPROTECTED', 'audit-pill-bad'],
+    partial:            ['PARTIAL', 'audit-pill-warn'],
+    drip_ok:            ['DRIP · NO STOP', 'audit-pill-muted'],
+    drip_violation:     ['DRIP VIOLATION', 'audit-pill-bad'],
+    skipped_fractional: ['FRACTIONAL · MONITOR', 'audit-pill-muted'],
+  };
+
+  const rows = (audit.positions || []).map(p => {
+    const [label, cls] = STATUS[p.status] || [p.status, 'audit-pill-muted'];
+    const trail = (p.trail_pct !== null && p.trail_pct !== undefined)
+      ? `${p.trail_pct}%` : '—';
+    return `<tr>
+      <td class="col-symbol">${escHtml(p.symbol)}</td>
+      <td><span class="tier-badge tier-${escHtml((p.tier || 'stock').toLowerCase())}">${escHtml(p.tier || 'stock')}</span></td>
+      <td>${p.quantity}</td>
+      <td>${trail}</td>
+      <td><span class="audit-pill ${cls}">${escHtml(label)}</span></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="card-title"><span class="card-title-icon">⬡</span> Stop Protection Audit</div>
+    <div class="${bannerCls}">${escHtml(bannerTxt)}</div>
+    <div class="table-scroll">
+    <table class="data-table">
+      <thead><tr><th>Ticker</th><th>Tier</th><th>Shares</th><th>Trail</th><th>Status</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     </div>`;

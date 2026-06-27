@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.4
+   C.L.U. — Cognitive Logic Unit — Report Renderer v4.5
    "Blade Runner Transmission"
    ============================================================ */
 
@@ -7,18 +7,14 @@ const DATA_URL          = './data/latest.json';
 const ARCHIVE_INDEX_URL = './data/archive/index.json';
 const ARCHIVE_REPORT    = (d) => `./data/archive/${d}.json`;
 const JOURNEY_URL       = './data/projected_journey.json';
-const REFRESH_SECS      = 300;
 
 /* Per-position slice colors: icy blue, magenta, orange, yellow, red, lime, violet, teal */
 const POS_COLORS = ['#7EC8FF','#e040fb','#ff9a44','#ffdd00','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];
 
-let countdownVal  = REFRESH_SECS;
-let countdownTick = null;
 let currentTab    = 'today';
 let journeyLoaded = false;
-let cachedAccuracy = null;
 
-/* ─── INIT ───────────────────────────────────────────── */
+/* ─── INIT ────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
   startClock();
@@ -26,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadReport();
 });
 
-/* ─── CLOCK ───────────────────────────────────────────── */
+/* ─── CLOCK ───────────────────────────────── */
 
 function startClock() {
   const el = document.getElementById('live-clock');
@@ -41,14 +37,13 @@ function startClock() {
   setInterval(tick, 1000);
 }
 
-/* ─── TABS ───────────────────────────────────────────── */
+/* ─── TABS ────────────────────────────────── */
 
 function initTabs() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
   document.getElementById('refresh-chip').addEventListener('click', () => {
-    resetCountdown();
     loadReport();
   });
 }
@@ -64,20 +59,7 @@ function switchTab(tab) {
   if (tab === 'journey') loadJourney();
 }
 
-/* ─── AUTO-REFRESH ─────────────────────────────────────────── */
-
-function resetCountdown() {
-  countdownVal = REFRESH_SECS;
-  clearInterval(countdownTick);
-  countdownTick = setInterval(() => {
-    countdownVal--;
-    const el = document.getElementById('countdown');
-    if (el) el.textContent = countdownVal;
-    if (countdownVal <= 0) { resetCountdown(); loadReport(); }
-  }, 1000);
-}
-
-/* ─── DATA LOADING ────────────────────────────────────────── */
+/* ─── DATA LOADING ───────────────────────────── */
 
 async function loadReport() {
   showState('loading');
@@ -87,7 +69,6 @@ async function loadReport() {
     const data = await res.json();
     renderReport(data);
     showState('report');
-    resetCountdown();
   } catch {
     showState('error');
   }
@@ -99,13 +80,12 @@ function showState(state) {
   document.getElementById('report-root').classList.toggle('hidden',   state !== 'report');
 }
 
-/* ─── REPORT RENDERER ────────────────────────────────────────── */
+/* ─── REPORT RENDERER ───────────────────────────── */
 
 function renderReport(d) {
   const { meta, portfolio, positions, earnings,
-          stop_loss_alerts, stop_audit, trades_executed, watchlist_changes,
-          alerts, top_opportunities, thoughts, learned_patterns,
-          signal_matrix, dividend_matrix, accuracy } = d;
+          stop_loss_alerts, trades_executed, watchlist_changes,
+          alerts, top_opportunities, thoughts, learned_patterns } = d;
 
   const movers = d.watchlist_movers || d.ah_movers || [];
 
@@ -116,63 +96,20 @@ function renderReport(d) {
   document.getElementById('rpt-generated').textContent = formatTime(meta.generated_at);
   document.getElementById('rpt-next-session').textContent = meta.next_session;
 
-  cachedAccuracy = accuracy || null;
-
   renderThoughts(thoughts || []);
   renderAlerts(alerts || []);
   renderAccountOverview(portfolio, positions || []);
   renderPositions(positions || []);
-  renderSignalMatrix(signal_matrix || [], meta);
-  renderDividendMatrix(dividend_matrix || []);
   renderMovers(movers);
   renderLearnedPatterns(learned_patterns || []);
-  renderAccuracy(cachedAccuracy);
   renderEarnings(earnings || []);
-  renderStopAudit(stop_audit || null);
   renderStopLoss(stop_loss_alerts || []);
   renderTrades(trades_executed || []);
   renderWatchlistChanges(watchlist_changes || []);
   renderOpportunities(top_opportunities || []);
 }
 
-/* ─── COMPOSITE SCORE HELPERS ─────────────────────────────────────────── */
-
-/* Signal class for a composite score in [-1, +1] */
-function compositeClass(score) {
-  if (score === null || score === undefined) return 'neutral';
-  if (score >  0.3) return 'bullish';
-  if (score < -0.3) return 'bearish';
-  return 'neutral';
-}
-
-/* A horizontal -1..+1 gauge with a center axis; fill grows right (green) or left (red). */
-function compositeBar(score) {
-  if (score === null || score === undefined) return '';
-  const s = Math.max(-1, Math.min(1, Number(score)));
-  const cls = compositeClass(s);
-  const halfPct = Math.abs(s) * 50;          // 0..50% of the bar width
-  const side = s >= 0
-    ? `left:50%;width:${halfPct}%`
-    : `right:50%;width:${halfPct}%`;
-  return `<span class="cscore-bar cscore-${cls}" title="Composite score ${s.toFixed(2)}">
-    <span class="cscore-fill" style="${side}"></span>
-    <span class="cscore-axis"></span>
-  </span>`;
-}
-
-/* Inline chip: score number + BULLISH/NEUTRAL/BEARISH badge */
-function compositeChip(score, signal) {
-  if (score === null || score === undefined) return '';
-  const cls = compositeClass(score);
-  const sig = signal || cls.toUpperCase();
-  const sign = score >= 0 ? '+' : '';
-  return `<span class="cscore-chip cscore-${cls}">
-    <span class="cscore-num">S ${sign}${Number(score).toFixed(2)}</span>
-    <span class="badge badge-${cls}">${escHtml(sig)}</span>
-  </span>`;
-}
-
-/* ─── PIE CHART (SVG donut) ────────────────────────────────────────── */
+/* ─── PIE CHART (SVG donut) ───────────────────────────── */
 
 function svgDonut(segments, total, size) {
   size = size || 96;
@@ -207,7 +144,7 @@ function svgDonut(segments, total, size) {
   </svg>`;
 }
 
-/* ─── ACCOUNT OVERVIEW ────────────────────────────────────────── */
+/* ─── ACCOUNT OVERVIEW ───────────────────────────── */
 
 function renderAccountOverview(p, positions) {
   const pending = p.pending_deposits || 0;
@@ -263,7 +200,7 @@ function renderAccountOverview(p, positions) {
     </div>`;
 }
 
-/* ─── CLU'S THOUGHTS ─────────────────────────────────────────── */
+/* ─── CLU'S THOUGHTS ───────────────────────────── */
 
 function renderThoughts(thoughts) {
   const el = document.getElementById('rpt-thoughts');
@@ -291,7 +228,7 @@ function renderThoughts(thoughts) {
     </div>`;
 }
 
-/* ─── LEARNED PATTERNS ─────────────────────────────────────────── */
+/* ─── LEARNED PATTERNS ───────────────────────────── */
 
 function renderLearnedPatterns(patterns) {
   const el = document.getElementById('rpt-patterns');
@@ -311,7 +248,7 @@ function renderLearnedPatterns(patterns) {
   }).join('');
   el.innerHTML = `<div class="patterns-card">
     <div class="patterns-header">
-      <span class="patterns-header-icon">◑</span>
+      <span class="patterns-header-icon">┑</span>
       CLU's Learned Patterns
       <span class="patterns-header-right">CROSS-SESSION INTELLIGENCE</span>
     </div>
@@ -319,7 +256,7 @@ function renderLearnedPatterns(patterns) {
   </div>`;
 }
 
-/* ─── ALERTS ────────────────────────────────────────────── */
+/* ─── ALERTS ─────────────────────────────── */
 
 function renderAlerts(alerts) {
   const el = document.getElementById('rpt-alerts');
@@ -332,7 +269,7 @@ function renderAlerts(alerts) {
   `).join('');
 }
 
-/* ─── ACTIVE POSITIONS ─────────────────────────────────────────── */
+/* ─── ACTIVE POSITIONS ───────────────────────────── */
 
 function renderPositions(positions) {
   const el = document.getElementById('rpt-positions');
@@ -349,25 +286,17 @@ function renderPositions(positions) {
     const dayColor = dayPos ? 'var(--green)' : 'var(--red)';
     const daySign  = dayPos ? '+' : '';
     const accentColor = POS_COLORS[i % POS_COLORS.length];
-    const tierKey   = (pos.tier || 'stock').toLowerCase();
-    const tierLabel = tierKey === 'drip' ? 'DRIP' : tierKey === 'etf' ? 'ETF' : 'STOCK';
-    const stopLabel = pos.stop_type === 'none' || tierKey === 'drip'
-      ? 'stop: none (DRIP — hold forever)'
-      : pos.stop_type === 'manual'
-        ? `stop ${fmtDollar(pos.stop_level)} ⚡ manual${pos.stop_trail_pct ? ' trail ' + pos.stop_trail_pct + '%' : ''}`
-        : `stop ${fmtDollar(pos.stop_level)} GTC trailing ${pos.stop_trail_pct || 5}%`;
+    const stopLabel = pos.stop_type === 'manual'
+      ? `stop ${fmtDollar(pos.stop_level)} ⚡ manual`
+      : `stop ${fmtDollar(pos.stop_level)} GTC`;
     return `
       <div class="pos-row" style="animation-delay:${i * 0.12}s">
         <div class="pos-left">
-          <div class="pos-ticker-row">
-            <span class="pos-ticker" style="color:${accentColor};text-shadow:0 0 16px ${accentColor}88">${escHtml(pos.symbol)}</span>
-            <span class="tier-badge tier-${tierKey}">${tierLabel}</span>
-          </div>
+          <span class="pos-ticker" style="color:${accentColor};text-shadow:0 0 16px ${accentColor}88">${escHtml(pos.symbol)}</span>
           ${pos.full_name ? `<span class="pos-name">${escHtml(pos.full_name)}</span>` : ''}
           ${pos.desc      ? `<span class="pos-desc">${escHtml(pos.desc)}</span>` : ''}
           <span class="pos-detail">${pos.shares} sh &middot; entry ${fmtDollar(pos.entry_price)} &middot; notional ${fmtDollar(pos.notional)}</span>
           <span class="pos-stop">${stopLabel}</span>
-          ${pos.composite_score !== undefined ? `<span class="pos-cscore">${compositeChip(pos.composite_score, pos.composite_signal)}</span>` : ''}
         </div>
         <div class="pos-right">
           <div class="pos-pnl ${pnlClass}">${pnlSign}${pos.total_pnl_pct.toFixed(2)}%</div>
@@ -379,192 +308,7 @@ function renderPositions(positions) {
   el.innerHTML = `<div class="card-title"><span class="card-title-icon">◉</span> Active Positions</div>${rows}`;
 }
 
-/* ─── SIGNAL MATRIX (quant engine output) ─────────────────────────────── */
-
-function renderSignalMatrix(matrix, meta) {
-  const el = document.getElementById('rpt-signal-matrix');
-  if (!el) return;
-  if (!matrix || !matrix.length) { el.innerHTML = ''; return; }
-
-  const computedAt = (meta && meta.signal_computed_at)
-    ? formatTime(meta.signal_computed_at) : null;
-
-  const rows = matrix.map(s => {
-    const cls     = compositeClass(s.composite_score);
-    const sign    = s.composite_score >= 0 ? '+' : '';
-    const rsiCls  = s.rsi_signal === 'Oversold' ? 'col-change-pos'
-                  : s.rsi_signal === 'Overbought' ? 'col-change-neg' : '';
-    const zCls    = s.z_signal === 'OVERSOLD' ? 'col-change-pos'
-                  : s.z_signal === 'OVERBOUGHT' ? 'col-change-neg' : '';
-    const macdCls = s.macd === 'Bullish' ? 'col-change-pos' : 'col-change-neg';
-    const trendCls = s.trend_50d === 'Up' ? 'col-change-pos'
-                   : s.trend_50d === 'Down' ? 'col-change-neg' : '';
-    const divgTag  = s.rsi_divergence && s.rsi_divergence !== 'None'
-      ? `<span class="sm-divg sm-divg-${s.rsi_divergence.toLowerCase()}">${escHtml(s.rsi_divergence)}</span>` : '';
-    const bbVal    = s.bb_pct !== undefined && s.bb_pct !== null
-      ? `<span class="sm-bb" title="Bollinger %B">${Number(s.bb_pct).toFixed(2)}</span>` : '—';
-    const macdHistVal = s.macd_hist !== undefined
-      ? `<span class="sm-sub">${s.macd_hist > 0 ? '+' : ''}${Number(s.macd_hist).toFixed(3)}</span>` : '';
-    const atrVal   = s.atr_pct !== undefined && s.atr_pct !== null
-      ? `<span class="sm-atr" title="ATR as % of price">${s.atr_pct}%</span>` : '—';
-    return `<tr>
-      <td class="col-symbol">${escHtml(s.symbol)}</td>
-      <td class="${rsiCls}">${s.rsi_14 ?? '—'}<span class="sm-sub">${escHtml(s.rsi_signal || '')}</span>${divgTag}</td>
-      <td class="${macdCls}">${escHtml(s.macd || '—')}${macdHistVal}</td>
-      <td>${bbVal}</td>
-      <td class="${zCls}">${s.z_score ?? '—'}<span class="sm-sub">${escHtml(s.z_signal || '')}</span></td>
-      <td>${escHtml(s.vol_signal || '—')}</td>
-      <td class="${trendCls}">${escHtml(s.trend_50d || '—')}</td>
-      <td>${atrVal}</td>
-      <td class="sm-score-cell">
-        <div class="sm-score-row">${compositeBar(s.composite_score)}<span class="sm-score-num cscore-${cls}">${sign}${Number(s.composite_score).toFixed(2)}</span></div>
-      </td>
-      <td><span class="badge badge-${cls}">${escHtml(s.composite_signal || cls.toUpperCase())}</span></td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="card-title">
-      <span class="card-title-icon">⚙</span> Quant Signal Matrix
-      <span class="card-title-right">${computedAt ? 'COMPUTED ' + computedAt : 'LOCAL PYTHON ENGINE'}</span>
-    </div>
-    <p class="sm-caption">Computed locally before each session — RSI, MACD, BB%B, Z-score, volume, trend &amp; ATR collapse into one composite score S ∈ [−1,+1]. Claude reads only this output.</p>
-    <div class="table-scroll">
-    <table class="data-table sm-table">
-      <thead><tr>
-        <th>Ticker</th><th>RSI</th><th>MACD</th><th>BB%B</th><th>Z-Score</th><th>Vol</th><th>Trend50</th><th>ATR%</th><th>Composite S</th><th>Signal</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
-}
-
-/* ─── DIVIDEND MATRIX (DRIP tier) ─────────────────────────────────────── */
-
-function renderDividendMatrix(matrix) {
-  const el = document.getElementById('rpt-dividend-matrix');
-  if (!el) return;
-  if (!matrix || !matrix.length) { el.innerHTML = ''; return; }
-
-  const rows = matrix.map(d => {
-    const yieldVal  = d.dividend_yield_pct !== null && d.dividend_yield_pct !== undefined
-      ? `${Number(d.dividend_yield_pct).toFixed(2)}%` : '—';
-    const yieldCls  = d.dividend_yield_pct >= 4 ? 'col-change-pos' : d.dividend_yield_pct >= 2 ? '' : 'col-change-neg';
-    const payoutVal = d.payout_ratio_pct !== null && d.payout_ratio_pct !== undefined
-      ? `${Number(d.payout_ratio_pct).toFixed(0)}%` : '—';
-    const payoutCls = d.payout_ratio_pct > 80 ? 'col-change-neg' : d.payout_ratio_pct < 60 ? 'col-change-pos' : '';
-    const annDiv    = d.annual_dividend ? `$${Number(d.annual_dividend).toFixed(2)}` : '—';
-    const exDate    = d.ex_dividend_date ? escHtml(d.ex_dividend_date) : '—';
-    const streak    = d.dividend_growth_streak ?? 0;
-    const streakCls = streak >= 10 ? 'col-change-pos' : streak >= 5 ? '' : 'col-change-neg';
-    const safety    = d.dividend_safety_score;
-    const safetyCls = safety >= 70 ? 'col-change-pos' : safety >= 50 ? '' : 'col-change-neg';
-    const safetyBar = safety !== null && safety !== undefined
-      ? `<div class="div-safety-bar"><div class="div-safety-fill" style="width:${safety}%;background:${safety >= 70 ? 'var(--green)' : safety >= 50 ? 'var(--yellow)' : 'var(--red)'}"></div></div>`
-      : '';
-    return `<tr>
-      <td class="col-symbol">${escHtml(d.symbol)}</td>
-      <td class="${yieldCls}" style="font-weight:700">${yieldVal}</td>
-      <td class="${payoutCls}">${payoutVal}</td>
-      <td style="color:var(--t2)">${annDiv}</td>
-      <td style="font-size:11px;color:var(--t3)">${exDate}</td>
-      <td class="${streakCls}">${streak}yr</td>
-      <td><div style="display:flex;align-items:center;gap:8px"><span class="${safetyCls}">${safety ?? '—'}</span>${safetyBar}</div></td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="card-title">
-      <span class="card-title-icon">◈</span> Dividend Matrix
-      <span class="card-title-right">DRIP TIER · HOLD FOREVER · NO STOP-LOSS</span>
-    </div>
-    <p class="sm-caption">DRIP tier assets held indefinitely — dividends auto-reinvest. Safety score combines yield, payout ratio, and dividend growth streak.</p>
-    <div class="table-scroll">
-    <table class="data-table">
-      <thead><tr>
-        <th>Ticker</th><th>Yield</th><th>Payout%</th><th>Ann. Div</th><th>Ex-Date</th><th>Growth Streak</th><th>Safety (0–100)</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
-}
-
-/* ─── ACCURACY & SELF-CORRECTION (learning loop) ──────────────────────── */
-
-function renderAccuracy(acc) {
-  const el = document.getElementById('rpt-accuracy');
-  if (!el) return;
-  if (!acc) { el.innerHTML = ''; return; }
-
-  const wr      = (acc.win_rate_pct !== undefined && acc.win_rate_pct !== null)
-                  ? acc.win_rate_pct : null;
-  const wrColor = wr === null ? 'var(--t3)'
-                : wr >= 60 ? 'var(--green)'
-                : wr >= 45 ? 'var(--yellow)' : 'var(--red)';
-  const evaluated = acc.trades_evaluated ?? 0;
-  const pending   = acc.trades_pending ?? 0;
-  const phase     = acc.phase || null;
-
-  const blocked = (acc.do_not_trade || []).map(c =>
-    `<div class="dnt-chip" title="${escHtml(c.notes || '')}">
-       <span class="dnt-x">⛔</span>
-       <span class="dnt-cond">${escHtml(c.condition)}</span>
-       <span class="dnt-delta">${c.cumulative_delta}</span>
-     </div>`).join('');
-
-  const ledger = (acc.recent_ledger || []).map(r => {
-    const d = r.accuracy_delta;
-    const dCls = (d === null || d === undefined || d === 'TBD') ? 'col-change-neu'
-               : Number(d) > 0 ? 'col-change-pos' : 'col-change-neg';
-    const dVal = (d === null || d === undefined) ? 'TBD' : d;
-    return `<tr>
-      <td class="col-symbol">${escHtml(r.ticker)}</td>
-      <td>${escHtml(r.action || 'BUY')}</td>
-      <td>${escHtml(r.outcome || 'TBD')}</td>
-      <td class="${dCls}">${escHtml(String(dVal))}</td>
-      <td style="font-size:10px;color:var(--text-dim)">${escHtml(r.conditions || '')}</td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="acc-card">
-      <div class="acc-header">
-        <span class="acc-header-icon">◎</span>
-        Accuracy &amp; Self-Correction
-        <span class="acc-header-right">CLOSED-LOOP LEARNING</span>
-      </div>
-      <div class="acc-stats">
-        <div class="acc-stat">
-          <div class="acc-stat-val" style="color:${wrColor}">${wr === null ? '—' : wr + '%'}</div>
-          <div class="acc-stat-label">Win Rate</div>
-        </div>
-        <div class="acc-stat">
-          <div class="acc-stat-val">${evaluated}</div>
-          <div class="acc-stat-label">Trades Graded</div>
-        </div>
-        <div class="acc-stat">
-          <div class="acc-stat-val" style="color:var(--yellow)">${pending}</div>
-          <div class="acc-stat-label">Awaiting 5-Day</div>
-        </div>
-        ${phase ? `<div class="acc-stat">
-          <div class="acc-stat-val" style="color:var(--blue);font-size:13px">${escHtml(phase)}</div>
-          <div class="acc-stat-label">Intel Phase</div>
-        </div>` : ''}
-      </div>
-      ${blocked ? `<div class="dnt-block">
-        <div class="dnt-title">⛔ DO-NOT-TRADE CONDITIONS <span class="dnt-sub">auto-learned from losing setups</span></div>
-        <div class="dnt-list">${blocked}</div>
-      </div>` : `<div class="dnt-block"><div class="dnt-title" style="color:var(--green)">✓ No blocked conditions — no losing pattern has crossed the −1.5 threshold.</div></div>`}
-      ${ledger ? `<div class="table-scroll" style="margin-top:12px">
-        <table class="data-table">
-          <thead><tr><th>Ticker</th><th>Action</th><th>5-Day Outcome</th><th>Δ</th><th>Entry Conditions</th></tr></thead>
-          <tbody>${ledger}</tbody>
-        </table>
-      </div>` : ''}
-    </div>`;
-}
-
-/* ─── WATCHLIST MOVERS ─────────────────────────────────────────── */
+/* ─── WATCHLIST MOVERS ───────────────────────────── */
 
 function renderMovers(movers) {
   const el = document.getElementById('rpt-movers');
@@ -576,14 +320,10 @@ function renderMovers(movers) {
     const sign   = chg > 0 ? '+' : '';
     const sigKey = (m.signal || 'neutral').replace(/[^a-z0-9-]/gi, '').toLowerCase();
     const sigLabel = (m.signal || 'neutral').replace(/-/g, ' ').toUpperCase();
-    const cScore = (m.composite_score !== undefined && m.composite_score !== null)
-      ? `<span class="cscore-num cscore-${compositeClass(m.composite_score)}">${m.composite_score >= 0 ? '+' : ''}${Number(m.composite_score).toFixed(2)}</span>`
-      : '<span style="color:var(--t4)">—</span>';
     return `<tr>
       <td class="col-symbol">${escHtml(m.symbol)}</td>
       <td class="col-price">${fmtDollar(price)}</td>
       <td class="${chgCls}">${sign}${chg.toFixed(1)}%</td>
-      <td>${cScore}</td>
       <td><span class="badge badge-${sigKey}">${sigLabel}</span></td>
       <td class="wl-tag">${escHtml(m.watchlist)}</td>
       <td style="color:var(--text-secondary);font-size:11px">${escHtml(m.note)}</td>
@@ -594,14 +334,14 @@ function renderMovers(movers) {
     <div class="table-scroll">
     <table class="data-table">
       <thead><tr>
-        <th>Ticker</th><th>Price</th><th>Change</th><th>S</th><th>Signal</th><th>Watchlist</th><th>Note</th>
+        <th>Ticker</th><th>Price</th><th>Change</th><th>Signal</th><th>Watchlist</th><th>Note</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
     </div>`;
 }
 
-/* ─── EARNINGS ────────────────────────────────────────────── */
+/* ─── EARNINGS ────────────────────────────── */
 
 function renderEarnings(earnings) {
   const el = document.getElementById('rpt-earnings');
@@ -632,7 +372,7 @@ function renderEarnings(earnings) {
     </div>`;
 }
 
-/* ─── STOP-LOSS ────────────────────────────────────────────── */
+/* ─── STOP-LOSS ───────────────────────────── */
 
 function renderStopLoss(alerts) {
   const el = document.getElementById('rpt-stoploss');
@@ -658,57 +398,7 @@ function renderStopLoss(alerts) {
     </div>`;
 }
 
-/* ─── STOP AUDIT ─────────────────────────────────────────────── */
-
-function renderStopAudit(audit) {
-  const el = document.getElementById('rpt-stop-audit');
-  if (!audit || !audit.summary) {
-    el.innerHTML = `<div class="card-title"><span class="card-title-icon">⬡</span> Stop Protection Audit</div>
-      <div class="none-label">Not yet audited this session.</div>`;
-    return;
-  }
-
-  const s = audit.summary;
-  const ok = audit.all_protected;
-  const bannerCls = ok ? 'audit-banner audit-ok' : 'audit-banner audit-bad';
-  const bannerTxt = ok
-    ? `All ${s.whole_share_positions} whole-share position${s.whole_share_positions === 1 ? '' : 's'} protected by live stops`
-    : `${s.unprotected} unprotected · ${s.partial} partial · ${s.drip_violations} DRIP violation${s.drip_violations === 1 ? '' : 's'}`;
-
-  const STATUS = {
-    protected:          ['PROTECTED', 'audit-pill-ok'],
-    unprotected:        ['UNPROTECTED', 'audit-pill-bad'],
-    partial:            ['PARTIAL', 'audit-pill-warn'],
-    drip_ok:            ['DRIP · NO STOP', 'audit-pill-muted'],
-    drip_violation:     ['DRIP VIOLATION', 'audit-pill-bad'],
-    skipped_fractional: ['FRACTIONAL · MONITOR', 'audit-pill-muted'],
-  };
-
-  const rows = (audit.positions || []).map(p => {
-    const [label, cls] = STATUS[p.status] || [p.status, 'audit-pill-muted'];
-    const trail = (p.trail_pct !== null && p.trail_pct !== undefined)
-      ? `${p.trail_pct}%` : '—';
-    return `<tr>
-      <td class="col-symbol">${escHtml(p.symbol)}</td>
-      <td><span class="tier-badge tier-${escHtml((p.tier || 'stock').toLowerCase())}">${escHtml(p.tier || 'stock')}</span></td>
-      <td>${p.quantity}</td>
-      <td>${trail}</td>
-      <td><span class="audit-pill ${cls}">${escHtml(label)}</span></td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML = `
-    <div class="card-title"><span class="card-title-icon">⬡</span> Stop Protection Audit</div>
-    <div class="${bannerCls}">${escHtml(bannerTxt)}</div>
-    <div class="table-scroll">
-    <table class="data-table">
-      <thead><tr><th>Ticker</th><th>Tier</th><th>Shares</th><th>Trail</th><th>Status</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
-}
-
-/* ─── TRADES ─────────────────────────────────────────────── */
+/* ─── TRADES ────────────────────────────── */
 
 function renderTrades(trades) {
   const el = document.getElementById('rpt-trades');
@@ -737,12 +427,12 @@ function renderTrades(trades) {
     </div>`;
 }
 
-/* ─── WATCHLIST CHANGES ─────────────────────────────────────────── */
+/* ─── WATCHLIST CHANGES ───────────────────────────── */
 
 function renderWatchlistChanges(changes) {
   const el = document.getElementById('rpt-watchlist');
   if (!changes.length) {
-    el.innerHTML = `<div class="card-title"><span class="card-title-icon">◫</span> Watchlist Changes</div>
+    el.innerHTML = `<div class="card-title"><span class="card-title-icon">▫</span> Watchlist Changes</div>
       <div class="none-label">No changes this session.</div>`;
     return;
   }
@@ -752,7 +442,7 @@ function renderWatchlistChanges(changes) {
     <td style="font-size:11px;color:var(--text-secondary)">${escHtml(c.reason)}</td>
   </tr>`).join('');
   el.innerHTML = `
-    <div class="card-title"><span class="card-title-icon">◫</span> Watchlist Changes</div>
+    <div class="card-title"><span class="card-title-icon">▫</span> Watchlist Changes</div>
     <div class="table-scroll">
     <table class="data-table">
       <thead><tr><th>Ticker</th><th>Change</th><th>Reason</th></tr></thead>
@@ -761,7 +451,7 @@ function renderWatchlistChanges(changes) {
     </div>`;
 }
 
-/* ─── OPPORTUNITIES ────────────────────────────────────────────── */
+/* ─── OPPORTUNITIES ───────────────────────────── */
 
 function renderOpportunities(opps) {
   const el = document.getElementById('rpt-opportunities');
@@ -769,12 +459,8 @@ function renderOpportunities(opps) {
   const cards = opps.map(o => `
     <div class="opp-card">
       <div class="opp-rank">#${o.rank} Opportunity</div>
-      <div class="opp-ticker-row">
-        <span class="opp-ticker">${escHtml(o.symbol)}</span>
-        ${o.composite_score !== undefined ? compositeChip(o.composite_score, o.composite_signal) : ''}
-      </div>
+      <div class="opp-ticker">${escHtml(o.symbol)}</div>
       <div class="opp-thesis">${escHtml(o.thesis)}</div>
-      ${o.quant_gate_status ? `<div class="opp-gate"><span class="opp-gate-label">QUANT GATE</span> ${escHtml(o.quant_gate_status)}</div>` : ''}
       <div class="opp-footer">
         <div class="opp-entry">Entry: ${escHtml(o.entry_target)}</div>
         <div class="opp-action">${escHtml(o.action)}</div>
@@ -811,9 +497,10 @@ async function loadJourney() {
 
 function renderProjectedJourney(d) {
   const root = document.getElementById('journey-root');
+  const actual = (d.growth_chart && d.growth_chart.actual) || [];
+  const lastActualValue = actual.length ? actual[actual.length - 1].value : null;
   root.innerHTML =
     buildJourneyHeader(d.meta, d.growth_chart) +
-    buildJourneyIntelBanner(cachedAccuracy) +
     `<div class="card journey-chart-card">` +
       `<div class="card-title"><span class="card-title-icon">◈</span> Growth Projection</div>` +
       `<div class="journey-chart-wrap">` +
@@ -826,19 +513,18 @@ function renderProjectedJourney(d) {
         `</div>` +
       `</div>` +
     `</div>` +
+    buildJourneyFundsCalc() +
     `<div class="journey-grid-3">` +
       buildJourneyDecisions(d.next_decisions || []) +
       buildJourneyEvolution(d.intelligence_evolution || []) +
       buildJourneyDNA(d.strategy_dna || []) +
     `</div>` +
-    `<section class="card" id="rpt-accuracy"></section>` +
     `<div class="journey-grid-2">` +
       buildJourneyRisk(d.risk_profile) +
-      buildJourneyMilestones(d.milestones || []) +
+      buildJourneyMilestones(d.milestones || [], lastActualValue) +
     `</div>` +
     buildJourneyRecap(d.weekly_recap);
-
-  if (cachedAccuracy) renderAccuracy(cachedAccuracy);
+  initFundsCalc(d.growth_chart || {}, d.milestones || []);
 }
 
 function buildJourneyHeader(meta, chart) {
@@ -847,7 +533,7 @@ function buildJourneyHeader(meta, chart) {
   const weeklyTgt = chart && chart.weekly_target_pct  ? `+${chart.weekly_target_pct}%/wk`  : '';
   const monthTgt  = chart && chart.monthly_target_pct ? `+${chart.monthly_target_pct}%/mo` : '';
   return `<div class="journey-header">
-    <div class="journey-header-title"><span class="journey-title-icon">◆</span> CLU — Projected Journey</div>
+    <div class="journey-header-title"><span class="journey-title-icon">↗</span> CLU — Projected Journey</div>
     <div class="journey-header-meta">
       <span>Updated ${escHtml(updDate)}</span>
       <span class="meta-sep">·</span>
@@ -860,46 +546,7 @@ function buildJourneyHeader(meta, chart) {
   </div>`;
 }
 
-/* ─── JOURNEY INTELLIGENCE STATUS BANNER ────────────────────────────── */
-
-function buildJourneyIntelBanner(acc) {
-  if (!acc) return '';
-  const phase = acc.phase || 'Phase 1 · Foundation';
-  const wr = (acc.win_rate_pct !== undefined && acc.win_rate_pct !== null) ? acc.win_rate_pct : null;
-  const evaluated = acc.trades_evaluated ?? 0;
-  const pending   = acc.trades_pending ?? 0;
-  const dnt       = (acc.do_not_trade || []).length;
-  const wrColor   = wr === null ? 'var(--t3)' : wr >= 60 ? 'var(--green)' : wr >= 45 ? 'var(--yellow)' : 'var(--red)';
-  const dntColor  = dnt > 0 ? 'var(--neon-orange)' : 'var(--green)';
-  return `<div class="journey-intel-banner">
-    <div class="jib-item">
-      <div class="jib-label">INTELLIGENCE PHASE</div>
-      <div class="jib-val" style="color:var(--blue)">${escHtml(phase)}</div>
-    </div>
-    <div class="jib-sep"></div>
-    <div class="jib-item">
-      <div class="jib-label">WIN RATE</div>
-      <div class="jib-val" style="color:${wrColor}">${wr === null ? '—' : wr + '%'}</div>
-    </div>
-    <div class="jib-sep"></div>
-    <div class="jib-item">
-      <div class="jib-label">TRADES GRADED</div>
-      <div class="jib-val">${evaluated}</div>
-    </div>
-    <div class="jib-sep"></div>
-    <div class="jib-item">
-      <div class="jib-label">AWAITING 5-DAY</div>
-      <div class="jib-val" style="color:var(--yellow)">${pending}</div>
-    </div>
-    <div class="jib-sep"></div>
-    <div class="jib-item">
-      <div class="jib-label">BLOCKED CONDITIONS</div>
-      <div class="jib-val" style="color:${dntColor}">${dnt > 0 ? dnt + ' active' : 'None'}</div>
-    </div>
-  </div>`;
-}
-
-/* ─── SVG LINE CHART (Robinhood-style) ────────────────────────────── */
+/* ─── SVG LINE CHART (Robinhood-style) ─────────────────── */
 
 function svgLineChart(actual, projected) {
   const VW = 900, VH = 200;
@@ -993,7 +640,210 @@ function svgLineChart(actual, projected) {
 </svg>`;
 }
 
-/* ─── JOURNEY SECTIONS ─────────────────────────────────────────── */
+/* ─── ADDED FUNDS SIMULATOR ────────────────────── */
+
+function buildJourneyFundsCalc() {
+  return `<div class="card jfunds-card">
+    <div class="card-title"><span class="card-title-icon">⊕</span> Added Funds Simulator</div>
+    <div class="jfunds-body">
+      <p class="jfunds-intro">Project how recurring or one-time contributions reshape CLU's growth curve. Funds compound at CLU's current projected rate — <strong>estimates only, not a guarantee of future results.</strong></p>
+      <div class="jfunds-controls">
+        <div class="jfunds-field">
+          <label class="jfunds-label" for="jf-amount">Contribution</label>
+          <div class="jfunds-input-wrap"><span class="jfunds-prefix">$</span><input type="number" id="jf-amount" class="jfunds-input" value="100" min="0" step="10"></div>
+        </div>
+        <div class="jfunds-field jfunds-field-grow">
+          <label class="jfunds-label">Frequency</label>
+          <div class="jfunds-freq" id="jf-freq">
+            <button type="button" class="jf-freq-btn" data-freq="once">One-time</button>
+            <button type="button" class="jf-freq-btn" data-freq="daily">Daily</button>
+            <button type="button" class="jf-freq-btn" data-freq="weekly">Weekly</button>
+            <button type="button" class="jf-freq-btn" data-freq="biweekly">Bi-weekly</button>
+            <button type="button" class="jf-freq-btn active" data-freq="monthly">Monthly</button>
+          </div>
+        </div>
+      </div>
+      <div class="jfunds-field jfunds-field-full">
+        <label class="jfunds-label">Timeline — <span id="jf-horizon-label" class="jfunds-horizon-label">1 yr</span></label>
+        <input type="range" id="jf-horizon" class="jfunds-slider" min="3" max="60" value="12" step="1">
+        <div class="jfunds-slider-ticks"><span>3 mo</span><span>1 yr</span><span>2 yr</span><span>3 yr</span><span>5 yr</span></div>
+      </div>
+      <div id="jf-results" class="jfunds-results"></div>
+    </div>
+  </div>`;
+}
+
+const CONTRIB_PER_MONTH = { daily: 30.4368, weekly: 4.34812, biweekly: 2.17406, monthly: 1, once: 0 };
+
+function deriveMonthlyRate(chart) {
+  if (chart && chart.monthly_target_pct) return chart.monthly_target_pct / 100;
+  const proj = (chart && chart.projected) || [];
+  if (proj.length >= 2 && proj[0].value > 0) {
+    const days = (new Date(proj[proj.length - 1].date) - new Date(proj[0].date)) / 86400000;
+    const months = days / 30.4368;
+    if (months > 0) return Math.pow(proj[proj.length - 1].value / proj[0].value, 1 / months) - 1;
+  }
+  if (chart && chart.weekly_target_pct) return Math.pow(1 + chart.weekly_target_pct / 100, 4.34812) - 1;
+  return 0.05;
+}
+
+function computeFundsProjection(V0, g, amount, freq, months) {
+  let base = V0, boost = V0, contributed = 0;
+  if (freq === 'once') { boost += amount; contributed = amount; }
+  const series = [{ m: 0, base: base, boost: boost }];
+  const per = CONTRIB_PER_MONTH[freq] || 0;
+  for (let m = 1; m <= months; m++) {
+    base  *= (1 + g);
+    boost *= (1 + g);
+    if (freq !== 'once' && amount > 0) { const add = amount * per; boost += add; contributed += add; }
+    series.push({ m: m, base: base, boost: boost });
+  }
+  return { series: series, contributed: contributed, finalBase: base, finalBoost: boost };
+}
+
+function firstMonthAtOrAbove(series, key, target) {
+  for (let i = 0; i < series.length; i++) if (series[i][key] >= target) return series[i].m;
+  return -1;
+}
+
+function initFundsCalc(chart, milestones) {
+  const amountEl  = document.getElementById('jf-amount');
+  const freqEl    = document.getElementById('jf-freq');
+  const horizonEl = document.getElementById('jf-horizon');
+  const hLabel    = document.getElementById('jf-horizon-label');
+  const results   = document.getElementById('jf-results');
+  if (!amountEl || !freqEl || !horizonEl || !results) return;
+
+  const actual = (chart && chart.actual) || [];
+  const V0 = actual.length ? actual[actual.length - 1].value
+           : ((chart && chart.projected && chart.projected.length) ? chart.projected[chart.projected.length - 1].value : 0);
+  const startDate = actual.length ? actual[actual.length - 1].date
+           : ((chart && chart.projected && chart.projected.length) ? chart.projected[0].date : null);
+  const g = deriveMonthlyRate(chart);
+
+  let freq = 'monthly';
+
+  function recompute() {
+    const amount = Math.max(0, parseFloat(amountEl.value) || 0);
+    const months = parseInt(horizonEl.value, 10) || 12;
+    hLabel.textContent = fmtMonthsLabel(months);
+    const sim = computeFundsProjection(V0, g, amount, freq, months);
+    results.innerHTML = renderFundsResults(sim, V0, g, amount, freq, months, startDate, milestones);
+  }
+
+  freqEl.querySelectorAll('.jf-freq-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      freq = btn.dataset.freq;
+      freqEl.querySelectorAll('.jf-freq-btn').forEach(b => b.classList.toggle('active', b === btn));
+      recompute();
+    });
+  });
+  amountEl.addEventListener('input', recompute);
+  horizonEl.addEventListener('input', recompute);
+  recompute();
+}
+
+function renderFundsResults(sim, V0, g, amount, freq, months, startDate, milestones) {
+  const delta      = sim.finalBoost - sim.finalBase;
+  const marketGain = sim.finalBoost - V0 - sim.contributed;
+  const freqLabel  = { once: 'one-time', daily: 'daily', weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly' }[freq] || freq;
+
+  const chart = miniProjChart(sim.series, months, startDate);
+
+  const stats = `<div class="jfunds-stat-grid">
+    <div class="jfunds-stat"><div class="pf-label">Without Added Funds</div><div class="jfunds-stat-val" style="color:var(--blue)">${fmtDollar(sim.finalBase)}</div></div>
+    <div class="jfunds-stat"><div class="pf-label">With Added Funds</div><div class="jfunds-stat-val" style="color:var(--green)">${fmtDollar(sim.finalBoost)}</div></div>
+    <div class="jfunds-stat"><div class="pf-label">Difference</div><div class="jfunds-stat-val" style="color:var(--magenta)">+${fmtDollar(delta)}</div></div>
+    <div class="jfunds-stat"><div class="pf-label">You Contribute</div><div class="jfunds-stat-val small">${fmtDollar(sim.contributed)}</div></div>
+    <div class="jfunds-stat"><div class="pf-label">Market Growth On Funds</div><div class="jfunds-stat-val small" style="color:var(--green)">+${fmtDollar(Math.max(0, marketGain))}</div></div>
+  </div>`;
+
+  const summary = `<p class="jfunds-summary">Adding <strong>${fmtDollar(amount)}</strong> ${freqLabel} over <strong>${fmtMonthsLabel(months)}</strong> projects to <strong style="color:var(--green)">${fmtDollar(sim.finalBoost)}</strong> — <strong style="color:var(--magenta)">${fmtDollar(delta)} more</strong> than CLU's baseline of ${fmtDollar(sim.finalBase)}.</p>`;
+
+  const mrows = (milestones || []).filter(m => m.target > V0).map(m => {
+    const baseM  = firstMonthAtOrAbove(sim.series, 'base', m.target);
+    const boostM = firstMonthAtOrAbove(sim.series, 'boost', m.target);
+    const baseTxt  = baseM  >= 0 ? fmtReachDate(startDate, baseM)  : `beyond ${fmtMonthsLabel(months)}`;
+    const boostTxt = boostM >= 0 ? fmtReachDate(startDate, boostM) : `beyond ${fmtMonthsLabel(months)}`;
+    let saved = '';
+    if (boostM >= 0 && baseM >= 0 && baseM > boostM) saved = `<span class="jfunds-saved">${fmtMonthsLabel(baseM - boostM)} sooner</span>`;
+    else if (boostM >= 0 && baseM < 0) saved = `<span class="jfunds-saved">now reachable</span>`;
+    return `<tr>
+      <td class="col-symbol">${fmtDollar(m.target)}</td>
+      <td style="font-size:11px;color:var(--t2)">${escHtml(m.label || '')}</td>
+      <td style="color:var(--blue)">${baseTxt}</td>
+      <td style="color:var(--green)">${boostTxt}</td>
+      <td>${saved}</td>
+    </tr>`;
+  }).join('');
+
+  const mtable = mrows ? `<div class="jfunds-milestones">
+    <div class="jfunds-sub">Milestone Impact</div>
+    <div class="table-scroll"><table class="data-table"><thead><tr>
+      <th>Target</th><th>Milestone</th><th>Baseline ETA</th><th>With Funds ETA</th><th>Gain</th>
+    </tr></thead><tbody>${mrows}</tbody></table></div>
+  </div>` : '';
+
+  return `<div class="jfunds-chart-wrap">${chart}
+    <div class="jfunds-chart-legend">
+      <span class="jcl-item"><span class="jcl-line" style="background:var(--blue)"></span> Baseline (CLU only)</span>
+      <span class="jcl-item"><span class="jcl-line" style="background:var(--green)"></span> With added funds</span>
+    </div>
+  </div>
+  ${stats}
+  ${summary}
+  ${mtable}
+  <p class="jfunds-disclaimer"><strong>Projection only.</strong> Assumes a constant ${(g * 100).toFixed(1)}%/mo compounding rate carried from CLU's current target. Real markets fluctuate; actual results will differ.</p>`;
+}
+
+function miniProjChart(series, months, startDate) {
+  const VW = 860, VH = 180, padL = 52, padR = 20, padT = 18, padB = 30;
+  const plotW = VW - padL - padR, plotH = VH - padT - padB;
+  if (series.length < 2) return '<p class="no-data" style="padding:16px">Enter an amount to project.</p>';
+  const vals = series.reduce((a, p) => { a.push(p.base, p.boost); return a; }, []);
+  const minV = Math.min.apply(null, vals) * 0.96;
+  const maxV = Math.max.apply(null, vals) * 1.04;
+  const xf = m => padL + (m / months) * plotW;
+  const yf = v => padT + plotH - ((v - minV) / (maxV - minV || 1)) * plotH;
+
+  let grid = '';
+  for (let i = 0; i <= 4; i++) {
+    const v = minV + (i / 4) * (maxV - minV);
+    const y = yf(v).toFixed(1);
+    grid += `<line x1="${padL}" y1="${y}" x2="${VW - padR}" y2="${y}" stroke="rgba(100,180,255,0.07)" stroke-width="1"/>`;
+    grid += `<text x="${padL - 6}" y="${(+y + 3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(100,180,255,0.42)" font-family="monospace">$${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}</text>`;
+  }
+
+  let xLabels = '';
+  const ticks = [...new Set([0, Math.round(months / 2), months])];
+  ticks.forEach(m => {
+    const x = xf(m).toFixed(1);
+    xLabels += `<text x="${x}" y="${(VH - padB + 16).toFixed(1)}" text-anchor="middle" font-size="9" fill="rgba(100,180,255,0.40)" font-family="monospace">${startDate ? fmtShortMonth(startDate, m) : m + 'mo'}</text>`;
+  });
+
+  const basePts  = series.map(p => `${xf(p.m).toFixed(1)},${yf(p.base).toFixed(1)}`);
+  const boostPts = series.map(p => `${xf(p.m).toFixed(1)},${yf(p.boost).toFixed(1)}`);
+  const boostArea = `M${xf(0).toFixed(1)},${(padT + plotH).toFixed(1)} L${boostPts.join(' L')} L${xf(months).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
+
+  const last = series[series.length - 1];
+  const baseLbl  = `<text x="${(xf(months) - 6).toFixed(1)}" y="${(yf(last.base) + 12).toFixed(1)}" text-anchor="end" font-size="9" fill="#7EC8FF" font-family="monospace">${fmtDollar(last.base)}</text>`;
+  const boostLbl = `<text x="${(xf(months) - 6).toFixed(1)}" y="${(yf(last.boost) - 7).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="#00ff88" font-family="monospace">${fmtDollar(last.boost)}</text>`;
+
+  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs><linearGradient id="lgBoost" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#00ff88" stop-opacity="0.28"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0.01"/>
+  </linearGradient></defs>
+  ${grid}
+  <path d="${boostArea}" fill="url(#lgBoost)"/>
+  <polyline points="${basePts.join(' ')}" fill="none" stroke="#7EC8FF" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <polyline points="${boostPts.join(' ')}" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
+  <line x1="${padL}" y1="${padT + plotH}" x2="${VW - padR}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
+  ${baseLbl}${boostLbl}${xLabels}
+</svg>`;
+}
+
+/* ─── JOURNEY SECTIONS ───────────────────────────── */
 
 function buildJourneyDecisions(decisions) {
   const typeIcon  = { watch:'◎', add:'◈', hold:'◉', build:'◆', sell:'▲', rebalance:'⇄' };
@@ -1031,7 +881,7 @@ function buildJourneyEvolution(phases) {
       </div>
     </div>`).join('');
   return `<div class="card journey-section">
-    <div class="card-title"><span class="card-title-icon">◑</span> Intelligence Evolution</div>
+    <div class="card-title"><span class="card-title-icon">┑</span> Intelligence Evolution</div>
     <div class="journey-section-body">${items || '<div class="none-label">Building history…</div>'}</div>
   </div>`;
 }
@@ -1086,19 +936,21 @@ function buildJourneyRisk(risk) {
   </div>`;
 }
 
-function buildJourneyMilestones(milestones) {
+function buildJourneyMilestones(milestones, currentValue) {
   const statusColor = { completed: 'var(--green)', upcoming: 'var(--t4)', active: 'var(--blue)' };
   const statusIcon  = { completed: '✓', upcoming: '○', active: '◈' };
   const items = milestones.map((m, i) => {
-    const color = statusColor[m.status] || 'var(--t4)';
-    const icon  = statusIcon[m.status]  || '○';
-    return `<div class="jmile-item">
+    const reached = currentValue != null && m.target != null && currentValue >= m.target;
+    const status  = reached ? 'completed' : m.status;
+    const color = reached ? 'var(--green)' : (statusColor[status] || 'var(--t4)');
+    const icon  = reached ? '✓' : (statusIcon[status] || '○');
+    return `<div class="jmile-item${reached ? ' jmile-reached' : ''}">
       <div class="jmile-icon" style="color:${color};border-color:${color}">${icon}</div>
       ${i < milestones.length - 1 ? '<div class="jmile-connector"></div>' : ''}
       <div class="jmile-info">
-        <div class="jmile-target" style="color:${color}">${fmtDollar(m.target)}</div>
+        <div class="jmile-target" style="color:${color}">${fmtDollar(m.target)}${reached ? ' <span class="jmile-reached-tag">✓ REACHED</span>' : ''}</div>
         <div class="jmile-label">${escHtml(m.label)}</div>
-        <div class="jmile-date">${escHtml(m.projected_date)}</div>
+        <div class="jmile-date">${reached ? 'Cleared — portfolio at ' + fmtDollar(currentValue) : escHtml(m.projected_date)}</div>
         ${m.notes ? `<div class="jmile-notes">${escHtml(m.notes)}</div>` : ''}
       </div>
     </div>`;
@@ -1318,6 +1170,27 @@ function formatTime(isoStr) {
       hour: 'numeric', minute: '2-digit', hour12: true
     }) + ' PDT';
   } catch { return isoStr; }
+}
+function fmtMonthsLabel(m) {
+  if (m < 12) return m + ' mo';
+  const y = Math.floor(m / 12), r = m % 12;
+  return r === 0 ? y + ' yr' : y + ' yr ' + r + ' mo';
+}
+function addMonths(dateStr, m) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCMonth(d.getUTCMonth() + Math.round(m));
+  return d;
+}
+function fmtShortMonth(startDate, m) {
+  try {
+    const d = addMonths(startDate, m);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[d.getUTCMonth()] + " '" + String(d.getUTCFullYear()).slice(2);
+  } catch { return m + 'mo'; }
+}
+function fmtReachDate(startDate, m) {
+  if (!startDate) return fmtMonthsLabel(m);
+  return fmtShortMonth(startDate, m) + ' (' + fmtMonthsLabel(m) + ')';
 }
 function escHtml(str) {
   if (!str) return '';

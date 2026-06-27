@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.5
+   C.L.U. — Cognitive Logic Unit — Report Renderer v4.6
    "Blade Runner Transmission"
    ============================================================ */
 
@@ -11,14 +11,24 @@ const JOURNEY_URL       = './data/projected_journey.json';
 /* Per-position slice colors: icy blue, magenta, orange, yellow, red, lime, violet, teal */
 const POS_COLORS = ['#7EC8FF','#e040fb','#ff9a44','#ffdd00','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];
 
+/* Ticker Engine — free Twelve Data key. Get your own (free, no card) at https://twelvedata.com.
+   'demo' only returns sample symbols (e.g. AAPL). Replace to unlock any ticker. */
+const TD_API_KEY = 'demo';
+const TD_BASE    = 'https://api.twelvedata.com';
+const ENGINE_TTL = 10 * 60 * 1000;
+const ENGINE_CACHE = {};
+
 let currentTab    = 'today';
 let journeyLoaded = false;
+let engineInit    = false;
+let engineBusy    = false;
 
 /* ─── INIT ────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
   startClock();
   initTabs();
+  initEngine();
   loadReport();
 });
 
@@ -57,6 +67,7 @@ function switchTab(tab) {
   });
   if (tab === 'archive') loadArchive();
   if (tab === 'journey') loadJourney();
+  if (tab === 'engine') { const i = document.getElementById('engine-input'); if (i) i.focus(); }
 }
 
 /* ─── DATA LOADING ───────────────────────────── */
@@ -80,7 +91,7 @@ function showState(state) {
   document.getElementById('report-root').classList.toggle('hidden',   state !== 'report');
 }
 
-/* ─── REPORT RENDERER ───────────────────────────── */
+/* ─── REPORT RENDERER ─────────────────────────── */
 
 function renderReport(d) {
   const { meta, portfolio, positions, earnings,
@@ -200,7 +211,7 @@ function renderAccountOverview(p, positions) {
     </div>`;
 }
 
-/* ─── CLU'S THOUGHTS ───────────────────────────── */
+/* ─── CLU'S THOUGHTS ──────────────────────────── */
 
 function renderThoughts(thoughts) {
   const el = document.getElementById('rpt-thoughts');
@@ -978,6 +989,308 @@ function buildJourneyRecap(recap) {
       </div>
       ${recap.summary ? `<div class="jrecap-summary">${escHtml(recap.summary)}</div>` : ''}
     </div>
+  </div>`;
+}
+
+/* ============================================================
+   TICKER ENGINE  (CLU Quant Core) — BETA
+   Deterministic quant scoring. No AI/Claude. Data: Twelve Data.
+   ============================================================ */
+
+function initEngine() {
+  if (engineInit) return;
+  engineInit = true;
+  const input = document.getElementById('engine-input');
+  const go    = document.getElementById('engine-go');
+  if (!input || !go) return;
+  const run = () => runTickerEngine(input.value);
+  go.addEventListener('click', run);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+  document.querySelectorAll('.engine-chip').forEach(c =>
+    c.addEventListener('click', () => { input.value = c.dataset.sym; runTickerEngine(c.dataset.sym); }));
+  if (TD_API_KEY === 'demo') {
+    const hdr = document.querySelector('.engine-header');
+    if (hdr) {
+      const note = document.createElement('div');
+      note.className = 'engine-demo-note';
+      note.innerHTML = '⚠ <strong>Demo data key active</strong> — only sample tickers (e.g. AAPL) return data. Add a free Twelve Data API key in app.js to analyze any symbol.';
+      hdr.appendChild(note);
+    }
+  }
+}
+
+async function tdFetch(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  const res = await fetch(`${TD_BASE}/${path}${sep}apikey=${encodeURIComponent(TD_API_KEY)}`);
+  let json;
+  try { json = await res.json(); } catch { throw new Error('Bad response from data provider.'); }
+  if (json && (json.status === 'error' || (typeof json.code === 'number' && json.code >= 400))) {
+    const msg = json.message || 'Data provider error.';
+    if (json.code === 429) throw new Error('Rate limit reached — wait a moment and try again.');
+    if (/api key|apikey|grow|plan/i.test(msg) && TD_API_KEY === 'demo')
+      throw new Error('This symbol needs a real API key. The built-in demo key only covers sample tickers like AAPL — add a free Twelve Data key to unlock any ticker.');
+    throw new Error(msg);
+  }
+  return json;
+}
+
+async function runTickerEngine(raw) {
+  const symbol = (raw || '').trim().toUpperCase();
+  const stateEl  = document.getElementById('engine-state');
+  const resultEl = document.getElementById('engine-result');
+  if (!symbol || !resultEl || engineBusy) return;
+
+  if (symbol.includes('/') || /^(BTC|ETH|DOGE|XRP|SOL|ADA|USDT|USDC|SHIB|LTC|BNB)([-/]|$)/.test(symbol)) {
+    showEngineMessage('— No Crypto / FX', "CLU's mandate excludes crypto and forex. Enter an individual stock, ETF, or index (e.g. AAPL, SPY, QQQ).", true);
+    return;
+  }
+
+  engineBusy = true;
+  if (stateEl) stateEl.classList.add('hidden');
+  resultEl.classList.remove('hidden');
+  resultEl.innerHTML = `<div class="empty-state"><div class="loader"></div><p>CLU is analyzing <strong style="color:var(--blue)">${escHtml(symbol)}</strong>…</p></div>`;
+
+  try {
+    let data = ENGINE_CACHE[symbol];
+    if (!data || Date.now() - data.t > ENGINE_TTL) {
+      const [quote, ts] = await Promise.all([
+        tdFetch(`quote?symbol=${encodeURIComponent(symbol)}`).catch(() => null),
+        tdFetch(`time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=260`)
+      ]);
+      data = { t: Date.now(), quote: quote, ts: ts };
+      ENGINE_CACHE[symbol] = data;
+    }
+    const analysis = analyzeTicker(symbol, data.quote, data.ts);
+    if (!analysis) throw new Error('Not enough price history to analyze this symbol.');
+    if (analysis.blocked) { showEngineMessage('— Unsupported Asset', analysis.blocked, true); engineBusy = false; return; }
+    resultEl.innerHTML = renderEngineResult(analysis);
+  } catch (e) {
+    showEngineMessage('Analysis Unavailable', (e && e.message) || 'Could not analyze this ticker.', true);
+  }
+  engineBusy = false;
+}
+
+function showEngineMessage(title, sub, isError) {
+  const resultEl = document.getElementById('engine-result');
+  const stateEl  = document.getElementById('engine-state');
+  if (stateEl) stateEl.classList.add('hidden');
+  if (!resultEl) return;
+  resultEl.classList.remove('hidden');
+  resultEl.innerHTML = `<div class="empty-state">
+    <div class="empty-icon" style="color:${isError ? 'var(--neon-orange)' : 'var(--t4)'}">⚠</div>
+    <p class="empty-title" style="${isError ? 'color:var(--neon-orange)' : ''}">${escHtml(title)}</p>
+    <p class="empty-sub">${escHtml(sub)}</p>
+  </div>`;
+}
+
+function emaSeries(a, n) { const k = 2 / (n + 1); const o = [a[0]]; for (let i = 1; i < a.length; i++) o.push(a[i] * k + o[i - 1] * (1 - k)); return o; }
+function smaCalc(a, n) { if (a.length < n) return null; let s = 0; for (let i = a.length - n; i < a.length; i++) s += a[i]; return s / n; }
+function pctReturn(a, n) { if (a.length <= n) return null; const p = a[a.length - 1 - n]; return p ? (a[a.length - 1] / p - 1) * 100 : null; }
+function rsiCalc(a, p) { p = p || 14; if (a.length < p + 1) return null; let g = 0, l = 0; for (let i = a.length - p; i < a.length; i++) { const d = a[i] - a[i - 1]; if (d >= 0) g += d; else l -= d; } const ag = g / p, al = l / p; if (al === 0) return 100; return 100 - 100 / (1 + ag / al); }
+function annualVol(a, win) { win = win || 30; if (a.length < win + 1) win = a.length - 1; if (win < 2) return null; const r = []; for (let i = a.length - win; i < a.length; i++) r.push(a[i] / a[i - 1] - 1); const m = r.reduce((x, y) => x + y, 0) / r.length; const v = r.reduce((x, y) => x + (y - m) * (y - m), 0) / r.length; return Math.sqrt(v) * Math.sqrt(252) * 100; }
+function macdHist(a) { if (a.length < 35) return null; const e12 = emaSeries(a, 12), e26 = emaSeries(a, 26); const macd = a.map((_, i) => e12[i] - e26[i]); const sig = emaSeries(macd, 9); return macd[macd.length - 1] - sig[sig.length - 1]; }
+function avgTail(a, n) { n = Math.min(n, a.length); if (!n) return 0; let s = 0; for (let i = a.length - n; i < a.length; i++) s += a[i]; return s / n; }
+
+function suggestStyle(conviction, vol, rsiVal, aboveSMA200, sma50above200) {
+  if (conviction < 45) return { label: 'Avoid / Reduce', note: 'Signals are weak — trend and momentum favor staying out until the chart repairs.' };
+  if (conviction < 60) return { label: 'Hold / Watch', note: 'Mixed signals — hold existing exposure and wait for confirmation before adding.' };
+  if (aboveSMA200 && sma50above200 && vol < 40) {
+    if (vol < 22) return { label: 'Long-Term Buy / DRIP', note: 'Steady, low-volatility uptrend — well suited to long-horizon accumulation and dividend reinvestment.' };
+    return { label: 'Long-Term Buy', note: 'Established uptrend above the 200-day — favorable for longer-horizon position holds.' };
+  }
+  if (vol >= 40 || rsiVal > 72) return { label: 'Short-Term / Swing', note: 'Momentum is strong but volatile or extended — better suited to a shorter-term trade with tight risk control.' };
+  return { label: 'Position Buy', note: 'Constructive setup — reasonable to scale in with a defined stop-loss.' };
+}
+
+function analyzeTicker(symbol, quote, ts) {
+  if (!ts || !ts.values || !ts.values.length) return null;
+  const type = (quote && quote.type) || (ts.meta && ts.meta.type) || '';
+  if (/digital currency|physical currency|crypto/i.test(type))
+    return { blocked: 'CLU does not analyze crypto or currencies. Enter a stock, ETF, or index.' };
+
+  const rows = ts.values.slice().reverse();
+  const closes = rows.map(r => parseFloat(r.close)).filter(v => !isNaN(v));
+  const vols   = rows.map(r => parseFloat(r.volume)).filter(v => !isNaN(v));
+  if (closes.length < 30) return null;
+
+  const price = quote && quote.close ? parseFloat(quote.close) : closes[closes.length - 1];
+  const prevClose = quote && quote.previous_close ? parseFloat(quote.previous_close) : closes[closes.length - 2];
+  const dayChgPct = quote && quote.percent_change != null ? parseFloat(quote.percent_change)
+                    : (prevClose ? (price / prevClose - 1) * 100 : 0);
+
+  const sma20 = smaCalc(closes, 20), sma50 = smaCalc(closes, 50), sma200 = smaCalc(closes, 200);
+  const ret1m = pctReturn(closes, 21), ret3m = pctReturn(closes, 63), ret6m = pctReturn(closes, 126);
+  const rsiVal = rsiCalc(closes, 14);
+  const vol = annualVol(closes, 30);
+  const macdH = macdHist(closes);
+  const tail = closes.slice(-252);
+  const hi52 = quote && quote.fifty_two_week && quote.fifty_two_week.high ? parseFloat(quote.fifty_two_week.high) : Math.max.apply(null, tail);
+  const lo52 = quote && quote.fifty_two_week && quote.fifty_two_week.low ? parseFloat(quote.fifty_two_week.low) : Math.min.apply(null, tail);
+  const pos52 = (hi52 > lo52) ? ((price - lo52) / (hi52 - lo52)) * 100 : 50;
+  const volTrend = (vols.length >= 60) ? (avgTail(vols, 10) / avgTail(vols, 60) - 1) * 100 : null;
+
+  const clamp = (x) => Math.max(-1, Math.min(1, x));
+  const factors = [];
+  function F(label, state, weight, detail) { factors.push({ label: label, state: state, weight: weight, detail: detail }); }
+
+  if (sma200 != null) F('Price vs 200-day trend', price >= sma200 ? 1 : -1, 2.0, price >= sma200 ? `Above 200-day (${fmtDollar(sma200)})` : `Below 200-day (${fmtDollar(sma200)})`);
+  if (sma50 != null)  F('Price vs 50-day trend',  price >= sma50 ? 1 : -1, 1.5, price >= sma50 ? `Above 50-day (${fmtDollar(sma50)})` : `Below 50-day (${fmtDollar(sma50)})`);
+  if (sma50 != null && sma200 != null) F('50 / 200 cross', sma50 >= sma200 ? 1 : -1, 1.5, sma50 >= sma200 ? 'Golden cross (50 > 200)' : 'Death cross (50 < 200)');
+  if (sma20 != null)  F('Short-term (20-day)', price >= sma20 ? 1 : -1, 1.0, price >= sma20 ? `Above 20-day (${fmtDollar(sma20)})` : `Below 20-day (${fmtDollar(sma20)})`);
+  if (ret3m != null)  F('3-month momentum', clamp(ret3m / 15), 2.0, `${ret3m >= 0 ? '+' : ''}${ret3m.toFixed(1)}% over 3 mo`);
+  if (ret6m != null)  F('6-month momentum', clamp(ret6m / 30), 1.5, `${ret6m >= 0 ? '+' : ''}${ret6m.toFixed(1)}% over 6 mo`);
+  if (ret1m != null)  F('1-month momentum', clamp(ret1m / 10), 1.0, `${ret1m >= 0 ? '+' : ''}${ret1m.toFixed(1)}% over 1 mo`);
+  if (rsiVal != null) {
+    let st, dt;
+    if (rsiVal >= 80) { st = -0.6; dt = `RSI ${rsiVal.toFixed(0)} — overbought`; }
+    else if (rsiVal >= 70) { st = 0.1; dt = `RSI ${rsiVal.toFixed(0)} — strong, extended`; }
+    else if (rsiVal >= 55) { st = 0.7; dt = `RSI ${rsiVal.toFixed(0)} — healthy momentum`; }
+    else if (rsiVal >= 45) { st = 0.0; dt = `RSI ${rsiVal.toFixed(0)} — neutral`; }
+    else if (rsiVal >= 30) { st = -0.4; dt = `RSI ${rsiVal.toFixed(0)} — weak`; }
+    else { st = -0.4; dt = `RSI ${rsiVal.toFixed(0)} — oversold (possible bounce)`; }
+    F('RSI (14)', st, 1.2, dt);
+  }
+  if (macdH != null) F('MACD histogram', macdH >= 0 ? 0.7 : -0.7, 1.0, macdH >= 0 ? 'Bullish (above signal)' : 'Bearish (below signal)');
+  if (volTrend != null) F('Volume trend', clamp(volTrend / 40), 0.5, `${volTrend >= 0 ? '+' : ''}${volTrend.toFixed(0)}% 10d vs 60d avg`);
+
+  let wsum = 0, w = 0;
+  factors.forEach(f => { wsum += f.state * f.weight; w += Math.abs(f.weight); });
+  const raw = w ? wsum / w : 0;
+  const conviction = Math.round((raw + 1) / 2 * 100);
+
+  let rec;
+  if (conviction >= 72) rec = { label: 'STRONG BUY', cls: 'sig-strong-buy' };
+  else if (conviction >= 60) rec = { label: 'BUY', cls: 'sig-buy' };
+  else if (conviction >= 45) rec = { label: 'HOLD', cls: 'sig-hold' };
+  else if (conviction >= 33) rec = { label: 'REDUCE', cls: 'sig-reduce' };
+  else rec = { label: 'SELL / AVOID', cls: 'sig-sell' };
+
+  let risk;
+  if (vol == null) risk = { label: 'N/A', cls: 'risk-mod' };
+  else if (vol < 22) risk = { label: 'LOW', cls: 'risk-low' };
+  else if (vol < 40) risk = { label: 'MODERATE', cls: 'risk-mod' };
+  else if (vol < 60) risk = { label: 'HIGH', cls: 'risk-high' };
+  else risk = { label: 'VERY HIGH', cls: 'risk-vhigh' };
+
+  const aboveSMA200 = sma200 != null && price >= sma200;
+  const sma50above200 = sma50 != null && sma200 != null && sma50 >= sma200;
+  const style = suggestStyle(conviction, vol == null ? 30 : vol, rsiVal == null ? 50 : rsiVal, aboveSMA200, sma50above200);
+
+  return {
+    symbol: symbol,
+    name: (quote && quote.name) || symbol,
+    exchange: (quote && quote.exchange) || (ts.meta && ts.meta.exchange) || '',
+    type: type || 'Equity',
+    asOf: (quote && quote.datetime) || (rows.length ? rows[rows.length - 1].datetime : ''),
+    marketOpen: quote ? quote.is_market_open : null,
+    price: price, dayChgPct: dayChgPct,
+    metrics: { sma20: sma20, sma50: sma50, sma200: sma200, ret1m: ret1m, ret3m: ret3m, ret6m: ret6m, rsi: rsiVal, vol: vol, pos52: pos52 },
+    factors: factors, conviction: conviction, rec: rec, risk: risk, style: style,
+    closes: closes.slice(-130)
+  };
+}
+
+function engineGauge(score) {
+  const R = 70, cx = 90, cy = 90, sw = 14;
+  const ang = Math.PI - (score / 100) * Math.PI;
+  const x = cx + R * Math.cos(ang), y = cy - R * Math.sin(ang);
+  const lx = cx - R, ly = cy, rx = cx + R, ry = cy;
+  const color = score >= 72 ? '#00ff88' : score >= 60 ? '#7EC8FF' : score >= 45 ? '#ffdd00' : score >= 33 ? '#ff9a44' : '#ff5a7a';
+  return `<svg viewBox="0 0 180 108" width="180" xmlns="http://www.w3.org/2000/svg">
+    <path d="M${lx},${ly} A${R},${R} 0 0,1 ${rx},${ry}" fill="none" stroke="rgba(100,180,255,0.12)" stroke-width="${sw}" stroke-linecap="round"/>
+    <path d="M${lx},${ly} A${R},${R} 0 0,1 ${x.toFixed(1)},${y.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${color}aa)"/>
+    <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="30" font-weight="700" fill="${color}" font-family="'Orbitron',monospace">${score}</text>
+    <text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="9" fill="rgba(168,216,255,0.7)" letter-spacing="2" font-family="monospace">CONVICTION</text>
+  </svg>`;
+}
+
+function engineSparkline(closes) {
+  if (!closes || closes.length < 2) return '';
+  const VW = 820, VH = 90, pad = 6;
+  const min = Math.min.apply(null, closes), max = Math.max.apply(null, closes);
+  const xf = i => pad + (i / (closes.length - 1)) * (VW - 2 * pad);
+  const yf = v => pad + (VH - 2 * pad) - ((v - min) / ((max - min) || 1)) * (VH - 2 * pad);
+  const pts = closes.map((v, i) => `${xf(i).toFixed(1)},${yf(v).toFixed(1)}`).join(' ');
+  const up = closes[closes.length - 1] >= closes[0];
+  const col = up ? '#00ff88' : '#ff5a7a';
+  const area = `M${xf(0).toFixed(1)},${(VH - pad).toFixed(1)} L${pts.split(' ').join(' L')} L${xf(closes.length - 1).toFixed(1)},${(VH - pad).toFixed(1)} Z`;
+  return `<div class="engine-spark"><svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="egSpark" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity="0.28"/><stop offset="100%" stop-color="${col}" stop-opacity="0.01"/></linearGradient></defs>
+    <path d="${area}" fill="url(#egSpark)"/>
+    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  </svg><span class="engine-spark-label">~6-month price history</span></div>`;
+}
+
+function renderEngineResult(a) {
+  const m = a.metrics;
+  const dayCls = a.dayChgPct >= 0 ? 'col-change-pos' : 'col-change-neg';
+  const daySign = a.dayChgPct >= 0 ? '+' : '';
+  const gauge = engineGauge(a.conviction);
+  const spark = engineSparkline(a.closes);
+
+  const factorRows = a.factors.map(f => {
+    const cls = f.state > 0.15 ? 'ef-pos' : f.state < -0.15 ? 'ef-neg' : 'ef-neu';
+    const icon = f.state > 0.15 ? '✓' : f.state < -0.15 ? '✕' : '–';
+    return `<div class="engine-factor ${cls}">
+      <span class="ef-icon">${icon}</span>
+      <span class="ef-label">${escHtml(f.label)}</span>
+      <span class="ef-detail">${escHtml(f.detail)}</span>
+    </div>`;
+  }).join('');
+
+  const pct = (v) => v == null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+  const pcls = (v) => v == null ? '' : (v >= 0 ? 'col-change-pos' : 'col-change-neg');
+  const metric = (label, val, cls) => `<div class="em-item"><div class="em-label">${label}</div><div class="em-val ${cls || ''}">${val}</div></div>`;
+
+  const metricsGrid = `<div class="engine-metrics">
+    ${metric('1-Mo Return', pct(m.ret1m), pcls(m.ret1m))}
+    ${metric('3-Mo Return', pct(m.ret3m), pcls(m.ret3m))}
+    ${metric('6-Mo Return', pct(m.ret6m), pcls(m.ret6m))}
+    ${metric('RSI (14)', m.rsi == null ? '—' : m.rsi.toFixed(0))}
+    ${metric('Volatility (ann.)', m.vol == null ? '—' : m.vol.toFixed(0) + '%')}
+    ${metric('52-Wk Range Pos.', m.pos52.toFixed(0) + '%')}
+    ${metric('20-Day SMA', m.sma20 == null ? '—' : fmtDollar(m.sma20))}
+    ${metric('50-Day SMA', m.sma50 == null ? '—' : fmtDollar(m.sma50))}
+    ${metric('200-Day SMA', m.sma200 == null ? '—' : fmtDollar(m.sma200))}
+  </div>`;
+
+  const marketTag = a.marketOpen === false ? ' · market closed' : a.marketOpen === true ? ' · market open' : '';
+
+  return `<div class="engine-card">
+    <div class="engine-result-head">
+      <div class="erh-left">
+        <div class="erh-symbol">${escHtml(a.symbol)}</div>
+        <div class="erh-name">${escHtml(a.name)}</div>
+        <div class="erh-meta">${escHtml(a.exchange)} · ${escHtml(a.type)}${marketTag}</div>
+      </div>
+      <div class="erh-right">
+        <div class="erh-price">${fmtDollar(a.price)}</div>
+        <div class="erh-day ${dayCls}">${daySign}${a.dayChgPct.toFixed(2)}% today</div>
+        <div class="erh-asof">as of ${escHtml(a.asOf)}</div>
+      </div>
+    </div>
+
+    <div class="engine-verdict">
+      <div class="ev-gauge">${gauge}</div>
+      <div class="ev-call">
+        <div class="ev-signal ${a.rec.cls}">${a.rec.label}</div>
+        <div class="ev-chips">
+          <span class="ev-chip ev-style">${escHtml(a.style.label)}</span>
+          <span class="ev-chip ${a.risk.cls}">RISK: ${a.risk.label}</span>
+        </div>
+        <div class="ev-note">${escHtml(a.style.note)}</div>
+      </div>
+    </div>
+
+    ${spark}
+    ${metricsGrid}
+
+    <div class="engine-factors-wrap">
+      <div class="jfunds-sub">Signal Breakdown</div>
+      ${factorRows}
+    </div>
+
+    <p class="engine-foot-disclaimer"><strong>BETA · Not financial advice.</strong> Generated by CLU's deterministic quant model (no AI) from historical price data — a starting point for research, not a recommendation. Markets carry risk; you can lose money.</p>
   </div>`;
 }
 

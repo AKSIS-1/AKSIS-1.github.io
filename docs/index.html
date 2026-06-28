@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>C.L.U. — Cognitive Logic Unit</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="theme-v5.css">
 </head>
-<body>
+<body data-tab="today">
 
   <div class="bg-fx"></div>
   <div class="bg-diag"></div>
@@ -19,55 +20,37 @@
     <header class="site-header">
       <div class="header-scan"></div>
 
-      <div class="ticker t-top t-fwd">
-        <div class="ticker-inner">
-          <b>◈</b> CLU — LIVE REPORT <b>◈</b> AGENTIC PROTOCOL: ENGAGED <b>◈</b> COGNITIVE LOGIC UNIT <b>◈</b> ALL SYSTEMS NOMINAL <b>◈</b> GROWTH INTELLIGENCE: ONLINE <b>◈</b> NO CRYPTO <b>◈</b> MAX 25% POSITION <b>◈</b> GUARDRAILS ALWAYS ACTIVE <b>◈</b> AUTONOMOUS INTELLIGENCE: ACTIVE <b>◈</b> CLU — LIVE REPORT <b>◈</b>
+      <div class="masthead">
+        <svg class="logo-svg" viewBox="0 0 120 120" aria-label="CLU identity disc">
+          <path class="lg-ring" d="M52 18.8 A42 42 0 1 0 68 18.8"/>
+          <path class="lg-key" d="M52 19 L52 33 M68 19 L68 33"/>
+          <ellipse class="lg-eq" cx="60" cy="60" rx="42" ry="15"/>
+          <circle class="lg-core" cx="60" cy="60" r="27"/>
+        </svg>
+        <div class="mast-div"></div>
+        <div class="mast-wm">
+          <div class="mast-bar"><span class="mast-dot"></span><span class="mast-rule"></span></div>
+          <div class="mast-clu">C&middot;L&middot;U</div>
+          <div class="mast-sub">Cognitive Logic Unit</div>
         </div>
       </div>
 
-      <div class="header-inner">
-        <div class="disc">
-          <div class="g1"></div><div class="g2"></div>
-          <div class="r1">
-            <div class="tk t0"></div><div class="tk t1"></div>
-            <div class="tk t2"></div><div class="tk t3"></div>
-          </div>
-          <div class="r2"></div><div class="r3"></div>
-          <div class="core"></div>
-        </div>
-
-        <div class="v-div"></div>
-
-        <div class="wm">
-          <div class="wm-bar"><div class="wm-dot"></div><div class="wm-rule"></div></div>
-          <div class="wm-clu">C · L · U</div>
-          <div class="wm-sub">Cognitive Logic Unit</div>
-          <div class="wm-sep"></div>
-          <div class="wm-tag">Agentic Intelligence System</div>
-          <div class="wm-bar"><div class="wm-dot"></div><div class="wm-rule"></div></div>
-        </div>
-
-        <div class="header-right">
-          <span class="live-badge"><span class="live-dot"></span>LIVE</span>
-          <span class="status-indicator" id="status-dot" title="System Online"></span>
-          <span class="live-clock" id="live-clock"></span>
+      <div class="statusbar">
+        <div class="sb"><span class="sb-live-dot"></span><span class="sb-live">Live</span></div>
+        <div class="sb">SYS <b>NOMINAL</b></div>
+        <div class="sb">CLOCK <b id="live-clock"></b></div>
+        <div class="sb sb-grow"></div>
+        <div class="sb sb-r" id="refresh-chip" role="button" tabindex="0" title="Reload latest report">
+          <span class="refresh-icon">↻</span> REFRESH
         </div>
       </div>
 
       <nav class="tab-nav">
         <div class="tab-nav-inner">
-          <button class="tab-btn active" data-tab="today">
-            <span class="tab-icon">◈</span> Live Report
-          </button>
-          <button class="tab-btn" data-tab="journey">
-            <span class="tab-icon">↗</span> Projected Journey
-          </button>
-          <button class="tab-btn" data-tab="engine">
-            <span class="tab-icon">⚙</span> Ticker Engine
-          </button>
-          <button class="tab-btn" data-tab="archive">
-            <span class="tab-icon">◷</span> Past Reports
-          </button>
+          <button class="tab-btn active" data-tab="today"><span class="tabnum">01</span> Live Report</button>
+          <button class="tab-btn" data-tab="journey"><span class="tabnum">02</span> Projected Journey</button>
+          <button class="tab-btn" data-tab="engine"><span class="tabnum">03</span> Ticker Engine</button>
+          <button class="tab-btn" data-tab="archive"><span class="tabnum">04</span> Past Reports</button>
         </div>
       </nav>
     </header>
@@ -92,10 +75,6 @@
           <div class="report-header">
             <div class="report-title-row">
               <h1 id="rpt-title" class="report-title"></h1>
-              <button class="refresh-chip" id="refresh-chip" type="button" title="Reload latest report">
-                <span class="refresh-icon">↻</span>
-                <span>Refresh</span>
-              </button>
             </div>
             <div class="report-meta-row">
               <span id="rpt-date"></span>
@@ -195,12 +174,6 @@
       </div>
 
     </main>
-
-    <div class="ticker t-bot t-rev">
-      <div class="ticker-inner">
-        <b>◈</b> END TRANSMISSION <b>◈</b> NEXT SESSION: STANDBY <b>◈</b> AUTONOMOUS PROTOCOL ACTIVE <b>◈</b> CLU AGENTIC INTELLIGENCE SYSTEM <b>◈</b> COGNITIVE LOGIC UNIT <b>◈</b> NO CRYPTO <b>◈</b> GUARDRAILS ALWAYS ACTIVE <b>◈</b> GROWTH INTELLIGENCE: ONLINE <b>◈</b> END TRANSMISSION <b>◈</b>
-      </div>
-    </div>
 
     <footer class="site-footer">
       <span>C.L.U. — Cognitive Logic Unit · Agentic Intelligence System · No crypto · Max 25% position · Guardrails always active</span>

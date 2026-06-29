@@ -7,6 +7,9 @@ const ARCHIVE_REPORT    = (d) => `./data/archive/${d}.json`;
 const JOURNEY_URL       = './data/projected_journey.json';
 const POS_COLORS = ['#6fb8ef','#cf6fe8','#f2a73d','#37e08a','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];
 
+// SECURITY: a browser-delivered key is public by nature and cannot be hidden.
+// ROTATE this at twelvedata.com, restrict it to this domain (HTTP-referrer allowlist)
+// with a low rate cap, and never reuse it server-side. (Flagged in the v1.0 hardening.)
 const TD_API_KEY = '87d9ba92240d465fb2500e093b78b10a';
 const TD_BASE    = 'https://api.twelvedata.com';
 const ENGINE_TTL = 10 * 60 * 1000;
@@ -237,11 +240,20 @@ async function loadJourney(){
   }
 }
 function renderJourney(d){
-  const gc = d.growth_chart || {}; const actual = gc.actual||[], projected = gc.projected||[];
+  const gc = d.growth_chart || {};
+  // v1.0: prefer a time-weighted return index (excludes deposits) when CLU provides
+  // one. Raw account value blends deposits with performance and overstates returns.
+  const twr = gc.return_index || [];
+  const useTWR = twr.length >= 2;
+  const actual = useTWR ? twr : (gc.actual||[]);
+  const projected = useTWR ? [] : (gc.projected||[]);   // no fixed-rate projection line on TWR
   const lastVal = actual.length ? actual[actual.length-1].value : null;
+  const fmtY = useTWR ? (v=>`${(v-1)*100>=0?'+':''}${((v-1)*100).toFixed(0)}%`) : (v=>`$${v.toFixed(0)}`);
   let m = '';
-  m += sec('J1','Growth Trajectory', `actual vs projected${gc.weekly_target_pct?` · +${gc.weekly_target_pct}%/wk target`:''}`);
-  m += card(`<div class="jchart">${svgEquity(actual,projected)}</div><div class="jlegend"><span><i style="background:#cf6fe8"></i>Actual</span><span><i style="background:#cf6fe8;opacity:.5"></i>Projected</span><span style="margin-left:auto;color:var(--t4)">${escHtml(gc.projection_basis||'')}</span></div>`,'J1.1','Equity Curve');
+  const subtitle = useTWR ? 'time-weighted return · excludes deposits' : 'account value · includes deposits';
+  m += sec('J1','Growth Trajectory', subtitle);
+  const basisNote = useTWR ? 'Deposit-adjusted · 1.00 = start' : (gc.projection_basis||'');
+  m += card(`<div class="jchart">${svgEquity(actual,projected,fmtY)}</div><div class="jlegend"><span><i style="background:#cf6fe8"></i>${useTWR?'TWR':'Actual'}</span>${useTWR?'':'<span><i style="background:#cf6fe8;opacity:.5"></i>Projected</span>'}<span style="margin-left:auto;color:var(--t4)">${escHtml(basisNote)}</span></div>`,'J1.1', useTWR?'Return Index':'Equity Curve');
 
   const mile = (d.milestones||[]).map(mil=>{
     const done = lastVal!=null && mil.target!=null && lastVal>=mil.target;
@@ -272,7 +284,8 @@ function renderJourney(d){
   if (eq && !prefersReducedMotion()) requestAnimationFrame(()=>animateEquity(eq));
 }
 
-function svgEquity(actual, projected){
+function svgEquity(actual, projected, fmtY){
+  const fy = fmtY || (v=>'$'+v.toFixed(0));
   const VW=900, VH=210, padL=50, padR=24, padT=22, padB=26;
   const pts = [...actual, ...projected];
   if (pts.length < 2) return '<div class="empty-sub" style="padding:30px">Not enough data to chart.</div>';
@@ -284,7 +297,7 @@ function svgEquity(actual, projected){
   const xf=s=> padL + (maxT===minT?0:(dayMs(s)-minT)/(maxT-minT))*(VW-padL-padR);
   const yf=v=> padT + (VH-padT-padB) - ((v-minV)/(maxV-minV))*(VH-padT-padB);
   let grid=''; for(let i=0;i<=3;i++){ const v=minV+i/3*(maxV-minV); const y=yf(v).toFixed(1);
-    grid+=`<line x1="${padL}" y1="${y}" x2="${VW-padR}" y2="${y}" stroke="rgba(120,170,220,.08)"/><text x="${padL-6}" y="${(+y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#33526b" font-family="monospace">$${v.toFixed(0)}</text>`; }
+    grid+=`<line x1="${padL}" y1="${y}" x2="${VW-padR}" y2="${y}" stroke="rgba(120,170,220,.08)"/><text x="${padL-6}" y="${(+y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#33526b" font-family="monospace">${fy(v)}</text>`; }
   const today = actual.length ? actual[actual.length-1].date : null;
   const aPts = actual.map(p=>`${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`).join(' ');
   const pPts = projected.map(p=>`${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`).join(' ');
@@ -292,8 +305,8 @@ function svgEquity(actual, projected){
   const nowX = today ? xf(today).toFixed(1) : null;
   const nowLine = nowX ? `<line x1="${nowX}" y1="${padT}" x2="${nowX}" y2="${VH-padB}" stroke="rgba(207,111,232,.3)" stroke-dasharray="3 3"/><text x="${(+nowX+6).toFixed(1)}" y="${padT+10}" font-size="8" fill="#cf6fe8" font-family="monospace" letter-spacing="1">NOW</text>` : '';
   const lastA = actual[actual.length-1], lastP = projected[projected.length-1];
-  const la = lastA?`<text x="${(xf(lastA.date)-8).toFixed(1)}" y="${(yf(lastA.value)-9).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="#cf6fe8" font-family="monospace">${fmtDollar(lastA.value)}</text>`:'';
-  const lp = lastP?`<text x="${(xf(lastP.date)).toFixed(1)}" y="${(yf(lastP.value)-8).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(207,111,232,.7)" font-family="monospace">$${lastP.value.toFixed(0)} proj</text>`:'';
+  const la = lastA?`<text x="${(xf(lastA.date)-8).toFixed(1)}" y="${(yf(lastA.value)-9).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="#cf6fe8" font-family="monospace">${fy(lastA.value)}</text>`:'';
+  const lp = lastP?`<text x="${(xf(lastP.date)).toFixed(1)}" y="${(yf(lastP.value)-8).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(207,111,232,.7)" font-family="monospace">${fy(lastP.value)} proj</text>`:'';
   let xl=''; const labs=[dates[0], today, dates[dates.length-1]].filter(Boolean);
   [...new Set(labs)].forEach(dt=>{ const pp=dt.split('-'); xl+=`<text x="${xf(dt).toFixed(1)}" y="${VH-8}" text-anchor="middle" font-size="9" fill="#33526b" font-family="monospace">${pp[1]}/${pp[2]}</text>`;});
   const clipW = (VW-padL-padR).toFixed(1);
@@ -351,7 +364,8 @@ function initFundsSim(gc, milestones){
 }
 function deriveMonthlyRate(gc){ if(gc&&gc.monthly_target_pct) return gc.monthly_target_pct/100;
   const pj=(gc&&gc.projected)||[]; if(pj.length>=2&&pj[0].value>0){ const days=(new Date(pj[pj.length-1].date)-new Date(pj[0].date))/86400000; const mo=days/30.4368; if(mo>0) return Math.pow(pj[pj.length-1].value/pj[0].value,1/mo)-1; }
-  if(gc&&gc.weekly_target_pct) return Math.pow(1+gc.weekly_target_pct/100,4.34812)-1; return 0.05; }
+  if(gc&&gc.weekly_target_pct) return Math.pow(1+gc.weekly_target_pct/100,4.34812)-1;
+  return 0.007; /* honest default ≈ 8.7%/yr (market-like), not a 5%/mo fantasy */ }
 function computeFunds(V0,g,a,freq,months){ let base=V0,boost=V0,contrib=0; if(freq==='once'){boost+=a;contrib=a;} const series=[{m:0,base,boost}]; const per=CPM[freq]||0;
   for(let i=1;i<=months;i++){ base*=(1+g); boost*=(1+g); if(freq!=='once'&&a>0){const add=a*per;boost+=add;contrib+=add;} series.push({m:i,base,boost}); } return {series,contrib,base,boost}; }
 function firstMonth(series,key,t){ for(let i=0;i<series.length;i++) if(series[i][key]>=t) return series[i].m; return -1; }

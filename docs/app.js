@@ -246,16 +246,30 @@ function renderJourney(d){
   const twr = gc.return_index || [];
   const useTWR = twr.length >= 2;
   const actual = useTWR ? twr : (gc.actual||[]);
-  const projected = useTWR ? [] : (gc.projected||[]);   // no fixed-rate projection line on TWR
+  // v1.1: always carry the Growth Trajectory a full year forward so the chart answers
+  // "where could this account be in 12 months?". The projection compounds the last point
+  // of the displayed series at CLU's monthly target rate (account history × CLU rate),
+  // independent of the hand-entered gc.projected points — those only stretch a few weeks.
+  const HORIZON_MONTHS = (gc.projection_horizon_months|0) || 12;
+  const g = deriveMonthlyRate(gc);
+  const projected = projectForward(actual, g, HORIZON_MONTHS);
   // Milestones are dollar targets — always test against the real account value, never
   // the TWR index (a deposit-adjusted ratio centered on 1.00 that would never clear $100).
   const lastVal = (gc.actual||[]).length ? gc.actual[gc.actual.length-1].value : (actual.length ? actual[actual.length-1].value : null);
   const fmtY = useTWR ? (v=>`${(v-1)*100>=0?'+':''}${((v-1)*100).toFixed(0)}%`) : (v=>`$${v.toFixed(0)}`);
   let m = '';
-  const subtitle = useTWR ? 'time-weighted return · excludes deposits' : 'account value · includes deposits';
+  const rateLabel = (g*100).toFixed(2).replace(/\.?0+$/,'')+'%/mo';
+  const subtitle = (useTWR ? 'time-weighted return' : 'account value') + ' · '+fmtMonthsLabel(HORIZON_MONTHS)+' projection @ '+rateLabel;
   m += sec('J1','Growth Trajectory', subtitle);
   const basisNote = useTWR ? 'Deposit-adjusted · 1.00 = start' : (gc.projection_basis||'');
-  m += card(`<div class="jchart">${svgEquity(actual,projected,fmtY)}</div><div class="jlegend"><span><i style="background:#cf6fe8"></i>${useTWR?'TWR':'Actual'}</span>${useTWR?'':'<span><i style="background:#cf6fe8;opacity:.5"></i>Projected</span>'}<span style="margin-left:auto;color:var(--t4)">${escHtml(basisNote)}</span></div>`,'J1.1', useTWR?'Return Index':'Equity Curve');
+  // Possible future value: compound the real account value (not the 1.00-based index) at
+  // CLU's rate over the horizon — performance-only, assuming no new deposits.
+  const futureVal = (lastVal!=null) ? lastVal*Math.pow(1+g, HORIZON_MONTHS) : null;
+  const conf = (gc.projection_confidence||'low').toUpperCase();
+  const fvRow = futureVal!=null
+    ? `<div class="cb" style="margin-top:10px"><div class="met"><div class="m"><div class="l">Now</div><div class="v">${fmtDollar(lastVal)}</div></div><div class="m"><div class="l">Possible in ${fmtMonthsLabel(HORIZON_MONTHS)}</div><div class="v g">${fmtDollar(futureVal)}</div></div><div class="m"><div class="l">Implied Gain</div><div class="v up">+${fmtDollar(futureVal-lastVal)}</div></div><div class="m"><div class="l">Confidence</div><div class="v sm">${conf}</div></div></div><p class="disc" style="margin-top:10px">Performance-only — compounds today's value at the CLU ${rateLabel} target with no new deposits. Not a guarantee; markets vary. Use the Added-Funds Sim below to layer in contributions.</p></div>`
+    : '';
+  m += card(`<div class="jchart">${svgEquity(actual,projected,fmtY)}</div><div class="jlegend"><span><i style="background:#cf6fe8"></i>${useTWR?'TWR':'Actual'}</span><span><i style="background:#cf6fe8;opacity:.5"></i>${fmtMonthsLabel(HORIZON_MONTHS)} projection</span><span style="margin-left:auto;color:var(--t4)">${escHtml(basisNote)}</span></div>${fvRow}`,'J1.1', useTWR?'Return Index · projected':'Equity Curve · projected');
 
   const mile = (d.milestones||[]).map(mil=>{
     const done = lastVal!=null && mil.target!=null && lastVal>=mil.target;
@@ -310,8 +324,19 @@ function svgEquity(actual, projected, fmtY){
   const lastA = actual[actual.length-1], lastP = projected[projected.length-1];
   const la = lastA?`<text x="${(xf(lastA.date)-8).toFixed(1)}" y="${(yf(lastA.value)-9).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="#cf6fe8" font-family="monospace">${fy(lastA.value)}</text>`:'';
   const lp = lastP?`<text x="${(xf(lastP.date)).toFixed(1)}" y="${(yf(lastP.value)-8).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(207,111,232,.7)" font-family="monospace">${fy(lastP.value)} proj</text>`:'';
-  let xl=''; const labs=[dates[0], today, dates[dates.length-1]].filter(Boolean);
-  [...new Set(labs)].forEach(dt=>{ const pp=dt.split('-'); xl+=`<text x="${xf(dt).toFixed(1)}" y="${VH-8}" text-anchor="middle" font-size="9" fill="#33526b" font-family="monospace">${pp[1]}/${pp[2]}</text>`;});
+  // X-axis labels. Over a long (≈1-yr projection) span, evenly-spaced quarterly ticks in
+  // "Mon 'YY" form read clearly; the tight day-apart start/now MM/DD labels would otherwise
+  // overlap and the projection end would collide with the now date (both 06/26, different years).
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const spanDays=(maxT-minT)/86400000, longSpan=spanDays>120;
+  const fmtX = dt=>{ const p=dt.split('-'); return longSpan?`${MON[+p[1]-1]} '${p[0].slice(2)}`:`${p[1]}/${p[2]}`; };
+  let labs;
+  if(longSpan){
+    labs=[dates[0]]; const s=new Date(dates[0]+'T00:00:00Z');
+    for(const mo of [3,6,9]){ const t=new Date(s); t.setUTCMonth(t.getUTCMonth()+mo); const iso=t.toISOString().slice(0,10); if(dayMs(iso)<maxT) labs.push(iso); }
+    labs.push(dates[dates.length-1]);   // NOW is marked by its own vertical line, so skip the near-start now label
+  } else { labs=[dates[0], today, dates[dates.length-1]].filter(Boolean); }
+  let xl=''; [...new Set(labs)].forEach(dt=>{ xl+=`<text x="${xf(dt).toFixed(1)}" y="${VH-8}" text-anchor="middle" font-size="9" fill="#33526b" font-family="monospace">${fmtX(dt)}</text>`;});
   const clipW = (VW-padL-padR).toFixed(1);
   // Data (lines + dots + value labels) is wiped on left→right via an expanding clip rect.
   // Grid + axis labels stay static; the NOW marker fades in after the wipe completes.
@@ -364,6 +389,19 @@ function initFundsSim(gc, milestones){
   }
   freqEl.querySelectorAll('.fb').forEach(b=>b.addEventListener('click',()=>{ freq=b.dataset.f; freqEl.querySelectorAll('.fb').forEach(x=>x.classList.toggle('on',x===b)); recompute(); }));
   amt.addEventListener('input',recompute); range.addEventListener('input',recompute); recompute();
+}
+// Carry a series forward `months` months at a fixed monthly rate. Returns the anchor
+// (last actual point) first so the dashed projection line joins the solid history line.
+function projectForward(series, g, months){
+  if(!series||!series.length||!(months>0)) return [];
+  const last = series[series.length-1];
+  const t0 = new Date(last.date+'T00:00:00Z');
+  const out = [{date:last.date, value:last.value}];
+  for(let i=1;i<=months;i++){
+    const dt = new Date(t0); dt.setUTCMonth(dt.getUTCMonth()+i);
+    out.push({date:dt.toISOString().slice(0,10), value:last.value*Math.pow(1+g,i)});
+  }
+  return out;
 }
 function deriveMonthlyRate(gc){ if(gc&&gc.monthly_target_pct) return gc.monthly_target_pct/100;
   const pj=(gc&&gc.projected)||[]; if(pj.length>=2&&pj[0].value>0){ const days=(new Date(pj[pj.length-1].date)-new Date(pj[0].date))/86400000; const mo=days/30.4368; if(mo>0) return Math.pow(pj[pj.length-1].value/pj[0].value,1/mo)-1; }

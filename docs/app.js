@@ -236,7 +236,7 @@ async function loadJourney(){
     renderJourney(journeyData);
     if (document.body.dataset.tab === 'journey') setStatusBar('journey');
   } catch {
-    root.innerHTML = `<div class="empty-state"><div class="empty-icon">↗</div><p class="empty-title">No Journey Data Yet</p><p class="empty-sub">CLU will generate the first Projected Journey report on Friday.</p></div>`;
+    root.innerHTML = `<div class="empty-state"><div class="empty-icon">↗</div><p class="empty-title">No Journey Data Yet</p><p class="empty-sub">CLU refreshes the Projected Journey at the Mon/Wed/Fri closing sessions.</p></div>`;
   }
 }
 function renderJourney(d){
@@ -247,7 +247,9 @@ function renderJourney(d){
   const useTWR = twr.length >= 2;
   const actual = useTWR ? twr : (gc.actual||[]);
   const projected = useTWR ? [] : (gc.projected||[]);   // no fixed-rate projection line on TWR
-  const lastVal = actual.length ? actual[actual.length-1].value : null;
+  // Milestones are dollar targets — always test against the real account value, never
+  // the TWR index (a deposit-adjusted ratio centered on 1.00 that would never clear $100).
+  const lastVal = (gc.actual||[]).length ? gc.actual[gc.actual.length-1].value : (actual.length ? actual[actual.length-1].value : null);
   const fmtY = useTWR ? (v=>`${(v-1)*100>=0?'+':''}${((v-1)*100).toFixed(0)}%`) : (v=>`$${v.toFixed(0)}`);
   let m = '';
   const subtitle = useTWR ? 'time-weighted return · excludes deposits' : 'account value · includes deposits';
@@ -269,8 +271,9 @@ function renderJourney(d){
   m += `<div class="grid" style="grid-template-columns:1.25fr 1fr">${mcard}${fcard}</div>`;
 
   if ((d.next_decisions||[]).length){
-    m += sec('J4','Next Likely Decisions');
-    m += d.next_decisions.map(dec=>`<div class="intel"><span class="tag">${escHtml((dec.type||'').toUpperCase())}</span><p><b style="color:var(--ac)">${escHtml(dec.ticker)}</b> — ${escHtml(dec.thesis)} <span style="color:var(--t4)">· trigger: ${escHtml(dec.trigger)}</span></p></div>`).join('');
+    const decisions = d.next_decisions.slice(0,3);   // top priority only — keep the queue tight
+    m += sec('J4','Decision Queue', decisions.length+' on deck');
+    m += decisions.map(dec=>`<div class="intel"><span class="tag">${escHtml((dec.type||'').toUpperCase())}</span><p><b style="color:var(--ac)">${escHtml(dec.ticker)}</b> — ${escHtml(dec.thesis)} <span style="color:var(--t4)">· trigger: ${escHtml(dec.trigger)}</span></p></div>`).join('');
   }
   if (d.weekly_recap){
     const rc=d.weekly_recap; const c=(rc.change_dollars||0)>=0;
@@ -357,7 +360,7 @@ function initFundsSim(gc, milestones){
       <div class="kpi"><div class="l">Difference</div><div class="v sm" style="color:var(--ac)">+${fmtDollar(delta)}</div></div>
       <div class="kpi"><div class="l">You Contribute</div><div class="v sm">${fmtDollar(sim.contrib)}</div></div>
       ${mrow}
-    </div><p class="disc" style="margin-top:12px">Projection only — assumes ${(g*100).toFixed(1)}%/mo compounding. Markets vary.</p></div>`;
+    </div><p class="disc" style="margin-top:12px">Projection only — assumes ${(g*100).toFixed(2).replace(/\.?0+$/,'')}%/mo compounding. Markets vary.</p></div>`;
   }
   freqEl.querySelectorAll('.fb').forEach(b=>b.addEventListener('click',()=>{ freq=b.dataset.f; freqEl.querySelectorAll('.fb').forEach(x=>x.classList.toggle('on',x===b)); recompute(); }));
   amt.addEventListener('input',recompute); range.addEventListener('input',recompute); recompute();

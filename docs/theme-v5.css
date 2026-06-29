@@ -83,6 +83,11 @@ body[data-tab="archive"] { --ac:#f2a73d; --acDim:#946224; --acBg:rgba(242,167,61
 .jf .slider::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--ac); border:2px solid #06121f; box-shadow:0 0 10px var(--ac); cursor:pointer; }
 .hzlabel{ color:var(--ac); font-weight:700; }
 .gauge svg{ display:block; }
+/* conviction gauge "power-on" lock-in flicker (engine) */
+.cgauge .cgauge-arc{ transition:none; }
+.cgauge.lit .cgauge-num{ animation:cgauge-lock .42s steps(1,end) both; }
+@keyframes cgauge-lock{ 0%{opacity:.45} 18%{opacity:1} 34%{opacity:.55} 52%{opacity:1} 72%{opacity:.8} 100%{opacity:1} }
+@media (prefers-reduced-motion: reduce){ .cgauge.lit .cgauge-num{ animation:none; } }
 
 /* section spacing — separate stacked cards/sections from the next header */
 .main > .card{ margin-bottom:22px; }

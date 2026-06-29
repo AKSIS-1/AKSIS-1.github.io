@@ -18,6 +18,9 @@ let journeyLoaded = false, archiveLoaded = false, engineReady = false, engineBus
 document.addEventListener('DOMContentLoaded', () => {
   startClock(); initTabs(); buildEngineShell();
   setStatusBar('today'); loadReport();
+  window.addEventListener('hashchange', onArchiveHashChange);
+  // shared deep-link (#YYYY-MM-DD) → jump straight to the Archive tab on load
+  if(/^\d{4}-\d{2}-\d{2}/.test((location.hash||'').replace(/^#/,''))) switchTab('archive');
 });
 
 function startClock(){ updateClock(); setInterval(updateClock, 1000); }
@@ -174,12 +177,48 @@ function renderReport(d){
   }
 
   document.getElementById('report-root').innerHTML = `<div class="wrap">${rail('LIVE&nbsp;REPORT&nbsp;//&nbsp;01')}<div class="main">${m}</div></div>`;
+  const ring = document.querySelector('#report-root .allocring');
+  if (ring) requestAnimationFrame(()=>initAllocRing(ring));
 }
 
 function svgAllocRing(segs,total){
   const r=42, C=2*Math.PI*r; let off=0;
-  const arcs = segs.map(s=>{ const len=(s.value/total)*C; const a=`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.color}" stroke-width="13" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`; off+=len; return a; }).join('');
-  return `<svg viewBox="0 0 120 120" width="96"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#01101f" stroke-width="13"/>${arcs}</svg>`;
+  const arcs = segs.map(s=>{ const len=(s.value/total)*C; const pct=Math.round(s.value/total*100);
+    const a=`<circle class="aslice" cx="60" cy="60" r="${r}" fill="none" stroke="${s.color}" stroke-width="13" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)" data-label="${escHtml(s.label)}" data-val="${fmtDollar(s.value)}" data-pct="${pct}" data-color="${s.color}" data-len="${len.toFixed(2)}"/>`;
+    off+=len; return a; }).join('');
+  return `<svg class="allocring" viewBox="0 0 120 120" width="96" data-c="${C.toFixed(2)}"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#01101f" stroke-width="13"/>${arcs}</svg>`;
+}
+function initAllocRing(svg){
+  const host = svg.closest('.acct'); if(!host) return;
+  let tip = host.querySelector('.ring-tip');
+  if(!tip){ tip = document.createElement('div'); tip.className='ring-tip'; host.appendChild(tip); }
+  svg.querySelectorAll('.aslice').forEach(el=>{
+    el.addEventListener('mousemove', ev=>{
+      tip.innerHTML = `<b style="color:${el.dataset.color}">${el.getAttribute('data-label')}</b> ${el.getAttribute('data-val')} · ${el.getAttribute('data-pct')}%`;
+      const r = host.getBoundingClientRect();
+      tip.style.left = (ev.clientX - r.left + 12) + 'px';
+      tip.style.top  = (ev.clientY - r.top + 10) + 'px';
+      tip.classList.add('on');
+    });
+    el.addEventListener('mouseleave', ()=> tip.classList.remove('on'));
+  });
+  if(!prefersReducedMotion()) animateAllocRing(svg);
+}
+function animateAllocRing(svg){
+  const slices = [...svg.querySelectorAll('.aslice')];
+  const C = parseFloat(svg.dataset.c) || 0;
+  const totalLen = slices.reduce((s,el)=> s + (parseFloat(el.dataset.len)||0), 0) || 1;
+  const DUR = 950; let acc = 0;
+  slices.forEach(el=>{
+    const len = parseFloat(el.dataset.len) || 0;
+    const segDur = Math.max(140, DUR * (len / totalLen));
+    const delay = acc; acc += segDur;
+    el.setAttribute('stroke-dasharray', `0 ${C.toFixed(2)}`); // start hidden
+    setTimeout(()=> rafAnim(segDur, easeOutCubic,
+      e => el.setAttribute('stroke-dasharray', `${(len*e).toFixed(2)} ${(C-len*e).toFixed(2)}`),
+      () => el.setAttribute('stroke-dasharray', `${len.toFixed(2)} ${(C-len).toFixed(2)}`)
+    ), delay);
+  });
 }
 
 /* PROJECTED JOURNEY */
@@ -229,6 +268,8 @@ function renderJourney(d){
 
   document.getElementById('journey-root').innerHTML = `<div class="wrap">${rail('PROJECTED&nbsp;JOURNEY&nbsp;//&nbsp;02')}<div class="main">${m}</div></div>`;
   initFundsSim(gc, d.milestones||[]);
+  const eq = document.querySelector('#journey-root .jchart svg');
+  if (eq && !prefersReducedMotion()) requestAnimationFrame(()=>animateEquity(eq));
 }
 
 function svgEquity(actual, projected){
@@ -255,10 +296,30 @@ function svgEquity(actual, projected){
   const lp = lastP?`<text x="${(xf(lastP.date)).toFixed(1)}" y="${(yf(lastP.value)-8).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(207,111,232,.7)" font-family="monospace">$${lastP.value.toFixed(0)} proj</text>`:'';
   let xl=''; const labs=[dates[0], today, dates[dates.length-1]].filter(Boolean);
   [...new Set(labs)].forEach(dt=>{ const pp=dt.split('-'); xl+=`<text x="${xf(dt).toFixed(1)}" y="${VH-8}" text-anchor="middle" font-size="9" fill="#33526b" font-family="monospace">${pp[1]}/${pp[2]}</text>`;});
-  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">${grid}${nowLine}
-    ${projected.length?`<polyline points="${pPts}" fill="none" stroke="#cf6fe8" stroke-width="1.6" stroke-dasharray="6 4" opacity=".65"/>`:''}
-    ${actual.length?`<polyline points="${aPts}" fill="none" stroke="#cf6fe8" stroke-width="2.5"/>`:''}
-    ${dots}${la}${lp}${xl}</svg>`;
+  const clipW = (VW-padL-padR).toFixed(1);
+  // Data (lines + dots + value labels) is wiped on left→right via an expanding clip rect.
+  // Grid + axis labels stay static; the NOW marker fades in after the wipe completes.
+  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <defs><clipPath id="eqclip"><rect class="eq-clip" x="${padL}" y="0" width="${clipW}" height="${VH}" data-x0="${padL}" data-w="${clipW}"/></clipPath></defs>
+    ${grid}
+    <g clip-path="url(#eqclip)">
+      ${projected.length?`<polyline points="${pPts}" fill="none" stroke="#cf6fe8" stroke-width="1.6" stroke-dasharray="6 4" opacity=".65"/>`:''}
+      ${actual.length?`<polyline points="${aPts}" fill="none" stroke="#cf6fe8" stroke-width="2.5"/>`:''}
+      ${dots}${la}${lp}
+    </g>
+    <g class="eq-now">${nowLine}</g>
+    ${xl}</svg>`;
+}
+function animateEquity(svg){
+  const clip = svg.querySelector('.eq-clip'), now = svg.querySelector('.eq-now');
+  if(!clip) return;
+  const w = parseFloat(clip.dataset.w) || 0;
+  if(now) now.style.opacity = '0';
+  clip.setAttribute('width','0');
+  rafAnim(1150, easeInOutSine,
+    e => clip.setAttribute('width', (w*e).toFixed(1)),
+    () => { clip.setAttribute('width', w.toFixed(1)); if(now){ now.style.transition='opacity .55s ease'; requestAnimationFrame(()=> now.style.opacity='1'); } }
+  );
 }
 
 let CPM = { once:0, daily:30.4368, weekly:4.34812, biweekly:2.17406, monthly:1 };
@@ -324,6 +385,7 @@ async function runEngine(raw){
     const a=analyzeTicker(symbol,data.q,data.ts); if(!a) throw new Error('Not enough price history.');
     if(a.blocked){ out.innerHTML=engMsg('— Unsupported',a.blocked); engineBusy=false; return; }
     out.innerHTML=renderEngine(a);
+    requestAnimationFrame(()=>animateEngineCard(out));
   }catch(e){ out.innerHTML=engMsg('Analysis Unavailable',(e&&e.message)||'Could not analyze this ticker.'); }
   engineBusy=false;
 }
@@ -334,19 +396,44 @@ function renderEngine(a){
   const facs=a.factors.map(f=>{ const cls=f.state>0.15?'':f.state<-0.15?'n':''; const icon=f.state>0.15?'✓':f.state<-0.15?'✕':'–';
     const segs=Math.max(1,Math.round(Math.abs(f.state)*4)); let w=''; for(let i=0;i<4;i++) w+=`<i class="${i<segs?(f.state<0?'neg':'on'):''}"></i>`;
     return `<div class="fac"><span class="fic ${cls}">${icon}</span> ${escHtml(f.label)} <span class="det">${escHtml(f.detail)}</span><span class="w">${w}</span></div>`; }).join('');
-  const met=[['1-Mo',pct(m.ret1m),pc(m.ret1m)],['3-Mo',pct(m.ret3m),pc(m.ret3m)],['6-Mo',pct(m.ret6m),pc(m.ret6m)],['RSI 14',m.rsi==null?'—':m.rsi.toFixed(0),''],['Volatility',m.vol==null?'—':m.vol.toFixed(0)+'%',''],['52-Wk Pos',m.pos52.toFixed(0)+'%',''],['50-D SMA',m.sma50==null?'—':fmtDollar(m.sma50),''],['200-D SMA',m.sma200==null?'—':fmtDollar(m.sma200),'']]
-    .map(x=>`<div class="m"><div class="l">${x[0]}</div><div class="v ${x[2]}">${x[1]}</div></div>`).join('');
+  const met=[['1-Mo',m.ret1m,'pctSigned',pc(m.ret1m)],['3-Mo',m.ret3m,'pctSigned',pc(m.ret3m)],['6-Mo',m.ret6m,'pctSigned',pc(m.ret6m)],['RSI 14',m.rsi,'int',''],['Volatility',m.vol,'intPct',''],['52-Wk Pos',m.pos52,'intPct',''],['50-D SMA',m.sma50,'dollar',''],['200-D SMA',m.sma200,'dollar','']]
+    .map(x=>{ const raw=x[1], f=x[2]; const disp=(raw==null||!isFinite(raw))?'—':fmtCU(raw,f); const cu=(raw==null||!isFinite(raw))?'':` data-cu="${raw}" data-cuf="${f}"`;
+      return `<div class="m"><div class="l">${x[0]}</div><div class="v ${x[3]}"${cu}>${disp}</div></div>`; }).join('');
   const mkt=a.marketOpen===false?' · market closed':a.marketOpen===true?' · market open':'';
   const sigColor={'sig-strong-buy':'#37e08a','sig-buy':'#6fb8ef','sig-hold':'#ffdd00','sig-reduce':'#f2a73d','sig-sell':'#ff5a7a'}[a.rec.cls]||'#37e08a';
-  return card(`<div class="vh"><div><div class="sym">${escHtml(a.symbol)}</div><div class="nm2">${escHtml(a.name)}</div><div class="ex">${escHtml(a.exchange)} · ${escHtml(a.type)}${mkt}</div></div><div class="rt"><div class="price">${fmtDollar(a.price)}</div><div class="chg" style="${dc?'':'color:var(--red)'}">${dc?'+':''}${a.dayChgPct.toFixed(2)}% today</div><div class="asof">as of ${escHtml(a.asOf)}</div></div></div>
+  return card(`<div class="vh"><div><div class="sym">${escHtml(a.symbol)}</div><div class="nm2">${escHtml(a.name)}</div><div class="ex">${escHtml(a.exchange)} · ${escHtml(a.type)}${mkt}</div></div><div class="rt"><div class="price" data-cu="${a.price}" data-cuf="dollar">${fmtDollar(a.price)}</div><div class="chg" style="${dc?'':'color:var(--red)'}" data-cu="${a.dayChgPct}" data-cuf="dayPct">${dc?'+':''}${a.dayChgPct.toFixed(2)}% today</div><div class="asof">as of ${escHtml(a.asOf)}</div></div></div>
     <div class="verdict"><div class="gauge">${engineGauge(a.conviction,sigColor)}</div><div><div class="sig" style="color:${sigColor};text-shadow:0 0 18px ${sigColor}66">${a.rec.label}</div><div class="chips"><span class="chip" style="color:${sigColor};border-color:${sigColor}">${escHtml(a.style.label)}</span><span class="chip amb">RISK: ${a.risk.label}</span></div><div class="vnote">${escHtml(a.style.note)}</div></div></div>
     <div class="met">${met}</div>
     <div class="fwrap"><div class="fh">Signal Breakdown</div>${facs}</div>
     <p class="disc" style="margin:12px 14px 14px"><b>BETA · Not financial advice.</b> Deterministic quant model (no AI) from historical price data — a research starting point, not a recommendation.</p>`);
 }
 function engineGauge(score,color){
-  const R=59,cx=75,cy=80; const ang=Math.PI-(score/100)*Math.PI; const x=(cx+R*Math.cos(ang)).toFixed(1), y=(cy-R*Math.sin(ang)).toFixed(1);
-  return `<svg viewBox="0 0 150 92" width="150" xmlns="http://www.w3.org/2000/svg"><path d="M16,80 A${R},${R} 0 0,1 134,80" fill="none" stroke="rgba(90,130,160,.18)" stroke-width="12"/><path d="M16,80 A${R},${R} 0 0,1 ${x},${y}" fill="none" stroke="${color}" stroke-width="12" style="filter:drop-shadow(0 0 5px ${color})"/><text x="75" y="70" text-anchor="middle" font-size="30" font-weight="700" fill="${color}" font-family="'Orbitron',monospace">${score}</text><text x="75" y="84" text-anchor="middle" font-size="7" fill="#9bc0e0" letter-spacing="2" font-family="monospace">CONVICTION</text></svg>`;
+  const R=59; const L=Math.PI*R; // semicircle arc length
+  const f=Math.max(0,Math.min(100,score))/100; const off=(L*(1-f));
+  const dash=L.toFixed(2), offT=off.toFixed(2);
+  // Markup renders the FINAL state (reduced-motion / no-JS safe); animateGauge() resets→sweeps.
+  return `<svg class="cgauge" viewBox="0 0 150 92" width="150" xmlns="http://www.w3.org/2000/svg" data-score="${score}" data-len="${dash}" data-off="${offT}">
+    <path d="M16,80 A${R},${R} 0 0,1 134,80" fill="none" stroke="rgba(90,130,160,.18)" stroke-width="12"/>
+    <path class="cgauge-arc" d="M16,80 A${R},${R} 0 0,1 134,80" fill="none" stroke="${color}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${dash}" stroke-dashoffset="${offT}" style="filter:drop-shadow(0 0 5px ${color})"/>
+    <text class="cgauge-num" x="75" y="70" text-anchor="middle" font-size="30" font-weight="700" fill="${color}" font-family="'Orbitron',monospace">${score}</text>
+    <text x="75" y="84" text-anchor="middle" font-size="7" fill="#9bc0e0" letter-spacing="2" font-family="monospace">CONVICTION</text>
+  </svg>`;
+}
+function animateGauge(svg){
+  const arc=svg.querySelector('.cgauge-arc'), num=svg.querySelector('.cgauge-num');
+  if(!arc||!num) return;
+  const len=parseFloat(svg.dataset.len), offT=parseFloat(svg.dataset.off), score=parseInt(svg.dataset.score,10)||0;
+  arc.setAttribute('stroke-dashoffset', len.toFixed(2)); num.textContent='0';
+  rafAnim(1150, easeOutBackMild, e => {
+    arc.setAttribute('stroke-dashoffset', (len - (len - offT) * e).toFixed(2));
+    num.textContent = Math.max(0, Math.min(score, Math.round(score * e)));
+  }, () => { arc.setAttribute('stroke-dashoffset', offT.toFixed(2)); num.textContent = score; svg.classList.add('lit'); });
+}
+function animateEngineCard(scope){
+  if(!scope) return;
+  if(prefersReducedMotion()) return; // final values already in markup
+  const g=scope.querySelector('.cgauge'); if(g) animateGauge(g);
+  animateCounts(scope, 1000);
 }
 const pct=v=>v==null?'—':`${v>=0?'+':''}${v.toFixed(1)}%`; const pc=v=>v==null?'':(v>=0?'up':'dn');
 
@@ -401,9 +488,32 @@ async function loadArchive(){
     list.innerHTML=archiveIndex.map(e=>{ const pc=e.day_pct; const has=typeof pc==='number'; const up=has&&pc>=0;
       return `<div class="arow" data-date="${e.date}"><span class="ad">${formatDateLong(e.date.slice(0,10))}</span><span class="as">${escHtml(e.session_label||e.session||'')}${has?` · <b class="${up?'':'dn'}">${up?'+':''}${pc.toFixed(1)}%</b>`:''}</span></div>`;
     }).join('');
-    list.querySelectorAll('.arow').forEach(r=>r.addEventListener('click',()=>{ list.querySelectorAll('.arow').forEach(x=>x.classList.remove('on')); r.classList.add('on'); archiveSel=r.dataset.date; setStatusBar('archive'); loadArchiveReport(r.dataset.date); }));
+    list.querySelectorAll('.arow').forEach(r=>r.addEventListener('click',()=>selectArchive(r.dataset.date,true)));
     if(document.body.dataset.tab==='archive') setStatusBar('archive');
+    // deep-link: open the report named in the URL hash (#YYYY-MM-DD or full key) on load
+    const initial = resolveArchiveKey((location.hash||'').replace(/^#/,''));
+    if(initial) selectArchive(initial,false);
   }catch{ const list=document.getElementById('arch-list'); if(list) list.innerHTML='<div class="empty-sub" style="padding:16px;color:#ff5a4a">Failed to load archive.</div>'; }
+}
+function resolveArchiveKey(h){
+  if(!h || !archiveIndex.length) return null;
+  if(archiveIndex.some(e=>e.date===h)) return h;
+  const pre = archiveIndex.find(e=>e.date.slice(0,10)===h.slice(0,10));
+  return pre ? pre.date : null;
+}
+function selectArchive(date, updateHash){
+  const list=document.getElementById('arch-list'); if(!list) return;
+  const row=list.querySelector(`.arow[data-date="${date}"]`); if(!row) return;
+  list.querySelectorAll('.arow').forEach(x=>x.classList.toggle('on', x===row));
+  archiveSel=date; setStatusBar('archive'); loadArchiveReport(date);
+  // replaceState keeps the URL shareable without spamming history or firing hashchange
+  if(updateHash && (location.hash||'').replace(/^#/,'')!==date) history.replaceState(null,'',`#${date}`);
+  row.scrollIntoView({block:'nearest'});
+}
+function onArchiveHashChange(){
+  const key=resolveArchiveKey((location.hash||'').replace(/^#/,'')); if(!key) return;
+  if(document.body.dataset.tab!=='archive'){ switchTab('archive'); return; } // loadArchive will pick up the hash
+  if(archiveLoaded && key!==archiveSel) selectArchive(key,false);
 }
 async function loadArchiveReport(date){
   const det=document.getElementById('arch-detail'); det.innerHTML=stateLoading('Loading…');
@@ -418,6 +528,37 @@ async function loadArchiveReport(date){
     const recap=(d.thoughts&&d.thoughts.length)?`<div class="intel"><span class="tag">RECAP</span><p>${escHtml(d.thoughts[0].text)}</p></div>`:'';
     det.innerHTML=card(`<div class="met">${kpi}</div><div class="fwrap"><div class="fh">Session Log</div>${log}</div>${recap?`<div style="padding:0 14px 14px">${recap}</div>`:''}`, 'REC', `Final Daily — ${formatDate((d.meta&&d.meta.date)||date)}`);
   }catch{ det.innerHTML='<div class="empty-sub" style="padding:20px;color:#ff5a4a">Failed to load report.</div>'; }
+}
+
+/* ANIMATION — shared "power-on" motion helpers (80s/retro feel) */
+function prefersReducedMotion(){ return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
+function rafAnim(dur, ease, onFrame, onDone){
+  let t0 = null;
+  requestAnimationFrame(function step(now){
+    if (t0 === null) t0 = now;
+    const p = Math.min(1, (now - t0) / dur); const e = ease(p);
+    onFrame(e, p);
+    if (p < 1) requestAnimationFrame(step); else if (onDone) onDone();
+  });
+}
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+const easeOutBackMild = t => { const c1 = 0.9, c3 = c1 + 1; return 1 + c3*Math.pow(t-1,3) + c1*Math.pow(t-1,2); };
+const easeInOutSine = t => -(Math.cos(Math.PI*t) - 1) / 2;
+function fmtCU(v, f){
+  if (f === 'dollar') return fmtDollar(v);
+  if (f === 'pctSigned') return `${v>=0?'+':''}${v.toFixed(1)}%`;
+  if (f === 'dayPct') return `${v>=0?'+':''}${v.toFixed(2)}% today`;
+  if (f === 'intPct') return Math.round(v) + '%';
+  if (f === 'int') return String(Math.round(v));
+  return String(Math.round(v));
+}
+function animateCounts(scope, dur){
+  scope.querySelectorAll('[data-cu]').forEach(el => {
+    const to = parseFloat(el.dataset.cu); const f = el.dataset.cuf || 'int';
+    if (!isFinite(to)) return;
+    el.textContent = fmtCU(0, f);
+    rafAnim(dur || 900, easeOutCubic, t => { el.textContent = fmtCU(to * t, f); }, () => { el.textContent = fmtCU(to, f); });
+  });
 }
 
 /* UTILS */

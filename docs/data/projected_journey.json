@@ -4,7 +4,7 @@
     "updated_by": "manual",
     "update_cadence": "Mon/Wed/Fri close or manual",
     "next_update": "2026-07-01",
-    "version": "0.72"
+    "version": "0.73"
   },
   "growth_chart": {
     "actual": [
@@ -19,15 +19,22 @@
     ],
     "projected": [
       { "date": "2026-06-26", "value": 148.82 },
-      { "date": "2026-07-03", "value": 151.05 },
-      { "date": "2026-07-10", "value": 153.32 },
-      { "date": "2026-07-17", "value": 155.62 },
-      { "date": "2026-07-31", "value": 160.34 },
-      { "date": "2026-08-28", "value": 170.21 },
-      { "date": "2026-09-25", "value": 180.69 }
+      { "date": "2026-07-26", "value": 150.68 },
+      { "date": "2026-08-26", "value": 152.56 },
+      { "date": "2026-09-26", "value": 154.47 },
+      { "date": "2026-10-26", "value": 156.40 },
+      { "date": "2026-11-26", "value": 158.36 },
+      { "date": "2026-12-26", "value": 160.34 },
+      { "date": "2027-01-26", "value": 162.34 },
+      { "date": "2027-02-26", "value": 164.37 },
+      { "date": "2027-03-26", "value": 166.42 },
+      { "date": "2027-04-26", "value": 168.50 },
+      { "date": "2027-05-26", "value": 170.61 },
+      { "date": "2027-06-26", "value": 172.74 }
     ],
+    "projection_horizon_months": 12,
     "projection_confidence": "low",
-    "projection_basis": "Only 1 week of operating history plus a $100 mid-week deposit that dominates the value change — underlying market performance was -$1.5 (one stop-loss, semi rotation). Projection assumes the 1.5%/week growth target on deployed capital once the ~$111 cash is routed to the ETF tier. Recalibrates each Mon/Wed/Fri close as deposit-free performance history accumulates.",
+    "projection_basis": "Possible future value one year out: today's ~$149 account value compounded at the CLU 1.25%/mo target → ~$173 by 2027-06, performance-only with no new deposits. Confidence is low — only ~1 week of live history, and a $100 mid-week deposit dominated week-1 value (underlying market performance ≈ -$1.5). The site computes this 12-month trajectory from the latest account value × the CLU monthly target and recalibrates each Mon/Wed/Fri close as deposit-free history accumulates. Layer contributions on top with the Added-Funds Sim.",
     "weekly_target_pct": 1.5,
     "monthly_target_pct": 1.25
   },

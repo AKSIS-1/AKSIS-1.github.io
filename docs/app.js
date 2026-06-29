@@ -365,7 +365,7 @@ function initFundsSim(gc, milestones){
 function deriveMonthlyRate(gc){ if(gc&&gc.monthly_target_pct) return gc.monthly_target_pct/100;
   const pj=(gc&&gc.projected)||[]; if(pj.length>=2&&pj[0].value>0){ const days=(new Date(pj[pj.length-1].date)-new Date(pj[0].date))/86400000; const mo=days/30.4368; if(mo>0) return Math.pow(pj[pj.length-1].value/pj[0].value,1/mo)-1; }
   if(gc&&gc.weekly_target_pct) return Math.pow(1+gc.weekly_target_pct/100,4.34812)-1;
-  return 0.007; /* honest default ≈ 8.7%/yr (market-like), not a 5%/mo fantasy */ }
+  return 0.015; /* sim assumption: 1.5%/mo (~19.6%/yr) — aggressive; illustrative only */ }
 function computeFunds(V0,g,a,freq,months){ let base=V0,boost=V0,contrib=0; if(freq==='once'){boost+=a;contrib=a;} const series=[{m:0,base,boost}]; const per=CPM[freq]||0;
   for(let i=1;i<=months;i++){ base*=(1+g); boost*=(1+g); if(freq!=='once'&&a>0){const add=a*per;boost+=add;contrib+=add;} series.push({m:i,base,boost}); } return {series,contrib,base,boost}; }
 function firstMonth(series,key,t){ for(let i=0;i<series.length;i++) if(series[i][key]>=t) return series[i].m; return -1; }
@@ -389,6 +389,24 @@ function buildEngineShell(){
 async function tdFetch(path){ const sep=path.includes('?')?'&':'?'; const res=await fetch(`${TD_BASE}/${path}${sep}apikey=${encodeURIComponent(TD_API_KEY)}`);
   let j; try{ j=await res.json(); }catch{ throw new Error('Bad response from data provider.'); }
   if(j&&(j.status==='error'||(typeof j.code==='number'&&j.code>=400))){ if(j.code===429) throw new Error('Rate limit reached — wait a moment.'); throw new Error(j.message||'Data provider error.'); } return j; }
+// DRIP tier only: average year-over-year dividend growth from the dividend history.
+async function fetchDivGrowth(symbol){
+  try{
+    const j = await tdFetch(`dividends?symbol=${encodeURIComponent(symbol)}&range=5y`);
+    const arr = (j && (j.dividends || j.data)) || [];
+    if(!arr.length) return null;
+    const byYear = {};
+    arr.forEach(d=>{ const dt=d.ex_date||d.payment_date||d.date||''; const amt=parseFloat(d.amount); if(dt&&isFinite(amt)){ const y=dt.slice(0,4); byYear[y]=(byYear[y]||0)+amt; } });
+    const thisYear = String(new Date().getFullYear());
+    let years = Object.keys(byYear).sort();
+    const complete = years.filter(y=>y!==thisYear);   // drop the in-progress year
+    if(complete.length>=2) years = complete;
+    if(years.length<2) return null;
+    const g=[];
+    for(let i=1;i<years.length;i++){ const prev=byYear[years[i-1]], cur=byYear[years[i]]; if(prev>0) g.push((cur/prev-1)*100); }
+    return g.length ? g.reduce((a,b)=>a+b,0)/g.length : null;
+  }catch{ return null; }
+}
 async function runEngine(raw){
   const symbol=(raw||'').trim().toUpperCase(); const out=document.getElementById('engine-result'); if(!symbol||!out||engineBusy) return;
   if(symbol.includes('/')||/^(BTC|ETH|DOGE|XRP|SOL|ADA|USDT|USDC|SHIB|LTC|BNB)([-/]|$)/.test(symbol)){ out.innerHTML=engMsg('— No Crypto / FX',"CLU's mandate excludes crypto and forex. Enter a stock, ETF, or index."); return; }
@@ -398,6 +416,7 @@ async function runEngine(raw){
     if(!data||Date.now()-data.t>ENGINE_TTL){ const [q,ts]=await Promise.all([tdFetch(`quote?symbol=${encodeURIComponent(symbol)}`).catch(()=>null), tdFetch(`time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=260`)]); data={t:Date.now(),q,ts}; ENGINE_CACHE[symbol]=data; }
     const a=analyzeTicker(symbol,data.q,data.ts); if(!a) throw new Error('Not enough price history.');
     if(a.blocked){ out.innerHTML=engMsg('— Unsupported',a.blocked); engineBusy=false; return; }
+    if(a.tier==='DRIP') a.divGrowth = await fetchDivGrowth(symbol);   // avg YoY dividend growth
     out.innerHTML=renderEngine(a);
     requestAnimationFrame(()=>animateEngineCard(out));
   }catch(e){ out.innerHTML=engMsg('Analysis Unavailable',(e&&e.message)||'Could not analyze this ticker.'); }
@@ -407,13 +426,23 @@ function engMsg(t,s){ return `<div class="empty-state"><div class="empty-icon" s
 
 const TONE_COLOR={bull:'#37e08a',bear:'#ff5a7a',caution:'#f2a73d',neutral:'#6fb8ef'};
 const BIAS_LABEL={short:'short-term',intermediate:'intermediate',long:'long-term'};
+// Classify any ticker into a CLU v1.0 tier. DRIP = known dividend/income ETF;
+// CORE = any other ETF/fund/index; LAB = single stock (the default).
+const DRIP_SET=new Set(['SCHD','DGRO','VIG','VYM','JEPI','JEPQ','SPYD','HDV','DVY','NOBL','SDY','SCHY','DGRW','SPHD']);
+function classifyTier(symbol,type){
+  if(DRIP_SET.has(symbol)) return 'DRIP';
+  if(/etf|fund|index/i.test(type||'')) return 'CORE';
+  return 'LAB';
+}
 function renderEngine(a){
   const m=a.metrics; const dc=a.dayChgPct>=0;
   const hz=a.horizons.map(h=>{ const tc=TONE_COLOR[h.verdict.tone]||'#6fb8ef';
     const ev=h.evidence.map(x=>`<li>${escHtml(x)}</li>`).join('');
     return `<div class="hz"><div class="hzh"><span class="hzl">${escHtml(h.label)}</span><span class="hzw">${escHtml(h.window)}</span></div><div class="hzv" style="color:${tc};border-color:${tc}66">${escHtml(h.verdict.label)} <i>${Math.round(h.score)}</i></div><ul class="hze">${ev}</ul></div>`;
   }).join('');
-  const met=[['1-Mo',m.ret1m,'pctSigned',pc(m.ret1m)],['3-Mo',m.ret3m,'pctSigned',pc(m.ret3m)],['6-Mo',m.ret6m,'pctSigned',pc(m.ret6m)],['RSI 14',m.rsi,'int',''],['Volatility',m.vol,'intPct',''],['ATR %',m.atr,'dec1Pct',''],['vs 50-day',m.distFrom50,'pctSigned',pc(m.distFrom50)],['vs 200-day',m.distFrom200,'pctSigned',pc(m.distFrom200)]]
+  const metRows=[['1-Mo',m.ret1m,'pctSigned',pc(m.ret1m)],['3-Mo',m.ret3m,'pctSigned',pc(m.ret3m)],['6-Mo',m.ret6m,'pctSigned',pc(m.ret6m)],['Avg Yr Return',m.annReturn,'pctSigned',pc(m.annReturn)],['RSI 14',m.rsi,'int',''],['Volatility',m.vol,'intPct',''],['ATR %',m.atr,'dec1Pct',''],['vs 50-day',m.distFrom50,'pctSigned',pc(m.distFrom50)],['vs 200-day',m.distFrom200,'pctSigned',pc(m.distFrom200)]];
+  if(a.tier==='DRIP') metRows.push(['Div Growth/yr',a.divGrowth,'pctSigned',pc(a.divGrowth)]);
+  const met=metRows
     .map(x=>{ const raw=x[1], f=x[2]; const disp=(raw==null||!isFinite(raw))?'—':fmtCU(raw,f); const cu=(raw==null||!isFinite(raw))?'':` data-cu="${raw}" data-cuf="${f}"`;
       return `<div class="m"><div class="l">${x[0]}</div><div class="v ${x[3]}"${cu}>${disp}</div></div>`; }).join('');
   const facs=a.evidence.map(f=>{ const cls=f.state>0.15?'':f.state<-0.15?'n':'z'; const icon=f.state>0.15?'✓':f.state<-0.15?'✕':'–';
@@ -422,7 +451,7 @@ function renderEngine(a){
   const sigColor={'sig-strong-buy':'#37e08a','sig-buy':'#6fb8ef','sig-hold':'#ffdd00','sig-reduce':'#f2a73d','sig-sell':'#ff5a7a'}[a.rec.cls]||'#37e08a';
   const stc=TONE_COLOR[a.setup.tone]||'#6fb8ef';
   return card(`<div class="vh"><div><div class="sym">${escHtml(a.symbol)}</div><div class="nm2">${escHtml(a.name)}</div><div class="ex">${escHtml(a.exchange)} · ${escHtml(a.type)}${mkt}</div></div><div class="rt"><div class="price" data-cu="${a.price}" data-cuf="dollar">${fmtDollar(a.price)}</div><div class="chg" style="${dc?'':'color:var(--red)'}" data-cu="${a.dayChgPct}" data-cuf="dayPct">${dc?'+':''}${a.dayChgPct.toFixed(2)}% today</div><div class="asof">as of ${escHtml(a.asOf)}</div></div></div>
-    <div class="verdict"><div class="gauge">${engineGauge(a.conviction,sigColor)}</div><div><div class="sig" style="color:${sigColor};text-shadow:0 0 18px ${sigColor}66">${escHtml(a.rec.label)}</div><div class="chips"><span class="chip setup" style="color:${stc};border-color:${stc}">${escHtml(a.setup.name)}</span><span class="chip amb">RISK: ${a.risk.label}</span></div><div class="vnote">${escHtml(a.setup.action)} <span style="color:var(--t4)">· best fit: ${escHtml(BIAS_LABEL[a.setup.horizonBias]||a.setup.horizonBias)}</span></div></div></div>
+    <div class="verdict"><div class="gauge">${engineGauge(a.conviction,sigColor)}</div><div><div class="sig" style="color:${sigColor};text-shadow:0 0 18px ${sigColor}66">${escHtml(a.rec.label)}</div><div class="chips"><span class="chip" style="color:${a.tier==='DRIP'?'#37e08a':a.tier==='LAB'?'#cf6fe8':'#7EC8FF'}">TIER: ${escHtml(a.tier)}</span><span class="chip setup" style="color:${stc};border-color:${stc}">${escHtml(a.setup.name)}</span><span class="chip amb">RISK: ${a.risk.label}</span></div><div class="vnote">${escHtml(a.setup.action)} <span style="color:var(--t4)">· best fit: ${escHtml(BIAS_LABEL[a.setup.horizonBias]||a.setup.horizonBias)}</span></div></div></div>
     <div class="hzwrap"><div class="fh">Horizon Outlook — by holding window</div><div class="hzmx">${hz}</div></div>
     <div class="met">${met}</div>
     <div class="fwrap"><div class="fh">Evidence &amp; Logic</div>${facs}</div>
@@ -566,7 +595,8 @@ function analyzeTicker(symbol,q,ts){
   const dd=hi?((price/hi)-1)*100:null, fromLow=lo?((price/lo)-1)*100:null;
   const distFrom20=sma20?(price/sma20-1)*100:null, distFrom50=sma50?(price/sma50-1)*100:null, distFrom200=sma200?(price/sma200-1)*100:null;
   const cross=(sma50!=null&&sma200!=null)?(sma50>=sma200?1:-1):null;
-  const M={price,sma20,sma50,sma200,slope20,slope50,slope200,ret2w,ret1m,ret3m,ret6m,rsi,vol,atr,macdHist,distFrom20,distFrom50,distFrom200,cross,pos52,dd,fromLow,hi,lo,volRatio:vS.ratio,volBias:vS.bias};
+  const annReturn = closes.length>20 ? (Math.pow(closes[closes.length-1]/closes[0], 252/(closes.length-1))-1)*100 : null;
+  const M={price,sma20,sma50,sma200,slope20,slope50,slope200,ret2w,ret1m,ret3m,ret6m,rsi,vol,atr,macdHist,distFrom20,distFrom50,distFrom200,cross,pos52,dd,fromLow,hi,lo,volRatio:vS.ratio,volBias:vS.bias,annReturn};
   const sShort=scoreShort(M),sInt=scoreInt(M),sLong=scoreLong(M);
   const horizons=[
     {key:'short',label:'Short-Term',window:'~1–10 trading days',score:sShort,verdict:hzVerdict(sShort),evidence:evShort(M)},
@@ -577,7 +607,7 @@ function analyzeTicker(symbol,q,ts){
   let rec; if(conviction>=72)rec={label:'STRONG BUY',cls:'sig-strong-buy'};else if(conviction>=60)rec={label:'BUY',cls:'sig-buy'};else if(conviction>=45)rec={label:'HOLD / NEUTRAL',cls:'sig-hold'};else if(conviction>=33)rec={label:'REDUCE',cls:'sig-reduce'};else rec={label:'AVOID',cls:'sig-sell'};
   let risk; if(vol==null)risk={label:'N/A'};else if(vol<22)risk={label:'LOW'};else if(vol<40)risk={label:'MODERATE'};else if(vol<60)risk={label:'HIGH'};else risk={label:'VERY HIGH'};
   const setup=classifySetup(M);
-  return { symbol, name:(q&&q.name)||symbol, exchange:(q&&q.exchange)||(ts.meta&&ts.meta.exchange)||'', type:type||'Equity', asOf:(q&&q.datetime)||(series.length?series[series.length-1].d:''), marketOpen:q?q.is_market_open:null, price, dayChgPct:day, metrics:M, horizons, conviction, rec, risk, setup, evidence:buildEvidence(M) };
+  return { symbol, name:(q&&q.name)||symbol, exchange:(q&&q.exchange)||(ts.meta&&ts.meta.exchange)||'', type:type||'Equity', asOf:(q&&q.datetime)||(series.length?series[series.length-1].d:''), marketOpen:q?q.is_market_open:null, price, dayChgPct:day, tier:classifyTier(symbol,type), metrics:M, horizons, conviction, rec, risk, setup, evidence:buildEvidence(M) };
 }
 
 /* ARCHIVE */

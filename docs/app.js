@@ -1,1512 +1,425 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Report Renderer v4.7
-   "Blade Runner Transmission"
+   C.L.U. — Cognitive Logic Unit — Renderer v5.0 "HUD"
    ============================================================ */
-
 const DATA_URL          = './data/latest.json';
 const ARCHIVE_INDEX_URL = './data/archive/index.json';
 const ARCHIVE_REPORT    = (d) => `./data/archive/${d}.json`;
 const JOURNEY_URL       = './data/projected_journey.json';
+const POS_COLORS = ['#6fb8ef','#cf6fe8','#f2a73d','#37e08a','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];
 
-/* Per-position slice colors: icy blue, magenta, orange, yellow, red, lime, violet, teal */
-const POS_COLORS = ['#7EC8FF','#e040fb','#ff9a44','#ffdd00','#ff5a7a','#80ff9a','#b388ff','#40e0d0'];
-
-/* Ticker Engine — free Twelve Data key (read-only market data; public by design on a static site). */
 const TD_API_KEY = '87d9ba92240d465fb2500e093b78b10a';
 const TD_BASE    = 'https://api.twelvedata.com';
 const ENGINE_TTL = 10 * 60 * 1000;
 const ENGINE_CACHE = {};
 
-let currentTab    = 'today';
-let journeyLoaded = false;
-let engineInit    = false;
-let engineBusy    = false;
-
-/* ─── INIT ────────────────────────────────── */
+let lastMeta = null, journeyData = null, archiveIndex = [], archiveSel = null;
+let journeyLoaded = false, archiveLoaded = false, engineReady = false, engineBusy = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-  startClock();
-  initTabs();
-  initEngine();
-  loadReport();
+  startClock(); initTabs(); buildEngineShell();
+  setStatusBar('today'); loadReport();
 });
 
-/* ─── CLOCK ───────────────────────────────── */
-
-function startClock() {
-  const el = document.getElementById('live-clock');
-  function tick() {
-    const now = new Date();
-    el.textContent = now.toLocaleTimeString('en-US', {
-      timeZone: 'America/Los_Angeles',
-      hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit'
-    }) + ' PDT';
-  }
-  tick();
-  setInterval(tick, 1000);
+function startClock(){ updateClock(); setInterval(updateClock, 1000); }
+function updateClock(){
+  const el = document.getElementById('live-clock'); if (!el) return;
+  el.textContent = new Date().toLocaleTimeString('en-US',{ timeZone:'America/Los_Angeles', hour12:true, hour:'numeric', minute:'2-digit', second:'2-digit' }) + ' PDT';
 }
 
-/* ─── TABS ────────────────────────────────── */
-
-function initTabs() {
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
-  });
-  document.getElementById('refresh-chip').addEventListener('click', () => {
-    loadReport();
-  });
+function initTabs(){
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
+  document.body.addEventListener('click', e => { if (e.target.closest('#refresh-chip')) refreshActive(); });
 }
-
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  document.querySelectorAll('.tab-pane').forEach(p => {
-    p.classList.toggle('active', p.id === `tab-${tab}`);
-    p.classList.toggle('hidden', p.id !== `tab-${tab}`);
-  });
-  if (tab === 'archive') loadArchive();
+function refreshActive(){
+  const t = document.body.dataset.tab;
+  if (t === 'today') loadReport();
+  else if (t === 'journey'){ journeyLoaded=false; loadJourney(); }
+  else if (t === 'archive'){ archiveLoaded=false; loadArchive(); }
+}
+function switchTab(tab){
+  document.body.dataset.tab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === `tab-${tab}`));
+  setStatusBar(tab);
   if (tab === 'journey') loadJourney();
-  if (tab === 'engine') { const i = document.getElementById('engine-input'); if (i) i.focus(); }
+  if (tab === 'archive') loadArchive();
+  if (tab === 'engine'){ const i = document.getElementById('engine-input'); if (i) i.focus(); }
 }
 
-/* ─── DATA LOADING ───────────────────────────── */
+function sbCell(label, val){ return `<div class="sb">${label} <b>${escHtml(val)}</b></div>`; }
+function setStatusBar(tab){
+  const live = `<div class="sb"><span class="dotlive"></span><span class="live">Live</span></div>`;
+  const clock = `<div class="sb">CLOCK <b id="live-clock"></b></div>`;
+  const refresh = `<div class="sb r" id="refresh-chip"><span>↻</span> REFRESH</div>`;
+  const grow = `<div class="sb" style="flex:1;border-right:none"></div>`;
+  let mid = '';
+  if (tab === 'today'){
+    const m = lastMeta || {};
+    mid = sbCell('SYS','NOMINAL') + clock + sbCell('SESSION', m.date ? formatDate(m.date) : '—') + sbCell('NEXT', m.next_session || '—');
+  } else if (tab === 'journey'){
+    const m = (journeyData && journeyData.meta) || {}; const gc = (journeyData && journeyData.growth_chart) || {};
+    mid = sbCell('MODEL','CLU v0.54') + sbCell('UPDATED', m.updated_at ? formatTimeShort(m.updated_at) : '—') + sbCell('NEXT', m.next_update || '—') + sbCell('CONFIDENCE', (gc.projection_confidence || 'medium').toUpperCase());
+  } else if (tab === 'engine'){
+    mid = sbCell('FEED','TWELVE DATA') + clock + sbCell('CACHE','10 MIN');
+  } else if (tab === 'archive'){
+    const span = archiveIndex.length ? `${formatDate(archiveIndex[archiveIndex.length-1].date.slice(0,10))} — ${formatDate(archiveIndex[0].date.slice(0,10))}` : '—';
+    mid = sbCell('ARCHIVE', (archiveIndex.length||0)+' ENTRIES') + sbCell('SPAN', span) + sbCell('SELECTED', archiveSel ? formatDate(archiveSel.slice(0,10)) : '—');
+  }
+  document.getElementById('statusbar').innerHTML = live + mid + grow + refresh;
+  updateClock();
+}
 
-async function loadReport() {
-  showState('loading');
-  try {
+function rail(label){ return `<div class="rail"><span>${label}</span></div>`; }
+function sec(id, title, meta, extra){ return `<div class="sec"><span class="id">${id}</span><h3>${title}${extra||''}</h3><span class="rule"></span><span class="meta">${meta||''}</span></div>`; }
+function card(inner, idlabel, name){
+  const head = name ? `<div class="ch"><span class="d"></span><span class="nm">${name}</span><span class="id">${idlabel||''}</span></div>` : '';
+  return `<div class="card"><span class="bk tl"></span><span class="bk br"></span>${head}${inner}</div>`;
+}
+function stateLoading(msg){ return `<div class="empty-state"><div class="loader"></div><p>${msg}</p></div>`; }
+
+/* LIVE REPORT */
+async function loadReport(){
+  const root = document.getElementById('report-root');
+  root.innerHTML = stateLoading('Fetching CLU intelligence data…');
+  try{
     const res = await fetch(DATA_URL + '?t=' + Date.now());
-    if (!res.ok) throw new Error('Not found');
-    const data = await res.json();
-    renderReport(data);
-    showState('report');
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+    lastMeta = d.meta || {};
+    renderReport(d);
+    if (document.body.dataset.tab === 'today') setStatusBar('today');
   } catch {
-    showState('error');
+    root.innerHTML = `<div class="empty-state"><div class="empty-icon neon-red">◌</div><p class="empty-title neon-red">System Offline</p><p class="empty-sub">CLU has not published a report for this session. Standing by for next transmission.</p></div>`;
   }
 }
 
-function showState(state) {
-  document.getElementById('state-loading').classList.toggle('hidden', state !== 'loading');
-  document.getElementById('state-error').classList.toggle('hidden',   state !== 'error');
-  document.getElementById('report-root').classList.toggle('hidden',   state !== 'report');
-}
-
-/* ─── REPORT RENDERER ─────────────────────────── */
-
-function renderReport(d) {
-  const { meta, portfolio, positions, earnings,
-          stop_loss_alerts, trades_executed, watchlist_changes,
-          alerts, top_opportunities, thoughts, learned_patterns } = d;
-
+function renderReport(d){
+  const p = d.portfolio || {}; const positions = d.positions || [];
   const movers = d.watchlist_movers || d.ah_movers || [];
+  let m = '';
 
-  const rawLabel = (meta.session_label || 'Live Report').replace(/after[- ]?hours/i, 'Live Report');
-  document.getElementById('rpt-title').textContent =
-    `C.L.U. ${rawLabel.toUpperCase()} — ${formatDate(meta.date)}`;
-  document.getElementById('rpt-date').textContent      = formatDateLong(meta.date);
-  document.getElementById('rpt-generated').textContent = formatTime(meta.generated_at);
-  document.getElementById('rpt-next-session').textContent = meta.next_session;
-
-  renderThoughts(thoughts || []);
-  renderAlerts(alerts || []);
-  renderAccountOverview(portfolio, positions || []);
-  renderPositions(positions || []);
-  renderMovers(movers);
-  renderLearnedPatterns(learned_patterns || []);
-  renderEarnings(earnings || []);
-  renderStopLoss(stop_loss_alerts || []);
-  renderTrades(trades_executed || []);
-  renderWatchlistChanges(watchlist_changes || []);
-  renderOpportunities(top_opportunities || []);
-}
-
-/* ─── PIE CHART (SVG donut) ───────────────────────────── */
-
-function svgDonut(segments, total, size) {
-  size = size || 96;
-  if (!total) return '';
-  const cx = size / 2, cy = size / 2;
-  const outerR = size / 2 - 3;
-  const innerR = outerR * 0.50;
-  let startAngle = -Math.PI / 2;
-  let paths = '';
-
-  segments.forEach(function(seg) {
-    if (seg.value <= 0) return;
-    const angle = (seg.value / total) * Math.PI * 2;
-    const endAngle = startAngle + angle;
-    const ox1 = cx + outerR * Math.cos(startAngle);
-    const oy1 = cy + outerR * Math.sin(startAngle);
-    const ox2 = cx + outerR * Math.cos(endAngle);
-    const oy2 = cy + outerR * Math.sin(endAngle);
-    const ix1 = cx + innerR * Math.cos(endAngle);
-    const iy1 = cy + innerR * Math.sin(endAngle);
-    const ix2 = cx + innerR * Math.cos(startAngle);
-    const iy2 = cy + innerR * Math.sin(startAngle);
-    const large = angle > Math.PI ? 1 : 0;
-    paths += `<path d="M${ox1.toFixed(2)},${oy1.toFixed(2)} A${outerR},${outerR} 0 ${large},1 ${ox2.toFixed(2)},${oy2.toFixed(2)} L${ix1.toFixed(2)},${iy1.toFixed(2)} A${innerR},${innerR} 0 ${large},0 ${ix2.toFixed(2)},${iy2.toFixed(2)} Z" fill="${seg.color}" opacity="0.88"/>`;
-    startAngle = endAngle;
+  (d.alerts || []).forEach(a => {
+    const cls = a.level === 'critical' ? 'crit' : a.level === 'warning' ? 'warn' : '';
+    m += `<div class="alertb ${cls}"><div class="at">⚠ ${escHtml(a.title)}</div><div class="am">${escHtml(a.message)}</div></div>`;
   });
 
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <circle cx="${cx}" cy="${cy}" r="${outerR + 2}" fill="rgba(0,0,24,0.6)" stroke="rgba(126,200,255,0.10)" stroke-width="1"/>
-    ${paths}
-    <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="rgba(0,0,20,0.95)" stroke="rgba(126,200,255,0.18)" stroke-width="1"/>
-  </svg>`;
-}
+  m += sec('A1','Account','USD · live');
+  const segs = positions.map((pos,i)=>({label:pos.symbol, value:pos.notional||0, color:POS_COLORS[i%POS_COLORS.length]}))
+                        .concat([{label:'CASH', value:p.cash||0, color:'#37e08a'}]).filter(s=>s.value>0);
+  const total = p.total_value || segs.reduce((a,b)=>a+b.value,0) || 1;
+  const legend = segs.map(s=>`<div class="li"><span class="sw" style="background:${s.color}"></span><b>${escHtml(s.label)}</b><i>${fmtDollar(s.value)} · ${Math.round(s.value/total*100)}%</i></div>`).join('');
+  const alloc = card(`<div class="cb"><div class="acct">${svgAllocRing(segs,total)}<div class="legend">${legend}</div></div></div>`, 'A1.1','Allocation');
+  const sign = (p.day_pnl_dollars||0) >= 0 ? '+' : '';
+  const pnlCls = (p.day_pnl_dollars||0) >= 0 ? 'g' : 'r';
+  const deployed = Math.max(0, (p.total_value||0) - (p.cash||0));
+  const cap = p.positions_cap || 4, open = p.open_positions || positions.length;
+  let bars=''; for(let i=0;i<cap;i++) bars += `<i class="${i<open?'on':''}"></i>`;
+  const perf = card(`<div class="cb"><div class="stats">
+    <div class="kpi"><div class="l">Total Value</div><div class="v">${fmtDollar(p.total_value)}</div></div>
+    <div class="kpi"><div class="l">Day P&amp;L</div><div class="v ${pnlCls}">${sign}${fmtDollar(p.day_pnl_dollars)} (${sign}${(p.day_pnl_pct||0).toFixed(1)}%)</div></div>
+    <div class="kpi"><div class="l">Cash / Buying Power</div><div class="v sm">${fmtDollar(p.cash)}</div></div>
+    <div class="kpi"><div class="l">Deployed · Slots ${open}/${cap}</div><div class="v sm">${fmtDollar(deployed)}</div><div class="barseg">${bars}</div></div>
+  </div></div>`, 'A1.2','Performance');
+  m += `<div class="grid">${alloc}${perf}</div>`;
 
-/* ─── ACCOUNT OVERVIEW ───────────────────────────── */
+  m += sec('A2','Active Positions', positions.length+' open');
+  if (positions.length){
+    const rows = positions.map((pos,i)=>{
+      const up = (pos.total_pnl_pct||0) >= 0; const du = (pos.day_pnl_pct||0) >= 0;
+      const stop = pos.stop_type === 'manual' ? `stop ${fmtDollar(pos.stop_level)} ⚡ manual` : `stop ${fmtDollar(pos.stop_level)} GTC`;
+      return `<div class="pos" style="--rc:${POS_COLORS[i%POS_COLORS.length]}"><div><div class="tk">${escHtml(pos.symbol)}</div><div class="sub">${pos.shares} sh · entry ${fmtDollar(pos.entry_price)} · ${stop}</div></div><div class="rt"><div class="pnl ${up?'up':'dn'}">${up?'+':''}${(pos.total_pnl_pct||0).toFixed(1)}%</div><div class="px">${fmtDollar(pos.current_price)} · day ${du?'+':''}${(pos.day_pnl_pct||0).toFixed(1)}%</div></div></div>`;
+    }).join('');
+    m += card(rows);
+  } else { m += card(`<div class="cb"><div class="empty-sub" style="text-align:left">No active positions.</div></div>`); }
 
-function renderAccountOverview(p, positions) {
-  const pending = p.pending_deposits || 0;
-
-  const posSegments = (positions || []).map(function(pos, i) {
-    return { label: pos.symbol, value: pos.notional || 0, color: POS_COLORS[i % POS_COLORS.length] };
-  });
-
-  const cashSegment = { label: 'Cash', value: p.cash, color: '#00ff88' };
-  const segments = posSegments.concat([cashSegment]).filter(function(s) { return s.value > 0; });
-
-  const pie = svgDonut(segments, p.total_value, 96);
-
-  const pnlSign  = p.day_pnl_dollars >= 0 ? '+' : '';
-  const pnlClass = p.day_pnl_dollars >= 0 ? 'pf-pnl-positive' : 'pf-pnl-negative';
-  const invested = Math.max(0, p.total_value - p.cash);
-  const slotPct  = Math.round((p.open_positions / p.positions_cap) * 100);
-
-  const legend = segments.map(s =>
-    `<div class="acct-legend-item"><div class="acct-legend-dot" style="background:${s.color};box-shadow:0 0 5px ${s.color}55"></div><span style="font-family:var(--display);font-size:9px;color:var(--t2);letter-spacing:1px">${escHtml(s.label)}</span> <span style="color:var(--t4)">${fmtDollar(s.value)}</span></div>`
-  ).join('');
-
-  document.getElementById('rpt-account').innerHTML = `
-    <div class="card-title"><span class="card-title-icon">◈</span> Account Overview</div>
-    <div class="acct-inner">
-      <div class="acct-chart">
-        ${pie}
-        <div class="acct-legend">${legend}</div>
-      </div>
-      <div class="acct-stats">
-        <div class="pf-item">
-          <div class="pf-label">Total Value</div>
-          <div class="pf-value">${fmtDollar(p.total_value)}</div>
-        </div>
-        <div class="pf-item">
-          <div class="pf-label">Day P&amp;L</div>
-          <div class="pf-value small ${pnlClass}">${pnlSign}${fmtDollar(p.day_pnl_dollars)} <span style="font-size:12px">(${pnlSign}${p.day_pnl_pct.toFixed(2)}%)</span></div>
-        </div>
-        <div class="pf-item">
-          <div class="pf-label">Cash / Buying Power</div>
-          <div class="pf-value small">${fmtDollar(p.cash)}</div>
-        </div>
-        <div class="pf-item">
-          <div class="pf-label">Slots ${p.open_positions}/${p.positions_cap}</div>
-          <div class="pf-value small">${fmtDollar(invested)} deployed</div>
-          <div class="slot-bar"><div class="slot-fill" style="width:${slotPct}%"></div></div>
-        </div>
-        ${pending > 0 ? `<div class="pf-item" style="grid-column:1/-1">
-          <div class="pf-label">Pending Deposit</div>
-          <div class="pf-value small" style="color:var(--yellow)">${fmtDollar(pending)}</div>
-        </div>` : ''}
-      </div>
-    </div>`;
-}
-
-/* ─── CLU'S THOUGHTS ──────────────────────────── */
-
-function renderThoughts(thoughts) {
-  const el = document.getElementById('rpt-thoughts');
-  if (!el) return;
-  if (!thoughts.length) { el.innerHTML = ''; return; }
-  const items = thoughts.map(t => {
-    const typeClass = t.type === 'plan' ? 'thought-plan'
-                    : t.type === 'concern' ? 'thought-concern'
-                    : 'thought-obs';
-    const label = t.label ||
-      (t.type === 'plan' ? 'PLAN' : t.type === 'concern' ? 'FLAG' : 'OBSERVE');
-    return `<div class="thought-item ${typeClass}">
-      <div class="thought-label">${escHtml(label)}</div>
-      <div class="thought-text">${escHtml(t.text)}</div>
-    </div>`;
-  }).join('');
-  el.innerHTML = `
-    <div class="thoughts-card">
-      <div class="thoughts-header">
-        <span class="thoughts-header-icon">◈</span>
-        CLU's Active Intelligence
-        <span class="thoughts-header-right">SYSTEM CONSCIOUSNESS LOG</span>
-      </div>
-      ${items}
-    </div>`;
-}
-
-/* ─── LEARNED PATTERNS ───────────────────────────── */
-
-function renderLearnedPatterns(patterns) {
-  const el = document.getElementById('rpt-patterns');
-  if (!el) return;
-  if (!patterns.length) { el.innerHTML = ''; return; }
-  const items = patterns.map(p => {
-    const confClass = p.confidence === 'high' ? 'conf-high'
-                    : p.confidence === 'medium' ? 'conf-medium'
-                    : 'conf-low';
-    return `<div class="pattern-item">
-      <div class="pattern-meta">
-        <span class="pattern-cat">${escHtml(p.category)}</span>
-        <span class="conf-badge ${confClass}">${escHtml(p.confidence)}</span>
-      </div>
-      <div class="pattern-text">${escHtml(p.pattern)}</div>
-    </div>`;
-  }).join('');
-  el.innerHTML = `<div class="patterns-card">
-    <div class="patterns-header">
-      <span class="patterns-header-icon">┑</span>
-      CLU's Learned Patterns
-      <span class="patterns-header-right">CROSS-SESSION INTELLIGENCE</span>
-    </div>
-    ${items}
-  </div>`;
-}
-
-/* ─── ALERTS ─────────────────────────────── */
-
-function renderAlerts(alerts) {
-  const el = document.getElementById('rpt-alerts');
-  if (!alerts.length) { el.innerHTML = ''; return; }
-  el.innerHTML = alerts.map(a => `
-    <div class="alert-banner ${a.level}">
-      <div class="alert-title">⚠ ${escHtml(a.title)}</div>
-      <div class="alert-msg">${escHtml(a.message)}</div>
-    </div>
-  `).join('');
-}
-
-/* ─── ACTIVE POSITIONS ───────────────────────────── */
-
-function renderPositions(positions) {
-  const el = document.getElementById('rpt-positions');
-  if (!positions.length) {
-    el.innerHTML = `<div class="card-title"><span class="card-title-icon">◉</span> Active Positions</div>
-      <p class="no-data">No active positions.</p>`;
-    return;
+  const thoughts = d.thoughts || [];
+  if (thoughts.length){
+    m += sec('A3','Active Intelligence','consciousness log');
+    m += thoughts.map(t=>{
+      const tag = t.label || (t.type==='plan'?'PLAN':t.type==='concern'?'FLAG':'OBSERVE');
+      return `<div class="intel"><span class="tag">${escHtml(tag)}</span><p>${escHtml(t.text)}</p></div>`;
+    }).join('');
   }
-  const rows = positions.map(function(pos, i) {
-    const pnl      = pos.total_pnl_pct >= 0;
-    const pnlClass = pnl ? 'pos-pnl-pos' : 'pos-pnl-neg';
-    const pnlSign  = pnl ? '+' : '';
-    const dayPos   = pos.day_pnl_pct >= 0;
-    const dayColor = dayPos ? 'var(--green)' : 'var(--red)';
-    const daySign  = dayPos ? '+' : '';
-    const accentColor = POS_COLORS[i % POS_COLORS.length];
-    const stopLabel = pos.stop_type === 'manual'
-      ? `stop ${fmtDollar(pos.stop_level)} ⚡ manual`
-      : `stop ${fmtDollar(pos.stop_level)} GTC`;
-    return `
-      <div class="pos-row" style="animation-delay:${i * 0.12}s">
-        <div class="pos-left">
-          <span class="pos-ticker" style="color:${accentColor};text-shadow:0 0 16px ${accentColor}88">${escHtml(pos.symbol)}</span>
-          ${pos.full_name ? `<span class="pos-name">${escHtml(pos.full_name)}</span>` : ''}
-          ${pos.desc      ? `<span class="pos-desc">${escHtml(pos.desc)}</span>` : ''}
-          <span class="pos-detail">${pos.shares} sh &middot; entry ${fmtDollar(pos.entry_price)} &middot; notional ${fmtDollar(pos.notional)}</span>
-          <span class="pos-stop">${stopLabel}</span>
-        </div>
-        <div class="pos-right">
-          <div class="pos-pnl ${pnlClass}">${pnlSign}${pos.total_pnl_pct.toFixed(2)}%</div>
-          <div class="pos-price">${fmtDollar(pos.current_price)}</div>
-          <div class="pos-day" style="color:${dayColor}">day ${daySign}${pos.day_pnl_pct.toFixed(2)}%</div>
-        </div>
-      </div>`;
-  }).join('');
-  el.innerHTML = `<div class="card-title"><span class="card-title-icon">◉</span> Active Positions</div>${rows}`;
-}
 
-/* ─── WATCHLIST MOVERS ───────────────────────────── */
-
-function renderMovers(movers) {
-  const el = document.getElementById('rpt-movers');
-  if (!movers.length) { el.innerHTML = ''; return; }
-  const rows = movers.map(m => {
-    const price  = m.price !== undefined ? m.price : m.ah_price;
-    const chg    = m.change_pct;
-    const chgCls = chg > 0 ? 'col-change-pos' : (chg < 0 ? 'col-change-neg' : 'col-change-neu');
-    const sign   = chg > 0 ? '+' : '';
-    const sigKey = (m.signal || 'neutral').replace(/[^a-z0-9-]/gi, '').toLowerCase();
-    const sigLabel = (m.signal || 'neutral').replace(/-/g, ' ').toUpperCase();
-    return `<tr>
-      <td class="col-symbol">${escHtml(m.symbol)}</td>
-      <td class="col-price">${fmtDollar(price)}</td>
-      <td class="${chgCls}">${sign}${chg.toFixed(1)}%</td>
-      <td><span class="badge badge-${sigKey}">${sigLabel}</span></td>
-      <td class="wl-tag">${escHtml(m.watchlist)}</td>
-      <td style="color:var(--text-secondary);font-size:11px">${escHtml(m.note)}</td>
-    </tr>`;
-  }).join('');
-  el.innerHTML = `
-    <div class="card-title"><span class="card-title-icon">▲</span> Watchlist Movers</div>
-    <div class="table-scroll">
-    <table class="data-table">
-      <thead><tr>
-        <th>Ticker</th><th>Price</th><th>Change</th><th>Signal</th><th>Watchlist</th><th>Note</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
-}
-
-/* ─── EARNINGS ────────────────────────────── */
-
-function renderEarnings(earnings) {
-  const el = document.getElementById('rpt-earnings');
-  if (!earnings.length) { el.innerHTML = ''; return; }
-  const rows = earnings.map(e => {
-    const sign     = e.beat_pct >= 0 ? '+' : '';
-    const pctCls   = e.beat_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
-    const badgeCls = e.result === 'beat' ? 'beat' : (e.result === 'miss' ? 'miss' : 'inline');
-    return `<tr>
-      <td class="col-symbol">${escHtml(e.symbol)}</td>
-      <td style="font-size:11px;color:var(--text-secondary)">${escHtml(e.event)}</td>
-      <td><span class="badge badge-${badgeCls}">${e.result.toUpperCase()}</span></td>
-      <td class="${pctCls}">${sign}${e.beat_pct.toFixed(1)}%</td>
-      <td style="font-size:11px">${fmtDollar(e.actual)} <span style="color:var(--text-dim)">vs ${fmtDollar(e.estimate)} est</span></td>
-      <td style="font-size:11px;color:var(--text-secondary)">${escHtml(e.impact)}</td>
-      <td style="font-size:11px;color:var(--text-dim)">${escHtml(e.action)}</td>
-    </tr>`;
-  }).join('');
-  el.innerHTML = `
-    <div class="card-title"><span class="card-title-icon">◎</span> Earnings &amp; News</div>
-    <div class="table-scroll">
-    <table class="data-table">
-      <thead><tr>
-        <th>Ticker</th><th>Event</th><th>Result</th><th>Beat%</th><th>EPS</th><th>Impact</th><th>Action</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
-}
-
-/* ─── STOP-LOSS ───────────────────────────── */
-
-function renderStopLoss(alerts) {
-  const el = document.getElementById('rpt-stoploss');
-  if (!alerts.length) {
-    el.innerHTML = `<div class="card-title"><span class="card-title-icon">⬡</span> Stop-Loss Alerts</div>
-      <div class="none-label">None — all positions within threshold.</div>`;
-    return;
+  let n = 4;
+  if ((d.learned_patterns||[]).length){
+    m += sec('A'+(n++),'Learned Patterns','cross-session');
+    m += d.learned_patterns.map(pt=>`<div class="intel"><span class="tag">${escHtml(pt.category)}</span><p>${escHtml(pt.pattern)} <span class="bdg ${pt.confidence==='high'?'g':''}" style="margin-left:6px">${escHtml(pt.confidence)}</span></p></div>`).join('');
   }
-  const rows = alerts.map(a => `<tr>
-    <td class="col-symbol">${escHtml(a.symbol)}</td>
-    <td class="col-change-neg">${a.pnl_pct.toFixed(2)}%</td>
-    <td>${fmtDollar(a.current_price)}</td>
-    <td>${fmtDollar(a.stop_level)}</td>
-    <td style="font-size:11px;color:var(--neon-red);text-shadow:0 0 8px rgba(255,58,0,0.4)">${escHtml(a.action)}</td>
-  </tr>`).join('');
-  el.innerHTML = `
-    <div class="card-title" style="color:var(--neon-red);text-shadow:0 0 12px rgba(255,58,0,0.4)"><span class="card-title-icon">⚠</span> Stop-Loss Alerts</div>
-    <div class="table-scroll">
-    <table class="data-table">
-      <thead><tr><th>Ticker</th><th>P&L%</th><th>Price</th><th>Stop</th><th>Action</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
-}
-
-/* ─── TRADES ────────────────────────────── */
-
-function renderTrades(trades) {
-  const el = document.getElementById('rpt-trades');
-  if (!trades.length) {
-    el.innerHTML = `<div class="card-title"><span class="card-title-icon">⇄</span> Trades Executed</div>
-      <div class="none-label">None this session.</div>`;
-    return;
+  if (movers.length){
+    const rows = movers.map(mv=>{ const c=mv.change_pct>=0; const price=mv.price!==undefined?mv.price:mv.ah_price;
+      return `<tr><td class="dsym">${escHtml(mv.symbol)}</td><td>${fmtDollar(price)}</td><td class="${c?'up':'dn'}">${c?'+':''}${(mv.change_pct||0).toFixed(1)}%</td><td><span class="bdg ${/bull/i.test(mv.signal)?'g':/bear/i.test(mv.signal)?'r':''}">${escHtml((mv.signal||'').replace(/-/g,' '))}</span></td><td class="note">${escHtml(mv.note||'')}</td></tr>`;}).join('');
+    m += sec('A'+(n++),'Watchlist Movers', movers.length+' tracked') + card(`<div class="dwrap"><table class="dtable"><thead><tr><th>Ticker</th><th>Price</th><th>Change</th><th>Signal</th><th>Note</th></tr></thead><tbody>${rows}</tbody></table></div>`);
   }
-  const rows = trades.map(t => {
-    const sideCls = t.side === 'BUY' ? 'col-change-pos' : 'col-change-neg';
-    return `<tr>
-      <td class="col-symbol">${escHtml(t.symbol)}</td>
-      <td class="${sideCls}" style="font-weight:700">${escHtml(t.side)}</td>
-      <td>${t.shares} sh</td>
-      <td>${fmtDollar(t.price)}</td>
-      <td style="font-size:11px;color:var(--text-secondary)">${escHtml(t.reason)}</td>
-    </tr>`;
-  }).join('');
-  el.innerHTML = `
-    <div class="card-title"><span class="card-title-icon">⇄</span> Trades Executed</div>
-    <div class="table-scroll">
-    <table class="data-table">
-      <thead><tr><th>Ticker</th><th>Side</th><th>Shares</th><th>Price</th><th>Reason</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
-}
-
-/* ─── WATCHLIST CHANGES ───────────────────────────── */
-
-function renderWatchlistChanges(changes) {
-  const el = document.getElementById('rpt-watchlist');
-  if (!changes.length) {
-    el.innerHTML = `<div class="card-title"><span class="card-title-icon">▫</span> Watchlist Changes</div>
-      <div class="none-label">No changes this session.</div>`;
-    return;
+  if ((d.earnings||[]).length){
+    const rows = d.earnings.map(e=>{const c=e.beat_pct>=0; const b=e.result==='beat'?'g':e.result==='miss'?'r':'';
+      return `<tr><td class="dsym">${escHtml(e.symbol)}</td><td class="note">${escHtml(e.event||'')}</td><td><span class="bdg ${b}">${escHtml((e.result||'').toUpperCase())}</span></td><td class="${c?'up':'dn'}">${c?'+':''}${(e.beat_pct||0).toFixed(1)}%</td><td class="note">${escHtml(e.impact||'')}</td></tr>`;}).join('');
+    m += sec('A'+(n++),'Earnings & News') + card(`<div class="dwrap"><table class="dtable"><thead><tr><th>Ticker</th><th>Event</th><th>Result</th><th>Beat%</th><th>Impact</th></tr></thead><tbody>${rows}</tbody></table></div>`);
   }
-  const rows = changes.map(c => `<tr>
-    <td class="col-symbol">${escHtml(c.symbol)}</td>
-    <td style="font-size:11px">${escHtml(c.change)}</td>
-    <td style="font-size:11px;color:var(--text-secondary)">${escHtml(c.reason)}</td>
-  </tr>`).join('');
-  el.innerHTML = `
-    <div class="card-title"><span class="card-title-icon">▫</span> Watchlist Changes</div>
-    <div class="table-scroll">
-    <table class="data-table">
-      <thead><tr><th>Ticker</th><th>Change</th><th>Reason</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    </div>`;
+  if ((d.stop_loss_alerts||[]).length){
+    const rows = d.stop_loss_alerts.map(a=>`<tr><td class="dsym">${escHtml(a.symbol)}</td><td class="dn">${(a.pnl_pct||0).toFixed(1)}%</td><td>${fmtDollar(a.current_price)}</td><td>${fmtDollar(a.stop_level)}</td><td class="note">${escHtml(a.action||'')}</td></tr>`).join('');
+    m += sec('A'+(n++),'Stop-Loss Alerts','risk') + card(`<div class="dwrap"><table class="dtable"><thead><tr><th>Ticker</th><th>P&amp;L%</th><th>Price</th><th>Stop</th><th>Action</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+  }
+  if ((d.trades_executed||[]).length){
+    const rows = d.trades_executed.map(t=>`<tr><td class="dsym">${escHtml(t.symbol)}</td><td class="${t.side==='BUY'?'up':'dn'}">${escHtml(t.side)}</td><td>${t.shares}</td><td>${fmtDollar(t.price)}</td><td class="note">${escHtml(t.reason||'')}</td></tr>`).join('');
+    m += sec('A'+(n++),'Trades Executed') + card(`<div class="dwrap"><table class="dtable"><thead><tr><th>Ticker</th><th>Side</th><th>Shares</th><th>Price</th><th>Reason</th></tr></thead><tbody>${rows}</tbody></table></div>`);
+  }
+  if ((d.top_opportunities||[]).length){
+    const cards = d.top_opportunities.map(o=>`<div class="opp"><div class="rk">#${o.rank} Opportunity</div><div class="sy">${escHtml(o.symbol)}</div><div class="th">${escHtml(o.thesis)}</div><div class="ft"><span class="e">Entry: ${escHtml(o.entry_target)}</span><span>${escHtml(o.action)}</span></div></div>`).join('');
+    m += sec('A'+(n++),"Tomorrow's Opportunities") + card(`<div class="oppg">${cards}</div>`);
+  }
+
+  document.getElementById('report-root').innerHTML = `<div class="wrap">${rail('LIVE&nbsp;REPORT&nbsp;//&nbsp;01')}<div class="main">${m}</div></div>`;
 }
 
-/* ─── OPPORTUNITIES ───────────────────────────── */
-
-function renderOpportunities(opps) {
-  const el = document.getElementById('rpt-opportunities');
-  if (!opps.length) { el.innerHTML = ''; return; }
-  const cards = opps.map(o => `
-    <div class="opp-card">
-      <div class="opp-rank">#${o.rank} Opportunity</div>
-      <div class="opp-ticker">${escHtml(o.symbol)}</div>
-      <div class="opp-thesis">${escHtml(o.thesis)}</div>
-      <div class="opp-footer">
-        <div class="opp-entry">Entry: ${escHtml(o.entry_target)}</div>
-        <div class="opp-action">${escHtml(o.action)}</div>
-      </div>
-    </div>
-  `).join('');
-  el.innerHTML = `
-    <div class="card-title"><span class="card-title-icon">◆</span> Tomorrow's Top Opportunities</div>
-    <div class="opp-grid">${cards}</div>`;
+function svgAllocRing(segs,total){
+  const r=42, C=2*Math.PI*r; let off=0;
+  const arcs = segs.map(s=>{ const len=(s.value/total)*C; const a=`<circle cx="60" cy="60" r="${r}" fill="none" stroke="${s.color}" stroke-width="13" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 60 60)"/>`; off+=len; return a; }).join('');
+  return `<svg viewBox="0 0 120 120" width="96"><circle cx="60" cy="60" r="${r}" fill="none" stroke="#01101f" stroke-width="13"/>${arcs}</svg>`;
 }
 
-/* ============================================================
-   PROJECTED JOURNEY
-   ============================================================ */
-
-async function loadJourney() {
-  if (journeyLoaded) return;
-  journeyLoaded = true;
-  const loading = document.getElementById('journey-loading');
-  const error   = document.getElementById('journey-error');
-  const root    = document.getElementById('journey-root');
-  try {
+/* PROJECTED JOURNEY */
+async function loadJourney(){
+  if (journeyLoaded) return; journeyLoaded = true;
+  const root = document.getElementById('journey-root');
+  root.innerHTML = stateLoading('Loading journey data…');
+  try{
     const res = await fetch(JOURNEY_URL + '?t=' + Date.now());
     if (!res.ok) throw new Error();
-    const data = await res.json();
-    loading.classList.add('hidden');
-    root.classList.remove('hidden');
-    renderProjectedJourney(data);
+    journeyData = await res.json();
+    renderJourney(journeyData);
+    if (document.body.dataset.tab === 'journey') setStatusBar('journey');
   } catch {
-    loading.classList.add('hidden');
-    error.classList.remove('hidden');
+    root.innerHTML = `<div class="empty-state"><div class="empty-icon">↗</div><p class="empty-title">No Journey Data Yet</p><p class="empty-sub">CLU will generate the first Projected Journey report on Friday.</p></div>`;
   }
 }
+function renderJourney(d){
+  const gc = d.growth_chart || {}; const actual = gc.actual||[], projected = gc.projected||[];
+  const lastVal = actual.length ? actual[actual.length-1].value : null;
+  let m = '';
+  m += sec('J1','Growth Trajectory', `actual vs projected${gc.weekly_target_pct?` · +${gc.weekly_target_pct}%/wk target`:''}`);
+  m += card(`<div class="jchart">${svgEquity(actual,projected)}</div><div class="jlegend"><span><i style="background:#cf6fe8"></i>Actual</span><span><i style="background:#cf6fe8;opacity:.5"></i>Projected</span><span style="margin-left:auto;color:var(--t4)">${escHtml(gc.projection_basis||'')}</span></div>`,'J1.1','Equity Curve');
 
-function renderProjectedJourney(d) {
-  const root = document.getElementById('journey-root');
-  const actual = (d.growth_chart && d.growth_chart.actual) || [];
-  const lastActualValue = actual.length ? actual[actual.length - 1].value : null;
-  root.innerHTML =
-    buildJourneyHeader(d.meta, d.growth_chart) +
-    `<div class="card journey-chart-card">` +
-      `<div class="card-title"><span class="card-title-icon">◈</span> Growth Projection</div>` +
-      `<div class="journey-chart-wrap">` +
-        svgLineChart(d.growth_chart.actual || [], d.growth_chart.projected || []) +
-        `<div class="journey-chart-legend">` +
-          `<span class="jcl-item jcl-actual"><span class="jcl-line"></span> Actual</span>` +
-          `<span class="jcl-item jcl-proj"><span class="jcl-line jcl-line-dash"></span> Projected</span>` +
-          `<span class="jcl-meta">${escHtml(d.growth_chart.projection_basis || '')}</span>` +
-          `<span class="jcl-conf conf-${escHtml(d.growth_chart.projection_confidence || 'low')}">${escHtml((d.growth_chart.projection_confidence || 'low').toUpperCase())} CONFIDENCE</span>` +
-        `</div>` +
-      `</div>` +
-    `</div>` +
-    buildJourneyFundsCalc() +
-    `<div class="journey-grid-3">` +
-      buildJourneyDecisions(d.next_decisions || []) +
-      buildJourneyEvolution(d.intelligence_evolution || []) +
-      buildJourneyDNA(d.strategy_dna || []) +
-    `</div>` +
-    `<div class="journey-grid-2">` +
-      buildJourneyRisk(d.risk_profile) +
-      buildJourneyMilestones(d.milestones || [], lastActualValue) +
-    `</div>` +
-    buildJourneyRecap(d.weekly_recap);
-  initFundsCalc(d.growth_chart || {}, d.milestones || []);
-}
+  const mile = (d.milestones||[]).map(mil=>{
+    const done = lastVal!=null && mil.target!=null && lastVal>=mil.target;
+    return `<div class="mile ${done?'done':''}"><span class="mnode">${done?'✓':'○'}</span><div><div class="mtar">${fmtDollar(mil.target)}${done?' <span class="tagd">REACHED</span>':''}</div><div class="mlab">${escHtml(mil.label||'')}</div></div><div class="meta2">${done?('cleared '+fmtDollar(lastVal)) : escHtml(mil.projected_date||'')}</div></div>`;
+  }).join('');
+  const mcard = card(mile || `<div class="cb"><div class="empty-sub" style="text-align:left">No milestones set.</div></div>`, 'J2.1','Milestone Ladder');
+  const fcard = card(`<div class="jf" id="jf-ctrls">
+      <div class="f"><label>Contribution</label><div class="inp"><span>$</span><input type="number" id="jf-amt" value="100" min="0" step="10"></div></div>
+      <div class="f grow"><label>Frequency</label><div class="freq" id="jf-freq">
+        <button class="fb" data-f="once">Once</button><button class="fb" data-f="weekly">Weekly</button><button class="fb" data-f="biweekly">Bi-wk</button><button class="fb on" data-f="monthly">Monthly</button></div></div>
+      <div class="f grow" style="width:100%"><label>Timeline — <span class="hzlabel" id="jf-hz">1 yr</span></label><input type="range" id="jf-range" class="slider" min="3" max="60" value="12"></div>
+    </div><div id="jf-out"></div>`, 'J3.1','Added-Funds Sim');
+  m += `<div class="grid" style="grid-template-columns:1.25fr 1fr">${mcard}${fcard}</div>`;
 
-function buildJourneyHeader(meta, chart) {
-  const updDate   = meta.updated_at ? formatTime(meta.updated_at) : '—';
-  const nextUpd   = meta.next_update || '—';
-  const weeklyTgt = chart && chart.weekly_target_pct  ? `+${chart.weekly_target_pct}%/wk`  : '';
-  const monthTgt  = chart && chart.monthly_target_pct ? `+${chart.monthly_target_pct}%/mo` : '';
-  return `<div class="journey-header">
-    <div class="journey-header-title"><span class="journey-title-icon">↗</span> CLU — Projected Journey</div>
-    <div class="journey-header-meta">
-      <span>Updated ${escHtml(updDate)}</span>
-      <span class="meta-sep">·</span>
-      <span>Next update: <strong>${escHtml(nextUpd)}</strong></span>
-      <span class="meta-sep">·</span>
-      <span>Target ${escHtml(weeklyTgt)} · ${escHtml(monthTgt)}</span>
-      <span class="meta-sep">·</span>
-      <span class="journey-cadence">${escHtml(meta.update_cadence || 'Weekly — Friday')}</span>
-    </div>
-  </div>`;
-}
-
-/* ─── SVG LINE CHART (Robinhood-style) ─────────────────── */
-
-function svgLineChart(actual, projected) {
-  const VW = 900, VH = 200;
-  const padL = 56, padR = 28, padT = 22, padB = 40;
-  const plotW = VW - padL - padR;
-  const plotH = VH - padT - padB;
-
-  function dayMs(d) { return new Date(d + 'T00:00:00Z').getTime(); }
-
-  const allDates = [...new Set([...actual.map(p => p.date), ...projected.map(p => p.date)])].sort();
-  const allVals  = [...actual.map(p => p.value), ...projected.map(p => p.value)];
-  if (allDates.length < 2 || allVals.length < 2) return '<p class="no-data" style="padding:20px">Not enough data to render chart.</p>';
-
-  const minT = dayMs(allDates[0]);
-  const maxT = dayMs(allDates[allDates.length - 1]);
-  const minV = Math.min(...allVals) * 0.95;
-  const maxV = Math.max(...allVals) * 1.03;
-
-  const xf = d => padL + (maxT === minT ? plotW / 2 : (dayMs(d) - minT) / (maxT - minT) * plotW);
-  const yf = v => padT + plotH - ((v - minV) / (maxV - minV)) * plotH;
-
-  let grid = '';
-  for (let i = 0; i <= 4; i++) {
-    const v = minV + (i / 4) * (maxV - minV);
-    const y = yf(v).toFixed(1);
-    grid += `<line x1="${padL}" y1="${y}" x2="${VW - padR}" y2="${y}" stroke="rgba(100,180,255,0.07)" stroke-width="1"/>`;
-    grid += `<text x="${padL - 5}" y="${(+y + 3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(100,180,255,0.42)" font-family="monospace">$${v.toFixed(0)}</text>`;
+  if ((d.next_decisions||[]).length){
+    m += sec('J4','Next Likely Decisions');
+    m += d.next_decisions.map(dec=>`<div class="intel"><span class="tag">${escHtml((dec.type||'').toUpperCase())}</span><p><b style="color:var(--ac)">${escHtml(dec.ticker)}</b> — ${escHtml(dec.thesis)} <span style="color:var(--t4)">· trigger: ${escHtml(dec.trigger)}</span></p></div>`).join('');
+  }
+  if (d.weekly_recap){
+    const rc=d.weekly_recap; const c=(rc.change_dollars||0)>=0;
+    m += sec('J5','Weekly Recap', escHtml(rc.week||''));
+    m += card(`<div class="met"><div class="m"><div class="l">Week Start</div><div class="v">${fmtDollar(rc.start_value)}</div></div><div class="m"><div class="l">Week End</div><div class="v">${fmtDollar(rc.end_value)}</div></div><div class="m"><div class="l">Change</div><div class="v ${c?'up':'dn'}">${c?'+':''}${fmtDollar(rc.change_dollars)}</div></div><div class="m"><div class="l">Trades W/L</div><div class="v">${rc.trades||0} · ${rc.wins||0}/${rc.losses||0}</div></div></div>${rc.summary?`<div class="cb"><div class="empty-sub" style="text-align:left;max-width:none">${escHtml(rc.summary)}</div></div>`:''}`);
   }
 
-  const todayDate = actual.length ? actual[actual.length - 1].date : null;
-  const labelSet  = new Set([allDates[0], allDates[allDates.length - 1]]);
-  if (todayDate) labelSet.add(todayDate);
-  if (allDates.length > 4) labelSet.add(allDates[Math.floor(allDates.length * 0.5)]);
-  let xLabels = '';
-  labelSet.forEach(date => {
-    const x = xf(date).toFixed(1);
-    const p = date.split('-');
-    const isToday = date === todayDate;
-    xLabels += `<text x="${x}" y="${(VH - padB + 15).toFixed(1)}" text-anchor="middle" font-size="9" fill="${isToday ? 'rgba(126,200,255,0.75)' : 'rgba(100,180,255,0.40)'}" font-family="monospace">${p[1]}/${p[2]}</text>`;
-  });
-
-  let actualSVG = '';
-  if (actual.length >= 2) {
-    const pts  = actual.map(p => `${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`);
-    const area = `M${xf(actual[0].date).toFixed(1)},${(padT + plotH).toFixed(1)} L${pts.join(' L')} L${xf(actual[actual.length - 1].date).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
-    actualSVG  = `<path d="${area}" fill="url(#lgAct)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#7EC8FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-  }
-
-  let projSVG = '';
-  if (projected.length >= 2) {
-    const pts  = projected.map(p => `${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`);
-    const area = `M${xf(projected[0].date).toFixed(1)},${(padT + plotH).toFixed(1)} L${pts.join(' L')} L${xf(projected[projected.length - 1].date).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
-    projSVG   = `<path d="${area}" fill="url(#lgProj)"/><polyline points="${pts.join(' ')}" fill="none" stroke="#3399FF" stroke-width="1.5" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round" opacity="0.70"/>`;
-  }
-
-  const todayX = todayDate ? xf(todayDate).toFixed(1) : null;
-  const todayLine = todayX
-    ? `<line x1="${todayX}" y1="${padT}" x2="${todayX}" y2="${padT + plotH}" stroke="rgba(126,200,255,0.28)" stroke-width="1" stroke-dasharray="3,3"/><text x="${(+todayX + 5).toFixed(1)}" y="${padT + 13}" font-size="8" fill="rgba(126,200,255,0.55)" letter-spacing="1" font-family="monospace">NOW</text>`
-    : '';
-
-  const dots = actual.map(p =>
-    `<circle cx="${xf(p.date).toFixed(1)}" cy="${yf(p.value).toFixed(1)}" r="3.5" fill="#7EC8FF" stroke="rgba(0,0,20,0.85)" stroke-width="1.5"/>`
-  ).join('');
-
-  const lastA = actual[actual.length - 1];
-  const lastP = projected[projected.length - 1];
-  const lastALabel = lastA ? `<text x="${(xf(lastA.date) - 10).toFixed(1)}" y="${(yf(lastA.value) - 9).toFixed(1)}" text-anchor="end" font-size="10" fill="#7EC8FF" font-weight="700" font-family="monospace">$${lastA.value.toFixed(2)}</text>` : '';
-  const lastPLabel = lastP ? `<text x="${xf(lastP.date).toFixed(1)}" y="${(yf(lastP.value) - 8).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(51,153,255,0.70)" font-family="monospace">$${lastP.value.toFixed(0)}</text>` : '';
-
-  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="lgAct" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#7EC8FF" stop-opacity="0.42"/>
-      <stop offset="100%" stop-color="#7EC8FF" stop-opacity="0.02"/>
-    </linearGradient>
-    <linearGradient id="lgProj" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#3399FF" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#3399FF" stop-opacity="0.01"/>
-    </linearGradient>
-  </defs>
-  ${grid}
-  ${projSVG}
-  ${actualSVG}
-  <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
-  <line x1="${padL}" y1="${padT + plotH}" x2="${VW - padR}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
-  ${todayLine}
-  ${dots}
-  ${lastALabel}
-  ${lastPLabel}
-  ${xLabels}
-</svg>`;
+  document.getElementById('journey-root').innerHTML = `<div class="wrap">${rail('PROJECTED&nbsp;JOURNEY&nbsp;//&nbsp;02')}<div class="main">${m}</div></div>`;
+  initFundsSim(gc, d.milestones||[]);
 }
 
-/* ─── ADDED FUNDS SIMULATOR ────────────────────── */
-
-function buildJourneyFundsCalc() {
-  return `<div class="card jfunds-card">
-    <div class="card-title"><span class="card-title-icon">⊕</span> Added Funds Simulator</div>
-    <div class="jfunds-body">
-      <p class="jfunds-intro">Project how recurring or one-time contributions reshape CLU's growth curve. Funds compound at CLU's current projected rate — <strong>estimates only, not a guarantee of future results.</strong></p>
-      <div class="jfunds-controls">
-        <div class="jfunds-field">
-          <label class="jfunds-label" for="jf-amount">Contribution</label>
-          <div class="jfunds-input-wrap"><span class="jfunds-prefix">$</span><input type="number" id="jf-amount" class="jfunds-input" value="100" min="0" step="10"></div>
-        </div>
-        <div class="jfunds-field jfunds-field-grow">
-          <label class="jfunds-label">Frequency</label>
-          <div class="jfunds-freq" id="jf-freq">
-            <button type="button" class="jf-freq-btn" data-freq="once">One-time</button>
-            <button type="button" class="jf-freq-btn" data-freq="daily">Daily</button>
-            <button type="button" class="jf-freq-btn" data-freq="weekly">Weekly</button>
-            <button type="button" class="jf-freq-btn" data-freq="biweekly">Bi-weekly</button>
-            <button type="button" class="jf-freq-btn active" data-freq="monthly">Monthly</button>
-          </div>
-        </div>
-      </div>
-      <div class="jfunds-field jfunds-field-full">
-        <label class="jfunds-label">Timeline — <span id="jf-horizon-label" class="jfunds-horizon-label">1 yr</span></label>
-        <input type="range" id="jf-horizon" class="jfunds-slider" min="3" max="60" value="12" step="1">
-        <div class="jfunds-slider-ticks"><span>3 mo</span><span>1 yr</span><span>2 yr</span><span>3 yr</span><span>5 yr</span></div>
-      </div>
-      <div id="jf-results" class="jfunds-results"></div>
-    </div>
-  </div>`;
+function svgEquity(actual, projected){
+  const VW=900, VH=210, padL=50, padR=24, padT=22, padB=26;
+  const pts = [...actual, ...projected];
+  if (pts.length < 2) return '<div class="empty-sub" style="padding:30px">Not enough data to chart.</div>';
+  const dayMs = s => new Date(s+'T00:00:00Z').getTime();
+  const dates = [...new Set(pts.map(p=>p.date))].sort();
+  const vals = pts.map(p=>p.value);
+  const minT=dayMs(dates[0]), maxT=dayMs(dates[dates.length-1]);
+  const minV=Math.min(...vals)*0.96, maxV=Math.max(...vals)*1.04;
+  const xf=s=> padL + (maxT===minT?0:(dayMs(s)-minT)/(maxT-minT))*(VW-padL-padR);
+  const yf=v=> padT + (VH-padT-padB) - ((v-minV)/(maxV-minV))*(VH-padT-padB);
+  let grid=''; for(let i=0;i<=3;i++){ const v=minV+i/3*(maxV-minV); const y=yf(v).toFixed(1);
+    grid+=`<line x1="${padL}" y1="${y}" x2="${VW-padR}" y2="${y}" stroke="rgba(120,170,220,.08)"/><text x="${padL-6}" y="${(+y+3).toFixed(1)}" text-anchor="end" font-size="9" fill="#33526b" font-family="monospace">$${v.toFixed(0)}</text>`; }
+  const today = actual.length ? actual[actual.length-1].date : null;
+  const aPts = actual.map(p=>`${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`).join(' ');
+  const pPts = projected.map(p=>`${xf(p.date).toFixed(1)},${yf(p.value).toFixed(1)}`).join(' ');
+  const dots = actual.map(p=>`<circle cx="${xf(p.date).toFixed(1)}" cy="${yf(p.value).toFixed(1)}" r="3.5" fill="#cf6fe8"/>`).join('');
+  const nowX = today ? xf(today).toFixed(1) : null;
+  const nowLine = nowX ? `<line x1="${nowX}" y1="${padT}" x2="${nowX}" y2="${VH-padB}" stroke="rgba(207,111,232,.3)" stroke-dasharray="3 3"/><text x="${(+nowX+6).toFixed(1)}" y="${padT+10}" font-size="8" fill="#cf6fe8" font-family="monospace" letter-spacing="1">NOW</text>` : '';
+  const lastA = actual[actual.length-1], lastP = projected[projected.length-1];
+  const la = lastA?`<text x="${(xf(lastA.date)-8).toFixed(1)}" y="${(yf(lastA.value)-9).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="#cf6fe8" font-family="monospace">${fmtDollar(lastA.value)}</text>`:'';
+  const lp = lastP?`<text x="${(xf(lastP.date)).toFixed(1)}" y="${(yf(lastP.value)-8).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(207,111,232,.7)" font-family="monospace">$${lastP.value.toFixed(0)} proj</text>`:'';
+  let xl=''; const labs=[dates[0], today, dates[dates.length-1]].filter(Boolean);
+  [...new Set(labs)].forEach(dt=>{ const pp=dt.split('-'); xl+=`<text x="${xf(dt).toFixed(1)}" y="${VH-8}" text-anchor="middle" font-size="9" fill="#33526b" font-family="monospace">${pp[1]}/${pp[2]}</text>`;});
+  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">${grid}${nowLine}
+    ${projected.length?`<polyline points="${pPts}" fill="none" stroke="#cf6fe8" stroke-width="1.6" stroke-dasharray="6 4" opacity=".65"/>`:''}
+    ${actual.length?`<polyline points="${aPts}" fill="none" stroke="#cf6fe8" stroke-width="2.5"/>`:''}
+    ${dots}${la}${lp}${xl}</svg>`;
 }
 
-const CONTRIB_PER_MONTH = { daily: 30.4368, weekly: 4.34812, biweekly: 2.17406, monthly: 1, once: 0 };
-
-function deriveMonthlyRate(chart) {
-  if (chart && chart.monthly_target_pct) return chart.monthly_target_pct / 100;
-  const proj = (chart && chart.projected) || [];
-  if (proj.length >= 2 && proj[0].value > 0) {
-    const days = (new Date(proj[proj.length - 1].date) - new Date(proj[0].date)) / 86400000;
-    const months = days / 30.4368;
-    if (months > 0) return Math.pow(proj[proj.length - 1].value / proj[0].value, 1 / months) - 1;
-  }
-  if (chart && chart.weekly_target_pct) return Math.pow(1 + chart.weekly_target_pct / 100, 4.34812) - 1;
-  return 0.05;
-}
-
-function computeFundsProjection(V0, g, amount, freq, months) {
-  let base = V0, boost = V0, contributed = 0;
-  if (freq === 'once') { boost += amount; contributed = amount; }
-  const series = [{ m: 0, base: base, boost: boost }];
-  const per = CONTRIB_PER_MONTH[freq] || 0;
-  for (let m = 1; m <= months; m++) {
-    base  *= (1 + g);
-    boost *= (1 + g);
-    if (freq !== 'once' && amount > 0) { const add = amount * per; boost += add; contributed += add; }
-    series.push({ m: m, base: base, boost: boost });
-  }
-  return { series: series, contributed: contributed, finalBase: base, finalBoost: boost };
-}
-
-function firstMonthAtOrAbove(series, key, target) {
-  for (let i = 0; i < series.length; i++) if (series[i][key] >= target) return series[i].m;
-  return -1;
-}
-
-function initFundsCalc(chart, milestones) {
-  const amountEl  = document.getElementById('jf-amount');
-  const freqEl    = document.getElementById('jf-freq');
-  const horizonEl = document.getElementById('jf-horizon');
-  const hLabel    = document.getElementById('jf-horizon-label');
-  const results   = document.getElementById('jf-results');
-  if (!amountEl || !freqEl || !horizonEl || !results) return;
-
-  const actual = (chart && chart.actual) || [];
-  const V0 = actual.length ? actual[actual.length - 1].value
-           : ((chart && chart.projected && chart.projected.length) ? chart.projected[chart.projected.length - 1].value : 0);
-  const startDate = actual.length ? actual[actual.length - 1].date
-           : ((chart && chart.projected && chart.projected.length) ? chart.projected[0].date : null);
-  const g = deriveMonthlyRate(chart);
-
-  let freq = 'monthly';
-
-  function recompute() {
-    const amount = Math.max(0, parseFloat(amountEl.value) || 0);
-    const months = parseInt(horizonEl.value, 10) || 12;
-    hLabel.textContent = fmtMonthsLabel(months);
-    const sim = computeFundsProjection(V0, g, amount, freq, months);
-    results.innerHTML = renderFundsResults(sim, V0, g, amount, freq, months, startDate, milestones);
-  }
-
-  freqEl.querySelectorAll('.jf-freq-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      freq = btn.dataset.freq;
-      freqEl.querySelectorAll('.jf-freq-btn').forEach(b => b.classList.toggle('active', b === btn));
-      recompute();
+let CPM = { once:0, daily:30.4368, weekly:4.34812, biweekly:2.17406, monthly:1 };
+function initFundsSim(gc, milestones){
+  const amt=document.getElementById('jf-amt'), freqEl=document.getElementById('jf-freq'), range=document.getElementById('jf-range'), hz=document.getElementById('jf-hz'), out=document.getElementById('jf-out');
+  if (!amt||!range||!out) return;
+  const actual=(gc.actual||[]); const V0 = actual.length?actual[actual.length-1].value : ((gc.projected&&gc.projected.length)?gc.projected[gc.projected.length-1].value:0);
+  const g = deriveMonthlyRate(gc); let freq='monthly';
+  function recompute(){
+    const a=Math.max(0,parseFloat(amt.value)||0); const months=parseInt(range.value,10)||12; hz.textContent=fmtMonthsLabel(months);
+    const sim=computeFunds(V0,g,a,freq,months); const delta=sim.boost-sim.base;
+    let mrow=''; (milestones||[]).filter(x=>x.target>V0).slice(0,1).forEach(x=>{
+      const bm=firstMonth(sim.series,'base',x.target), om=firstMonth(sim.series,'boost',x.target);
+      if(om>=0&&bm>=0&&bm>om) mrow=`<div class="kpi" style="grid-column:1/-1"><div class="l">${fmtDollar(x.target)} milestone</div><div class="v" style="color:var(--ac)">${fmtMonthsLabel(bm-om)} sooner</div></div>`;
+      else if(om>=0&&bm<0) mrow=`<div class="kpi" style="grid-column:1/-1"><div class="l">${fmtDollar(x.target)} milestone</div><div class="v" style="color:var(--ac)">now reachable</div></div>`;
     });
-  });
-  amountEl.addEventListener('input', recompute);
-  horizonEl.addEventListener('input', recompute);
-  recompute();
-}
-
-function renderFundsResults(sim, V0, g, amount, freq, months, startDate, milestones) {
-  const delta      = sim.finalBoost - sim.finalBase;
-  const marketGain = sim.finalBoost - V0 - sim.contributed;
-  const freqLabel  = { once: 'one-time', daily: 'daily', weekly: 'weekly', biweekly: 'bi-weekly', monthly: 'monthly' }[freq] || freq;
-
-  const chart = miniProjChart(sim.series, months, startDate);
-
-  const stats = `<div class="jfunds-stat-grid">
-    <div class="jfunds-stat"><div class="pf-label">Without Added Funds</div><div class="jfunds-stat-val" style="color:var(--blue)">${fmtDollar(sim.finalBase)}</div></div>
-    <div class="jfunds-stat"><div class="pf-label">With Added Funds</div><div class="jfunds-stat-val" style="color:var(--green)">${fmtDollar(sim.finalBoost)}</div></div>
-    <div class="jfunds-stat"><div class="pf-label">Difference</div><div class="jfunds-stat-val" style="color:var(--magenta)">+${fmtDollar(delta)}</div></div>
-    <div class="jfunds-stat"><div class="pf-label">You Contribute</div><div class="jfunds-stat-val small">${fmtDollar(sim.contributed)}</div></div>
-    <div class="jfunds-stat"><div class="pf-label">Market Growth On Funds</div><div class="jfunds-stat-val small" style="color:var(--green)">+${fmtDollar(Math.max(0, marketGain))}</div></div>
-  </div>`;
-
-  const summary = `<p class="jfunds-summary">Adding <strong>${fmtDollar(amount)}</strong> ${freqLabel} over <strong>${fmtMonthsLabel(months)}</strong> projects to <strong style="color:var(--green)">${fmtDollar(sim.finalBoost)}</strong> — <strong style="color:var(--magenta)">${fmtDollar(delta)} more</strong> than CLU's baseline of ${fmtDollar(sim.finalBase)}.</p>`;
-
-  const mrows = (milestones || []).filter(m => m.target > V0).map(m => {
-    const baseM  = firstMonthAtOrAbove(sim.series, 'base', m.target);
-    const boostM = firstMonthAtOrAbove(sim.series, 'boost', m.target);
-    const baseTxt  = baseM  >= 0 ? fmtReachDate(startDate, baseM)  : `beyond ${fmtMonthsLabel(months)}`;
-    const boostTxt = boostM >= 0 ? fmtReachDate(startDate, boostM) : `beyond ${fmtMonthsLabel(months)}`;
-    let saved = '';
-    if (boostM >= 0 && baseM >= 0 && baseM > boostM) saved = `<span class="jfunds-saved">${fmtMonthsLabel(baseM - boostM)} sooner</span>`;
-    else if (boostM >= 0 && baseM < 0) saved = `<span class="jfunds-saved">now reachable</span>`;
-    return `<tr>
-      <td class="col-symbol">${fmtDollar(m.target)}</td>
-      <td style="font-size:11px;color:var(--t2)">${escHtml(m.label || '')}</td>
-      <td style="color:var(--blue)">${baseTxt}</td>
-      <td style="color:var(--green)">${boostTxt}</td>
-      <td>${saved}</td>
-    </tr>`;
-  }).join('');
-
-  const mtable = mrows ? `<div class="jfunds-milestones">
-    <div class="jfunds-sub">Milestone Impact</div>
-    <div class="table-scroll"><table class="data-table"><thead><tr>
-      <th>Target</th><th>Milestone</th><th>Baseline ETA</th><th>With Funds ETA</th><th>Gain</th>
-    </tr></thead><tbody>${mrows}</tbody></table></div>
-  </div>` : '';
-
-  return `<div class="jfunds-chart-wrap">${chart}
-    <div class="jfunds-chart-legend">
-      <span class="jcl-item"><span class="jcl-line" style="background:var(--blue)"></span> Baseline (CLU only)</span>
-      <span class="jcl-item"><span class="jcl-line" style="background:var(--green)"></span> With added funds</span>
-    </div>
-  </div>
-  ${stats}
-  ${summary}
-  ${mtable}
-  <p class="jfunds-disclaimer"><strong>Projection only.</strong> Assumes a constant ${(g * 100).toFixed(1)}%/mo compounding rate carried from CLU's current target. Real markets fluctuate; actual results will differ.</p>`;
-}
-
-function miniProjChart(series, months, startDate) {
-  const VW = 860, VH = 180, padL = 52, padR = 20, padT = 18, padB = 30;
-  const plotW = VW - padL - padR, plotH = VH - padT - padB;
-  if (series.length < 2) return '<p class="no-data" style="padding:16px">Enter an amount to project.</p>';
-  const vals = series.reduce((a, p) => { a.push(p.base, p.boost); return a; }, []);
-  const minV = Math.min.apply(null, vals) * 0.96;
-  const maxV = Math.max.apply(null, vals) * 1.04;
-  const xf = m => padL + (m / months) * plotW;
-  const yf = v => padT + plotH - ((v - minV) / (maxV - minV || 1)) * plotH;
-
-  let grid = '';
-  for (let i = 0; i <= 4; i++) {
-    const v = minV + (i / 4) * (maxV - minV);
-    const y = yf(v).toFixed(1);
-    grid += `<line x1="${padL}" y1="${y}" x2="${VW - padR}" y2="${y}" stroke="rgba(100,180,255,0.07)" stroke-width="1"/>`;
-    grid += `<text x="${padL - 6}" y="${(+y + 3.5).toFixed(1)}" text-anchor="end" font-size="9" fill="rgba(100,180,255,0.42)" font-family="monospace">$${v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v.toFixed(0)}</text>`;
+    out.innerHTML=`<div class="cb"><div class="stats">
+      <div class="kpi"><div class="l">Add</div><div class="v sm" style="color:var(--ac)">${fmtDollar(a)} / ${freq}</div></div>
+      <div class="kpi"><div class="l">Horizon</div><div class="v sm">${fmtMonthsLabel(months)}</div></div>
+      <div class="kpi"><div class="l">Baseline</div><div class="v sm" style="color:#6fb8ef">${fmtDollar(sim.base)}</div></div>
+      <div class="kpi"><div class="l">With Funds</div><div class="v g">${fmtDollar(sim.boost)}</div></div>
+      <div class="kpi"><div class="l">Difference</div><div class="v sm" style="color:var(--ac)">+${fmtDollar(delta)}</div></div>
+      <div class="kpi"><div class="l">You Contribute</div><div class="v sm">${fmtDollar(sim.contrib)}</div></div>
+      ${mrow}
+    </div><p class="disc" style="margin-top:12px">Projection only — assumes ${(g*100).toFixed(1)}%/mo compounding. Markets vary.</p></div>`;
   }
+  freqEl.querySelectorAll('.fb').forEach(b=>b.addEventListener('click',()=>{ freq=b.dataset.f; freqEl.querySelectorAll('.fb').forEach(x=>x.classList.toggle('on',x===b)); recompute(); }));
+  amt.addEventListener('input',recompute); range.addEventListener('input',recompute); recompute();
+}
+function deriveMonthlyRate(gc){ if(gc&&gc.monthly_target_pct) return gc.monthly_target_pct/100;
+  const pj=(gc&&gc.projected)||[]; if(pj.length>=2&&pj[0].value>0){ const days=(new Date(pj[pj.length-1].date)-new Date(pj[0].date))/86400000; const mo=days/30.4368; if(mo>0) return Math.pow(pj[pj.length-1].value/pj[0].value,1/mo)-1; }
+  if(gc&&gc.weekly_target_pct) return Math.pow(1+gc.weekly_target_pct/100,4.34812)-1; return 0.05; }
+function computeFunds(V0,g,a,freq,months){ let base=V0,boost=V0,contrib=0; if(freq==='once'){boost+=a;contrib=a;} const series=[{m:0,base,boost}]; const per=CPM[freq]||0;
+  for(let i=1;i<=months;i++){ base*=(1+g); boost*=(1+g); if(freq!=='once'&&a>0){const add=a*per;boost+=add;contrib+=add;} series.push({m:i,base,boost}); } return {series,contrib,base,boost}; }
+function firstMonth(series,key,t){ for(let i=0;i<series.length;i++) if(series[i][key]>=t) return series[i].m; return -1; }
 
-  let xLabels = '';
-  const ticks = [...new Set([0, Math.round(months / 2), months])];
-  ticks.forEach(m => {
-    const x = xf(m).toFixed(1);
-    xLabels += `<text x="${x}" y="${(VH - padB + 16).toFixed(1)}" text-anchor="middle" font-size="9" fill="rgba(100,180,255,0.40)" font-family="monospace">${startDate ? fmtShortMonth(startDate, m) : m + 'mo'}</text>`;
-  });
+/* TICKER ENGINE */
+function buildEngineShell(){
+  if (engineReady) return; engineReady = true;
+  const root = document.getElementById('engine-root');
+  root.innerHTML = `<div class="wrap">${rail('TICKER&nbsp;ENGINE&nbsp;//&nbsp;03')}<div class="main">
+    ${sec('Q1','Quant Core','deterministic · no AI','<span class="beta">BETA</span>')}
+    <div class="search"><div class="sin"><span class="ic">⌕</span><input id="engine-input" style="background:none;border:none;outline:none;color:var(--t1);font-family:var(--disp);letter-spacing:3px;font-size:15px;text-transform:uppercase;width:100%" placeholder="ENTER TICKER — AAPL, SPY, QQQ" maxlength="12" autocomplete="off" spellcheck="false"></div><button class="go" id="engine-go">ANALYZE</button></div>
+    <p class="disc"><b>BETA — not financial advice.</b> Automated quant signal (trend · momentum · RSI · volatility). Not a buy/sell recommendation. Stocks, ETFs &amp; indexes only · no crypto.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">${['AAPL','MSFT','SPY','QQQ','NVDA'].map(s=>`<button class="fb" data-sym="${s}" style="font-family:var(--disp);font-size:10px;letter-spacing:1px;padding:6px 12px;background:var(--bg2);border:1px solid var(--line);color:var(--t3);cursor:pointer">${s}</button>`).join('')}</div>
+    <div id="engine-result"><div class="empty-state"><div class="empty-icon">⚙</div><p class="empty-title">Enter a Ticker to Begin</p><p class="empty-sub">CLU pulls recent price history and returns a quant read — signal, conviction, suggested style, and the factors behind it. Stocks, ETFs &amp; indexes only.</p></div></div>
+  </div></div>`;
+  const input=document.getElementById('engine-input'), go=document.getElementById('engine-go');
+  const run=()=>runEngine(input.value);
+  go.addEventListener('click',run); input.addEventListener('keydown',e=>{if(e.key==='Enter')run();});
+  root.querySelectorAll('[data-sym]').forEach(b=>b.addEventListener('click',()=>{input.value=b.dataset.sym;runEngine(b.dataset.sym);}));
+}
+async function tdFetch(path){ const sep=path.includes('?')?'&':'?'; const res=await fetch(`${TD_BASE}/${path}${sep}apikey=${encodeURIComponent(TD_API_KEY)}`);
+  let j; try{ j=await res.json(); }catch{ throw new Error('Bad response from data provider.'); }
+  if(j&&(j.status==='error'||(typeof j.code==='number'&&j.code>=400))){ if(j.code===429) throw new Error('Rate limit reached — wait a moment.'); throw new Error(j.message||'Data provider error.'); } return j; }
+async function runEngine(raw){
+  const symbol=(raw||'').trim().toUpperCase(); const out=document.getElementById('engine-result'); if(!symbol||!out||engineBusy) return;
+  if(symbol.includes('/')||/^(BTC|ETH|DOGE|XRP|SOL|ADA|USDT|USDC|SHIB|LTC|BNB)([-/]|$)/.test(symbol)){ out.innerHTML=engMsg('— No Crypto / FX',"CLU's mandate excludes crypto and forex. Enter a stock, ETF, or index."); return; }
+  engineBusy=true; out.innerHTML=`<div class="empty-state"><div class="loader"></div><p>Analyzing <b style="color:var(--ac)">${escHtml(symbol)}</b>…</p></div>`;
+  try{
+    let data=ENGINE_CACHE[symbol];
+    if(!data||Date.now()-data.t>ENGINE_TTL){ const [q,ts]=await Promise.all([tdFetch(`quote?symbol=${encodeURIComponent(symbol)}`).catch(()=>null), tdFetch(`time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=260`)]); data={t:Date.now(),q,ts}; ENGINE_CACHE[symbol]=data; }
+    const a=analyzeTicker(symbol,data.q,data.ts); if(!a) throw new Error('Not enough price history.');
+    if(a.blocked){ out.innerHTML=engMsg('— Unsupported',a.blocked); engineBusy=false; return; }
+    out.innerHTML=renderEngine(a);
+  }catch(e){ out.innerHTML=engMsg('Analysis Unavailable',(e&&e.message)||'Could not analyze this ticker.'); }
+  engineBusy=false;
+}
+function engMsg(t,s){ return `<div class="empty-state"><div class="empty-icon" style="color:#ff8800">⚠</div><p class="empty-title" style="color:#ff8800">${escHtml(t)}</p><p class="empty-sub">${escHtml(s)}</p></div>`; }
 
-  const basePts  = series.map(p => `${xf(p.m).toFixed(1)},${yf(p.base).toFixed(1)}`);
-  const boostPts = series.map(p => `${xf(p.m).toFixed(1)},${yf(p.boost).toFixed(1)}`);
-  const boostArea = `M${xf(0).toFixed(1)},${(padT + plotH).toFixed(1)} L${boostPts.join(' L')} L${xf(months).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
+function renderEngine(a){
+  const m=a.metrics; const dc=a.dayChgPct>=0;
+  const facs=a.factors.map(f=>{ const cls=f.state>0.15?'':f.state<-0.15?'n':''; const icon=f.state>0.15?'✓':f.state<-0.15?'✕':'–';
+    const segs=Math.max(1,Math.round(Math.abs(f.state)*4)); let w=''; for(let i=0;i<4;i++) w+=`<i class="${i<segs?(f.state<0?'neg':'on'):''}"></i>`;
+    return `<div class="fac"><span class="fic ${cls}">${icon}</span> ${escHtml(f.label)} <span class="det">${escHtml(f.detail)}</span><span class="w">${w}</span></div>`; }).join('');
+  const met=[['1-Mo',pct(m.ret1m),pc(m.ret1m)],['3-Mo',pct(m.ret3m),pc(m.ret3m)],['6-Mo',pct(m.ret6m),pc(m.ret6m)],['RSI 14',m.rsi==null?'—':m.rsi.toFixed(0),''],['Volatility',m.vol==null?'—':m.vol.toFixed(0)+'%',''],['52-Wk Pos',m.pos52.toFixed(0)+'%',''],['50-D SMA',m.sma50==null?'—':fmtDollar(m.sma50),''],['200-D SMA',m.sma200==null?'—':fmtDollar(m.sma200),'']]
+    .map(x=>`<div class="m"><div class="l">${x[0]}</div><div class="v ${x[2]}">${x[1]}</div></div>`).join('');
+  const mkt=a.marketOpen===false?' · market closed':a.marketOpen===true?' · market open':'';
+  const sigColor={'sig-strong-buy':'#37e08a','sig-buy':'#6fb8ef','sig-hold':'#ffdd00','sig-reduce':'#f2a73d','sig-sell':'#ff5a7a'}[a.rec.cls]||'#37e08a';
+  return card(`<div class="vh"><div><div class="sym">${escHtml(a.symbol)}</div><div class="nm2">${escHtml(a.name)}</div><div class="ex">${escHtml(a.exchange)} · ${escHtml(a.type)}${mkt}</div></div><div class="rt"><div class="price">${fmtDollar(a.price)}</div><div class="chg" style="${dc?'':'color:var(--red)'}">${dc?'+':''}${a.dayChgPct.toFixed(2)}% today</div><div class="asof">as of ${escHtml(a.asOf)}</div></div></div>
+    <div class="verdict"><div class="gauge">${engineGauge(a.conviction,sigColor)}</div><div><div class="sig" style="color:${sigColor};text-shadow:0 0 18px ${sigColor}66">${a.rec.label}</div><div class="chips"><span class="chip" style="color:${sigColor};border-color:${sigColor}">${escHtml(a.style.label)}</span><span class="chip amb">RISK: ${a.risk.label}</span></div><div class="vnote">${escHtml(a.style.note)}</div></div></div>
+    <div class="met">${met}</div>
+    <div class="fwrap"><div class="fh">Signal Breakdown</div>${facs}</div>
+    <p class="disc" style="margin:12px 14px 14px"><b>BETA · Not financial advice.</b> Deterministic quant model (no AI) from historical price data — a research starting point, not a recommendation.</p>`);
+}
+function engineGauge(score,color){
+  const R=59,cx=75,cy=80; const ang=Math.PI-(score/100)*Math.PI; const x=(cx+R*Math.cos(ang)).toFixed(1), y=(cy-R*Math.sin(ang)).toFixed(1);
+  return `<svg viewBox="0 0 150 92" width="150" xmlns="http://www.w3.org/2000/svg"><path d="M16,80 A${R},${R} 0 0,1 134,80" fill="none" stroke="rgba(90,130,160,.18)" stroke-width="12"/><path d="M16,80 A${R},${R} 0 0,1 ${x},${y}" fill="none" stroke="${color}" stroke-width="12" style="filter:drop-shadow(0 0 5px ${color})"/><text x="75" y="70" text-anchor="middle" font-size="30" font-weight="700" fill="${color}" font-family="'Orbitron',monospace">${score}</text><text x="75" y="84" text-anchor="middle" font-size="7" fill="#9bc0e0" letter-spacing="2" font-family="monospace">CONVICTION</text></svg>`;
+}
+const pct=v=>v==null?'—':`${v>=0?'+':''}${v.toFixed(1)}%`; const pc=v=>v==null?'':(v>=0?'up':'dn');
 
-  const last = series[series.length - 1];
-  const baseLbl  = `<text x="${(xf(months) - 6).toFixed(1)}" y="${(yf(last.base) + 12).toFixed(1)}" text-anchor="end" font-size="9" fill="#7EC8FF" font-family="monospace">${fmtDollar(last.base)}</text>`;
-  const boostLbl = `<text x="${(xf(months) - 6).toFixed(1)}" y="${(yf(last.boost) - 7).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="#00ff88" font-family="monospace">${fmtDollar(last.boost)}</text>`;
-
-  return `<svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <defs><linearGradient id="lgBoost" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="#00ff88" stop-opacity="0.28"/><stop offset="100%" stop-color="#00ff88" stop-opacity="0.01"/>
-  </linearGradient></defs>
-  ${grid}
-  <path d="${boostArea}" fill="url(#lgBoost)"/>
-  <polyline points="${basePts.join(' ')}" fill="none" stroke="#7EC8FF" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
-  <polyline points="${boostPts.join(' ')}" fill="none" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
-  <line x1="${padL}" y1="${padT + plotH}" x2="${VW - padR}" y2="${padT + plotH}" stroke="rgba(100,180,255,0.15)" stroke-width="1"/>
-  ${baseLbl}${boostLbl}${xLabels}
-</svg>`;
+function emaS(a,n){const k=2/(n+1);const o=[a[0]];for(let i=1;i<a.length;i++)o.push(a[i]*k+o[i-1]*(1-k));return o;}
+function smaC(a,n){if(a.length<n)return null;let s=0;for(let i=a.length-n;i<a.length;i++)s+=a[i];return s/n;}
+function retC(a,n){if(a.length<=n)return null;const p=a[a.length-1-n];return p?(a[a.length-1]/p-1)*100:null;}
+function rsiC(a,p){p=p||14;if(a.length<p+1)return null;let g=0,l=0;for(let i=a.length-p;i<a.length;i++){const d=a[i]-a[i-1];if(d>=0)g+=d;else l-=d;}const ag=g/p,al=l/p;if(al===0)return 100;return 100-100/(1+ag/al);}
+function volC(a,w){w=w||30;if(a.length<w+1)w=a.length-1;if(w<2)return null;const r=[];for(let i=a.length-w;i<a.length;i++)r.push(a[i]/a[i-1]-1);const m=r.reduce((x,y)=>x+y,0)/r.length;const v=r.reduce((x,y)=>x+(y-m)*(y-m),0)/r.length;return Math.sqrt(v)*Math.sqrt(252)*100;}
+function macdH(a){if(a.length<35)return null;const e12=emaS(a,12),e26=emaS(a,26);const md=a.map((_,i)=>e12[i]-e26[i]);const sg=emaS(md,9);return md[md.length-1]-sg[sg.length-1];}
+function styleOf(conv,vol,rsi,a200,c50200){ if(conv<45)return{label:'Avoid / Reduce',note:'Signals are weak — trend and momentum favor staying out until the chart repairs.'};
+  if(conv<60)return{label:'Hold / Watch',note:'Mixed signals — hold existing exposure and wait for confirmation before adding.'};
+  if(a200&&c50200&&vol<40){ if(vol<22)return{label:'Long-Term Buy / DRIP',note:'Steady, low-volatility uptrend — suits long-horizon accumulation and dividend reinvestment.'}; return{label:'Long-Term Buy',note:'Established uptrend above the 200-day — favorable for longer-horizon holds.'}; }
+  if(vol>=40||rsi>72)return{label:'Short-Term / Swing',note:'Momentum strong but volatile/extended — better as a shorter-term trade with tight risk.'};
+  return{label:'Position Buy',note:'Constructive setup — reasonable to scale in with a defined stop.'}; }
+function analyzeTicker(symbol,q,ts){
+  if(!ts||!ts.values||!ts.values.length)return null;
+  const type=(q&&q.type)||(ts.meta&&ts.meta.type)||'';
+  if(/digital currency|physical currency|crypto/i.test(type))return{blocked:'CLU does not analyze crypto or currencies.'};
+  const rows=ts.values.slice().reverse(); const closes=rows.map(r=>parseFloat(r.close)).filter(v=>!isNaN(v)); if(closes.length<30)return null;
+  const price=q&&q.close?parseFloat(q.close):closes[closes.length-1]; const pv=q&&q.previous_close?parseFloat(q.previous_close):closes[closes.length-2];
+  const day=q&&q.percent_change!=null?parseFloat(q.percent_change):(pv?(price/pv-1)*100:0);
+  const s20=smaC(closes,20),s50=smaC(closes,50),s200=smaC(closes,200);
+  const r1=retC(closes,21),r3=retC(closes,63),r6=retC(closes,126),rsi=rsiC(closes,14),vol=volC(closes,30),mh=macdH(closes);
+  const tail=closes.slice(-252); const hi=q&&q.fifty_two_week&&q.fifty_two_week.high?parseFloat(q.fifty_two_week.high):Math.max.apply(null,tail); const lo=q&&q.fifty_two_week&&q.fifty_two_week.low?parseFloat(q.fifty_two_week.low):Math.min.apply(null,tail);
+  const pos52=hi>lo?((price-lo)/(hi-lo))*100:50;
+  const cl=x=>Math.max(-1,Math.min(1,x)); const F=[];
+  if(s200!=null)F.push({label:'Price vs 200-day trend',state:price>=s200?1:-1,detail:price>=s200?`above ${fmtDollar(s200)}`:`below ${fmtDollar(s200)}`,w:2});
+  if(s50!=null&&s200!=null)F.push({label:'50 / 200 cross',state:s50>=s200?1:-1,detail:s50>=s200?'golden cross':'death cross',w:1.5});
+  if(s50!=null)F.push({label:'Price vs 50-day',state:price>=s50?1:-1,detail:price>=s50?`above ${fmtDollar(s50)}`:`below ${fmtDollar(s50)}`,w:1.5});
+  if(r3!=null)F.push({label:'3-month momentum',state:cl(r3/15),detail:`${r3>=0?'+':''}${r3.toFixed(1)}%`,w:2});
+  if(r6!=null)F.push({label:'6-month momentum',state:cl(r6/30),detail:`${r6>=0?'+':''}${r6.toFixed(1)}%`,w:1.5});
+  if(r1!=null)F.push({label:'1-month momentum',state:cl(r1/10),detail:`${r1>=0?'+':''}${r1.toFixed(1)}%`,w:1});
+  if(rsi!=null){let st,dt; if(rsi>=80){st=-0.6;dt=`RSI ${rsi.toFixed(0)} — overbought`;}else if(rsi>=70){st=0.1;dt=`RSI ${rsi.toFixed(0)} — extended`;}else if(rsi>=55){st=0.7;dt=`RSI ${rsi.toFixed(0)} — healthy`;}else if(rsi>=45){st=0;dt=`RSI ${rsi.toFixed(0)} — neutral`;}else if(rsi>=30){st=-0.4;dt=`RSI ${rsi.toFixed(0)} — weak`;}else{st=-0.4;dt=`RSI ${rsi.toFixed(0)} — oversold`;} F.push({label:'RSI (14)',state:st,detail:dt,w:1.2});}
+  if(mh!=null)F.push({label:'MACD histogram',state:mh>=0?0.7:-0.7,detail:mh>=0?'bullish':'bearish',w:1});
+  let ws=0,w=0; F.forEach(f=>{ws+=f.state*f.w;w+=Math.abs(f.w);}); const raw=w?ws/w:0; const conv=Math.round((raw+1)/2*100);
+  let rec; if(conv>=72)rec={label:'STRONG BUY',cls:'sig-strong-buy'};else if(conv>=60)rec={label:'BUY',cls:'sig-buy'};else if(conv>=45)rec={label:'HOLD',cls:'sig-hold'};else if(conv>=33)rec={label:'REDUCE',cls:'sig-reduce'};else rec={label:'SELL / AVOID',cls:'sig-sell'};
+  let risk; if(vol==null)risk={label:'N/A'};else if(vol<22)risk={label:'LOW'};else if(vol<40)risk={label:'MODERATE'};else if(vol<60)risk={label:'HIGH'};else risk={label:'VERY HIGH'};
+  const a200=s200!=null&&price>=s200, c50200=s50!=null&&s200!=null&&s50>=s200;
+  return { symbol, name:(q&&q.name)||symbol, exchange:(q&&q.exchange)||(ts.meta&&ts.meta.exchange)||'', type:type||'Equity', asOf:(q&&q.datetime)||(rows.length?rows[rows.length-1].datetime:''), marketOpen:q?q.is_market_open:null, price, dayChgPct:day, metrics:{sma20:s20,sma50:s50,sma200:s200,ret1m:r1,ret3m:r3,ret6m:r6,rsi,vol,pos52}, factors:F.map(f=>({label:f.label,state:f.state,detail:f.detail})), conviction:conv, rec, risk, style:styleOf(conv,vol==null?30:vol,rsi==null?50:rsi,a200,c50200) };
 }
 
-/* ─── JOURNEY SECTIONS ───────────────────────────── */
-
-function buildJourneyDecisions(decisions) {
-  const typeIcon  = { watch:'◎', add:'◈', hold:'◉', build:'◆', sell:'▲', rebalance:'⇄' };
-  const typeColor = { watch:'var(--yellow)', add:'var(--green)', hold:'var(--blue)', build:'var(--magenta)', sell:'var(--red)', rebalance:'var(--orange)' };
-  const items = decisions.map(dec => {
-    const icon  = typeIcon[dec.type]  || '◎';
-    const color = typeColor[dec.type] || 'var(--t3)';
-    return `<div class="jd-item">
-      <div class="jd-head">
-        <span class="jd-icon" style="color:${color}">${icon}</span>
-        <span class="jd-ticker">${escHtml(dec.ticker)}</span>
-        <span class="jd-type" style="color:${color};border-color:${color}">${escHtml((dec.type || '').toUpperCase())}</span>
-      </div>
-      <div class="jd-thesis">${escHtml(dec.thesis)}</div>
-      <div class="jd-trigger"><span class="jd-trigger-label">TRIGGER</span> ${escHtml(dec.trigger)}</div>
-    </div>`;
-  }).join('');
-  return `<div class="card journey-section">
-    <div class="card-title"><span class="card-title-icon">◎</span> Next Likely Decisions</div>
-    <div class="journey-section-body">${items || '<div class="none-label">No decisions queued.</div>'}</div>
-  </div>`;
+/* ARCHIVE */
+async function loadArchive(){
+  if (archiveLoaded) return; archiveLoaded = true;
+  const root=document.getElementById('archive-root');
+  root.innerHTML=`<div class="wrap">${rail('PAST&nbsp;REPORTS&nbsp;//&nbsp;04')}<div class="main">${sec('R1','Filed Reports','final daily · newest first')}<div class="archlay"><div class="alist" id="arch-list">${stateLoading('Loading…')}</div><div id="arch-detail"><div class="empty-state"><div class="empty-icon">◷</div><p class="empty-title">Select a Report</p><p class="empty-sub">Choose a date to view the full session brief.</p></div></div></div></div></div>`;
+  try{
+    const res=await fetch(ARCHIVE_INDEX_URL+'?t='+Date.now()); if(!res.ok) throw new Error();
+    archiveIndex=(await res.json()).sort((a,b)=>b.date.localeCompare(a.date));
+    const list=document.getElementById('arch-list');
+    if(!archiveIndex.length){ list.innerHTML='<div class="empty-sub" style="padding:16px">No archived reports yet.</div>'; return; }
+    list.innerHTML=archiveIndex.map(e=>{ const pc=e.day_pct; const has=typeof pc==='number'; const up=has&&pc>=0;
+      return `<div class="arow" data-date="${e.date}"><span class="ad">${formatDateLong(e.date.slice(0,10))}</span><span class="as">${escHtml(e.session_label||e.session||'')}${has?` · <b class="${up?'':'dn'}">${up?'+':''}${pc.toFixed(1)}%</b>`:''}</span></div>`;
+    }).join('');
+    list.querySelectorAll('.arow').forEach(r=>r.addEventListener('click',()=>{ list.querySelectorAll('.arow').forEach(x=>x.classList.remove('on')); r.classList.add('on'); archiveSel=r.dataset.date; setStatusBar('archive'); loadArchiveReport(r.dataset.date); }));
+    if(document.body.dataset.tab==='archive') setStatusBar('archive');
+  }catch{ const list=document.getElementById('arch-list'); if(list) list.innerHTML='<div class="empty-sub" style="padding:16px;color:#ff5a4a">Failed to load archive.</div>'; }
+}
+async function loadArchiveReport(date){
+  const det=document.getElementById('arch-detail'); det.innerHTML=stateLoading('Loading…');
+  try{
+    const res=await fetch(ARCHIVE_REPORT(date)+'?t='+Date.now()); if(!res.ok) throw new Error(); const d=await res.json();
+    const p=d.portfolio||{}; const pos=d.positions||[]; const c=(p.day_pnl_dollars||0)>=0;
+    const best=pos.slice().sort((a,b)=>(b.total_pnl_pct||0)-(a.total_pnl_pct||0))[0];
+    const trades=d.trades_executed||[];
+    const kpi=[['Close Value',fmtDollar(p.total_value),''],['Day P&L',(c?'+':'')+fmtDollar(p.day_pnl_dollars),c?'up':'dn'],['Day %',(c?'+':'')+(p.day_pnl_pct||0).toFixed(1)+'%',c?'up':'dn'],['Trades',String(trades.length),''],['Best',best?`${escHtml(best.symbol)} ${(best.total_pnl_pct||0)>=0?'+':''}${(best.total_pnl_pct||0).toFixed(1)}%`:'—','up'],['Cash',fmtDollar(p.cash),''],['Positions',`${p.open_positions||pos.length} / ${p.positions_cap||4}`,''],['Session',formatDate((d.meta&&d.meta.date)||date),'']]
+      .map(x=>`<div class="m"><div class="l">${x[0]}</div><div class="v ${x[2]}">${x[1]}</div></div>`).join('');
+    const log=trades.length?trades.map(t=>`<div class="fac"><span class="fic">⇄</span> ${escHtml(t.side)} ${escHtml(t.symbol)} ×${t.shares} <span class="det">@ ${fmtDollar(t.price)} — ${escHtml(t.reason||'')}</span></div>`).join(''):'<div class="fac"><span class="fic">–</span> No trades this session.</div>';
+    const recap=(d.thoughts&&d.thoughts.length)?`<div class="intel"><span class="tag">RECAP</span><p>${escHtml(d.thoughts[0].text)}</p></div>`:'';
+    det.innerHTML=card(`<div class="met">${kpi}</div><div class="fwrap"><div class="fh">Session Log</div>${log}</div>${recap?`<div style="padding:0 14px 14px">${recap}</div>`:''}`, 'REC', `Final Daily — ${formatDate((d.meta&&d.meta.date)||date)}`);
+  }catch{ det.innerHTML='<div class="empty-sub" style="padding:20px;color:#ff5a4a">Failed to load report.</div>'; }
 }
 
-function buildJourneyEvolution(phases) {
-  const items = phases.map((ph, i) => `
-    <div class="je-phase">
-      <div class="je-phase-num">PHASE ${i + 1}</div>
-      <div class="je-phase-title">${escHtml(ph.phase)}</div>
-      <div class="je-phase-range">${escHtml(ph.date_range)} &middot; ${ph.sessions || 0} sessions</div>
-      <div class="je-phase-summary">${escHtml(ph.summary)}</div>
-      ${ph.key_insight ? `<div class="je-insight"><span class="je-insight-label">KEY INSIGHT</span>${escHtml(ph.key_insight)}</div>` : ''}
-      <div class="je-phase-footer">
-        <span class="je-stat">${ph.patterns_locked || 0} patterns locked</span>
-        ${ph.next_phase ? `<span class="je-next">→ ${escHtml(ph.next_phase)}</span>` : ''}
-      </div>
-    </div>`).join('');
-  return `<div class="card journey-section">
-    <div class="card-title"><span class="card-title-icon">┑</span> Intelligence Evolution</div>
-    <div class="journey-section-body">${items || '<div class="none-label">Building history…</div>'}</div>
-  </div>`;
-}
-
-function buildJourneyDNA(rules) {
-  const statusColor = { locked: 'var(--neon-orange)', active: 'var(--green)', learning: 'var(--blue-mid)' };
-  const statusIcon  = { locked: '🔒', active: '●', learning: '◌' };
-  const items = rules.map(r => {
-    const color = statusColor[r.status] || 'var(--t3)';
-    const icon  = statusIcon[r.status]  || '○';
-    return `<div class="jdna-item">
-      <div class="jdna-head">
-        <span class="jdna-status" style="color:${color}">${icon} ${escHtml((r.status || '').toUpperCase())}</span>
-        <span class="jdna-rule">${escHtml(r.rule)}</span>
-      </div>
-      <div class="jdna-note">${escHtml(r.note)}</div>
-    </div>`;
-  }).join('');
-  return `<div class="card journey-section">
-    <div class="card-title"><span class="card-title-icon">◉</span> Strategy DNA</div>
-    <div class="journey-section-body">${items}</div>
-  </div>`;
-}
-
-function buildJourneyRisk(risk) {
-  if (!risk) return `<div class="card journey-section"><div class="card-title"><span class="card-title-icon">⬡</span> Risk Profile</div><div class="none-label">No data.</div></div>`;
-  const overallColor = risk.overall === 'low' ? 'var(--green)' : risk.overall === 'moderate' ? 'var(--yellow)' : 'var(--neon-orange)';
-  const concColor    = risk.concentration_risk === 'low' ? 'var(--green)' : risk.concentration_risk === 'elevated' ? 'var(--neon-orange)' : 'var(--red)';
-  const divScore = risk.diversification_score || 0;
-  const divMax   = risk.diversification_max   || 10;
-  const divPct   = Math.round((divScore / divMax) * 100);
-  const totalN   = (risk.sector_exposure || []).reduce((a, b) => a + (b.notional || 0), 0);
-  const sectors  = (risk.sector_exposure || []).map(s => {
-    const pct = totalN > 0 ? ((s.notional / totalN) * 100).toFixed(0) : 0;
-    return `<div class="jrisk-sector">
-      <div class="jrisk-sector-head"><span class="jrisk-sector-name">${escHtml(s.sector)}</span><span class="jrisk-sector-tickers">${escHtml(s.tickers)}</span></div>
-      <div class="jrisk-bar-wrap"><div class="jrisk-bar" style="width:${pct}%"></div><span class="jrisk-pct">${pct}%</span></div>
-    </div>`;
-  }).join('');
-  return `<div class="card journey-section">
-    <div class="card-title"><span class="card-title-icon">⬡</span> Risk Profile</div>
-    <div class="journey-section-body">
-      <div class="jrisk-stats">
-        <div class="jrisk-item"><div class="pf-label">Overall Risk</div><div class="jrisk-val" style="color:${overallColor}">${escHtml((risk.overall || '').toUpperCase())}</div></div>
-        <div class="jrisk-item"><div class="pf-label">Concentration</div><div class="jrisk-val" style="color:${concColor}">${escHtml((risk.concentration_risk || '').toUpperCase())}</div></div>
-        <div class="jrisk-item"><div class="pf-label">Cash Buffer</div><div class="jrisk-val" style="color:var(--green)">${risk.cash_buffer_pct || 0}%</div></div>
-        <div class="jrisk-item"><div class="pf-label">Diversification</div><div class="jrisk-val">${divScore}/${divMax}</div><div class="slot-bar" style="margin-top:5px"><div class="slot-fill" style="width:${divPct}%"></div></div></div>
-      </div>
-      ${risk.notes ? `<div class="jrisk-notes">${escHtml(risk.notes)}</div>` : ''}
-      <div class="jrisk-sectors">${sectors}</div>
-    </div>
-  </div>`;
-}
-
-function buildJourneyMilestones(milestones, currentValue) {
-  const statusColor = { completed: 'var(--green)', upcoming: 'var(--t4)', active: 'var(--blue)' };
-  const statusIcon  = { completed: '✓', upcoming: '○', active: '◈' };
-  const items = milestones.map((m, i) => {
-    const reached = currentValue != null && m.target != null && currentValue >= m.target;
-    const status  = reached ? 'completed' : m.status;
-    const color = reached ? 'var(--green)' : (statusColor[status] || 'var(--t4)');
-    const icon  = reached ? '✓' : (statusIcon[status] || '○');
-    return `<div class="jmile-item${reached ? ' jmile-reached' : ''}">
-      <div class="jmile-icon" style="color:${color};border-color:${color}">${icon}</div>
-      ${i < milestones.length - 1 ? '<div class="jmile-connector"></div>' : ''}
-      <div class="jmile-info">
-        <div class="jmile-target" style="color:${color}">${fmtDollar(m.target)}${reached ? ' <span class="jmile-reached-tag">✓ REACHED</span>' : ''}</div>
-        <div class="jmile-label">${escHtml(m.label)}</div>
-        <div class="jmile-date">${reached ? 'Cleared — portfolio at ' + fmtDollar(currentValue) : escHtml(m.projected_date)}</div>
-        ${m.notes ? `<div class="jmile-notes">${escHtml(m.notes)}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-  return `<div class="card journey-section">
-    <div class="card-title"><span class="card-title-icon">◆</span> Milestone Targets</div>
-    <div class="journey-section-body"><div class="jmile-list">${items || '<div class="none-label">No milestones set.</div>'}</div></div>
-  </div>`;
-}
-
-function buildJourneyRecap(recap) {
-  if (!recap) return '';
-  const sign     = recap.change_dollars >= 0 ? '+' : '';
-  const pnlColor = recap.change_dollars >= 0 ? 'var(--green)' : 'var(--red)';
-  const best     = recap.best_performer;
-  return `<div class="card journey-recap-card">
-    <div class="card-title"><span class="card-title-icon">◷</span> Week ${recap.week_num || 1} Recap — ${escHtml(recap.week)}</div>
-    <div class="journey-recap-inner">
-      <div class="jrecap-stats">
-        <div class="pf-item"><div class="pf-label">Week Start</div><div class="pf-value small">${fmtDollar(recap.start_value)}</div></div>
-        <div class="pf-item"><div class="pf-label">Week End</div><div class="pf-value small">${fmtDollar(recap.end_value)}</div></div>
-        <div class="pf-item"><div class="pf-label">Change</div><div class="pf-value small" style="color:${pnlColor}">${sign}${fmtDollar(recap.change_dollars)} (${sign}${recap.change_pct.toFixed(2)}%)</div></div>
-        <div class="pf-item"><div class="pf-label">Trades / W / L</div><div class="pf-value small">${recap.trades} / <span style="color:var(--green)">${recap.wins}W</span> / <span style="color:var(--red)">${recap.losses}L</span></div></div>
-        ${best ? `<div class="pf-item"><div class="pf-label">Best Performer</div><div class="pf-value small" style="color:var(--green)">${escHtml(best.ticker)} +${best.pct}%</div></div>` : ''}
-      </div>
-      ${recap.summary ? `<div class="jrecap-summary">${escHtml(recap.summary)}</div>` : ''}
-    </div>
-  </div>`;
-}
-
-/* ============================================================
-   TICKER ENGINE  (CLU Quant Core) — BETA
-   Deterministic quant scoring. No AI/Claude. Data: Twelve Data.
-   ============================================================ */
-
-function initEngine() {
-  if (engineInit) return;
-  engineInit = true;
-  const input = document.getElementById('engine-input');
-  const go    = document.getElementById('engine-go');
-  if (!input || !go) return;
-  const run = () => runTickerEngine(input.value);
-  go.addEventListener('click', run);
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
-  document.querySelectorAll('.engine-chip').forEach(c =>
-    c.addEventListener('click', () => { input.value = c.dataset.sym; runTickerEngine(c.dataset.sym); }));
-  if (TD_API_KEY === 'demo') {
-    const hdr = document.querySelector('.engine-header');
-    if (hdr) {
-      const note = document.createElement('div');
-      note.className = 'engine-demo-note';
-      note.innerHTML = '⚠ <strong>Demo data key active</strong> — only sample tickers (e.g. AAPL) return data. Add a free Twelve Data API key in app.js to analyze any symbol.';
-      hdr.appendChild(note);
-    }
-  }
-}
-
-async function tdFetch(path) {
-  const sep = path.includes('?') ? '&' : '?';
-  const res = await fetch(`${TD_BASE}/${path}${sep}apikey=${encodeURIComponent(TD_API_KEY)}`);
-  let json;
-  try { json = await res.json(); } catch { throw new Error('Bad response from data provider.'); }
-  if (json && (json.status === 'error' || (typeof json.code === 'number' && json.code >= 400))) {
-    const msg = json.message || 'Data provider error.';
-    if (json.code === 429) throw new Error('Rate limit reached — wait a moment and try again.');
-    if (/api key|apikey|grow|plan/i.test(msg) && TD_API_KEY === 'demo')
-      throw new Error('This symbol needs a real API key. The built-in demo key only covers sample tickers like AAPL — add a free Twelve Data key to unlock any ticker.');
-    throw new Error(msg);
-  }
-  return json;
-}
-
-async function runTickerEngine(raw) {
-  const symbol = (raw || '').trim().toUpperCase();
-  const stateEl  = document.getElementById('engine-state');
-  const resultEl = document.getElementById('engine-result');
-  if (!symbol || !resultEl || engineBusy) return;
-
-  if (symbol.includes('/') || /^(BTC|ETH|DOGE|XRP|SOL|ADA|USDT|USDC|SHIB|LTC|BNB)([-/]|$)/.test(symbol)) {
-    showEngineMessage('— No Crypto / FX', "CLU's mandate excludes crypto and forex. Enter an individual stock, ETF, or index (e.g. AAPL, SPY, QQQ).", true);
-    return;
-  }
-
-  engineBusy = true;
-  if (stateEl) stateEl.classList.add('hidden');
-  resultEl.classList.remove('hidden');
-  resultEl.innerHTML = `<div class="empty-state"><div class="loader"></div><p>CLU is analyzing <strong style="color:var(--blue)">${escHtml(symbol)}</strong>…</p></div>`;
-
-  try {
-    let data = ENGINE_CACHE[symbol];
-    if (!data || Date.now() - data.t > ENGINE_TTL) {
-      const [quote, ts] = await Promise.all([
-        tdFetch(`quote?symbol=${encodeURIComponent(symbol)}`).catch(() => null),
-        tdFetch(`time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=260`)
-      ]);
-      data = { t: Date.now(), quote: quote, ts: ts };
-      ENGINE_CACHE[symbol] = data;
-    }
-    const analysis = analyzeTicker(symbol, data.quote, data.ts);
-    if (!analysis) throw new Error('Not enough price history to analyze this symbol.');
-    if (analysis.blocked) { showEngineMessage('— Unsupported Asset', analysis.blocked, true); engineBusy = false; return; }
-    resultEl.innerHTML = renderEngineResult(analysis);
-  } catch (e) {
-    showEngineMessage('Analysis Unavailable', (e && e.message) || 'Could not analyze this ticker.', true);
-  }
-  engineBusy = false;
-}
-
-function showEngineMessage(title, sub, isError) {
-  const resultEl = document.getElementById('engine-result');
-  const stateEl  = document.getElementById('engine-state');
-  if (stateEl) stateEl.classList.add('hidden');
-  if (!resultEl) return;
-  resultEl.classList.remove('hidden');
-  resultEl.innerHTML = `<div class="empty-state">
-    <div class="empty-icon" style="color:${isError ? 'var(--neon-orange)' : 'var(--t4)'}">⚠</div>
-    <p class="empty-title" style="${isError ? 'color:var(--neon-orange)' : ''}">${escHtml(title)}</p>
-    <p class="empty-sub">${escHtml(sub)}</p>
-  </div>`;
-}
-
-function emaSeries(a, n) { const k = 2 / (n + 1); const o = [a[0]]; for (let i = 1; i < a.length; i++) o.push(a[i] * k + o[i - 1] * (1 - k)); return o; }
-function smaCalc(a, n) { if (a.length < n) return null; let s = 0; for (let i = a.length - n; i < a.length; i++) s += a[i]; return s / n; }
-function pctReturn(a, n) { if (a.length <= n) return null; const p = a[a.length - 1 - n]; return p ? (a[a.length - 1] / p - 1) * 100 : null; }
-function rsiCalc(a, p) { p = p || 14; if (a.length < p + 1) return null; let g = 0, l = 0; for (let i = a.length - p; i < a.length; i++) { const d = a[i] - a[i - 1]; if (d >= 0) g += d; else l -= d; } const ag = g / p, al = l / p; if (al === 0) return 100; return 100 - 100 / (1 + ag / al); }
-function annualVol(a, win) { win = win || 30; if (a.length < win + 1) win = a.length - 1; if (win < 2) return null; const r = []; for (let i = a.length - win; i < a.length; i++) r.push(a[i] / a[i - 1] - 1); const m = r.reduce((x, y) => x + y, 0) / r.length; const v = r.reduce((x, y) => x + (y - m) * (y - m), 0) / r.length; return Math.sqrt(v) * Math.sqrt(252) * 100; }
-function macdHist(a) { if (a.length < 35) return null; const e12 = emaSeries(a, 12), e26 = emaSeries(a, 26); const macd = a.map((_, i) => e12[i] - e26[i]); const sig = emaSeries(macd, 9); return macd[macd.length - 1] - sig[sig.length - 1]; }
-function avgTail(a, n) { n = Math.min(n, a.length); if (!n) return 0; let s = 0; for (let i = a.length - n; i < a.length; i++) s += a[i]; return s / n; }
-
-function suggestStyle(conviction, vol, rsiVal, aboveSMA200, sma50above200) {
-  if (conviction < 45) return { label: 'Avoid / Reduce', note: 'Signals are weak — trend and momentum favor staying out until the chart repairs.' };
-  if (conviction < 60) return { label: 'Hold / Watch', note: 'Mixed signals — hold existing exposure and wait for confirmation before adding.' };
-  if (aboveSMA200 && sma50above200 && vol < 40) {
-    if (vol < 22) return { label: 'Long-Term Buy / DRIP', note: 'Steady, low-volatility uptrend — well suited to long-horizon accumulation and dividend reinvestment.' };
-    return { label: 'Long-Term Buy', note: 'Established uptrend above the 200-day — favorable for longer-horizon position holds.' };
-  }
-  if (vol >= 40 || rsiVal > 72) return { label: 'Short-Term / Swing', note: 'Momentum is strong but volatile or extended — better suited to a shorter-term trade with tight risk control.' };
-  return { label: 'Position Buy', note: 'Constructive setup — reasonable to scale in with a defined stop-loss.' };
-}
-
-function analyzeTicker(symbol, quote, ts) {
-  if (!ts || !ts.values || !ts.values.length) return null;
-  const type = (quote && quote.type) || (ts.meta && ts.meta.type) || '';
-  if (/digital currency|physical currency|crypto/i.test(type))
-    return { blocked: 'CLU does not analyze crypto or currencies. Enter a stock, ETF, or index.' };
-
-  const rows = ts.values.slice().reverse();
-  const closes = rows.map(r => parseFloat(r.close)).filter(v => !isNaN(v));
-  const vols   = rows.map(r => parseFloat(r.volume)).filter(v => !isNaN(v));
-  if (closes.length < 30) return null;
-
-  const price = quote && quote.close ? parseFloat(quote.close) : closes[closes.length - 1];
-  const prevClose = quote && quote.previous_close ? parseFloat(quote.previous_close) : closes[closes.length - 2];
-  const dayChgPct = quote && quote.percent_change != null ? parseFloat(quote.percent_change)
-                    : (prevClose ? (price / prevClose - 1) * 100 : 0);
-
-  const sma20 = smaCalc(closes, 20), sma50 = smaCalc(closes, 50), sma200 = smaCalc(closes, 200);
-  const ret1m = pctReturn(closes, 21), ret3m = pctReturn(closes, 63), ret6m = pctReturn(closes, 126);
-  const rsiVal = rsiCalc(closes, 14);
-  const vol = annualVol(closes, 30);
-  const macdH = macdHist(closes);
-  const tail = closes.slice(-252);
-  const hi52 = quote && quote.fifty_two_week && quote.fifty_two_week.high ? parseFloat(quote.fifty_two_week.high) : Math.max.apply(null, tail);
-  const lo52 = quote && quote.fifty_two_week && quote.fifty_two_week.low ? parseFloat(quote.fifty_two_week.low) : Math.min.apply(null, tail);
-  const pos52 = (hi52 > lo52) ? ((price - lo52) / (hi52 - lo52)) * 100 : 50;
-  const volTrend = (vols.length >= 60) ? (avgTail(vols, 10) / avgTail(vols, 60) - 1) * 100 : null;
-
-  const clamp = (x) => Math.max(-1, Math.min(1, x));
-  const factors = [];
-  function F(label, state, weight, detail) { factors.push({ label: label, state: state, weight: weight, detail: detail }); }
-
-  if (sma200 != null) F('Price vs 200-day trend', price >= sma200 ? 1 : -1, 2.0, price >= sma200 ? `Above 200-day (${fmtDollar(sma200)})` : `Below 200-day (${fmtDollar(sma200)})`);
-  if (sma50 != null)  F('Price vs 50-day trend',  price >= sma50 ? 1 : -1, 1.5, price >= sma50 ? `Above 50-day (${fmtDollar(sma50)})` : `Below 50-day (${fmtDollar(sma50)})`);
-  if (sma50 != null && sma200 != null) F('50 / 200 cross', sma50 >= sma200 ? 1 : -1, 1.5, sma50 >= sma200 ? 'Golden cross (50 > 200)' : 'Death cross (50 < 200)');
-  if (sma20 != null)  F('Short-term (20-day)', price >= sma20 ? 1 : -1, 1.0, price >= sma20 ? `Above 20-day (${fmtDollar(sma20)})` : `Below 20-day (${fmtDollar(sma20)})`);
-  if (ret3m != null)  F('3-month momentum', clamp(ret3m / 15), 2.0, `${ret3m >= 0 ? '+' : ''}${ret3m.toFixed(1)}% over 3 mo`);
-  if (ret6m != null)  F('6-month momentum', clamp(ret6m / 30), 1.5, `${ret6m >= 0 ? '+' : ''}${ret6m.toFixed(1)}% over 6 mo`);
-  if (ret1m != null)  F('1-month momentum', clamp(ret1m / 10), 1.0, `${ret1m >= 0 ? '+' : ''}${ret1m.toFixed(1)}% over 1 mo`);
-  if (rsiVal != null) {
-    let st, dt;
-    if (rsiVal >= 80) { st = -0.6; dt = `RSI ${rsiVal.toFixed(0)} — overbought`; }
-    else if (rsiVal >= 70) { st = 0.1; dt = `RSI ${rsiVal.toFixed(0)} — strong, extended`; }
-    else if (rsiVal >= 55) { st = 0.7; dt = `RSI ${rsiVal.toFixed(0)} — healthy momentum`; }
-    else if (rsiVal >= 45) { st = 0.0; dt = `RSI ${rsiVal.toFixed(0)} — neutral`; }
-    else if (rsiVal >= 30) { st = -0.4; dt = `RSI ${rsiVal.toFixed(0)} — weak`; }
-    else { st = -0.4; dt = `RSI ${rsiVal.toFixed(0)} — oversold (possible bounce)`; }
-    F('RSI (14)', st, 1.2, dt);
-  }
-  if (macdH != null) F('MACD histogram', macdH >= 0 ? 0.7 : -0.7, 1.0, macdH >= 0 ? 'Bullish (above signal)' : 'Bearish (below signal)');
-  if (volTrend != null) F('Volume trend', clamp(volTrend / 40), 0.5, `${volTrend >= 0 ? '+' : ''}${volTrend.toFixed(0)}% 10d vs 60d avg`);
-
-  let wsum = 0, w = 0;
-  factors.forEach(f => { wsum += f.state * f.weight; w += Math.abs(f.weight); });
-  const raw = w ? wsum / w : 0;
-  const conviction = Math.round((raw + 1) / 2 * 100);
-
-  let rec;
-  if (conviction >= 72) rec = { label: 'STRONG BUY', cls: 'sig-strong-buy' };
-  else if (conviction >= 60) rec = { label: 'BUY', cls: 'sig-buy' };
-  else if (conviction >= 45) rec = { label: 'HOLD', cls: 'sig-hold' };
-  else if (conviction >= 33) rec = { label: 'REDUCE', cls: 'sig-reduce' };
-  else rec = { label: 'SELL / AVOID', cls: 'sig-sell' };
-
-  let risk;
-  if (vol == null) risk = { label: 'N/A', cls: 'risk-mod' };
-  else if (vol < 22) risk = { label: 'LOW', cls: 'risk-low' };
-  else if (vol < 40) risk = { label: 'MODERATE', cls: 'risk-mod' };
-  else if (vol < 60) risk = { label: 'HIGH', cls: 'risk-high' };
-  else risk = { label: 'VERY HIGH', cls: 'risk-vhigh' };
-
-  const aboveSMA200 = sma200 != null && price >= sma200;
-  const sma50above200 = sma50 != null && sma200 != null && sma50 >= sma200;
-  const style = suggestStyle(conviction, vol == null ? 30 : vol, rsiVal == null ? 50 : rsiVal, aboveSMA200, sma50above200);
-
-  return {
-    symbol: symbol,
-    name: (quote && quote.name) || symbol,
-    exchange: (quote && quote.exchange) || (ts.meta && ts.meta.exchange) || '',
-    type: type || 'Equity',
-    asOf: (quote && quote.datetime) || (rows.length ? rows[rows.length - 1].datetime : ''),
-    marketOpen: quote ? quote.is_market_open : null,
-    price: price, dayChgPct: dayChgPct,
-    metrics: { sma20: sma20, sma50: sma50, sma200: sma200, ret1m: ret1m, ret3m: ret3m, ret6m: ret6m, rsi: rsiVal, vol: vol, pos52: pos52 },
-    factors: factors, conviction: conviction, rec: rec, risk: risk, style: style,
-    closes: closes.slice(-130)
-  };
-}
-
-function engineGauge(score) {
-  const R = 70, cx = 90, cy = 90, sw = 14;
-  const ang = Math.PI - (score / 100) * Math.PI;
-  const x = cx + R * Math.cos(ang), y = cy - R * Math.sin(ang);
-  const lx = cx - R, ly = cy, rx = cx + R, ry = cy;
-  const color = score >= 72 ? '#00ff88' : score >= 60 ? '#7EC8FF' : score >= 45 ? '#ffdd00' : score >= 33 ? '#ff9a44' : '#ff5a7a';
-  return `<svg viewBox="0 0 180 108" width="180" xmlns="http://www.w3.org/2000/svg">
-    <path d="M${lx},${ly} A${R},${R} 0 0,1 ${rx},${ry}" fill="none" stroke="rgba(100,180,255,0.12)" stroke-width="${sw}" stroke-linecap="round"/>
-    <path d="M${lx},${ly} A${R},${R} 0 0,1 ${x.toFixed(1)},${y.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" style="filter:drop-shadow(0 0 6px ${color}aa)"/>
-    <text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="30" font-weight="700" fill="${color}" font-family="'Orbitron',monospace">${score}</text>
-    <text x="${cx}" y="${cy + 11}" text-anchor="middle" font-size="9" fill="rgba(168,216,255,0.7)" letter-spacing="2" font-family="monospace">CONVICTION</text>
-  </svg>`;
-}
-
-function engineSparkline(closes) {
-  if (!closes || closes.length < 2) return '';
-  const VW = 820, VH = 90, pad = 6;
-  const min = Math.min.apply(null, closes), max = Math.max.apply(null, closes);
-  const xf = i => pad + (i / (closes.length - 1)) * (VW - 2 * pad);
-  const yf = v => pad + (VH - 2 * pad) - ((v - min) / ((max - min) || 1)) * (VH - 2 * pad);
-  const pts = closes.map((v, i) => `${xf(i).toFixed(1)},${yf(v).toFixed(1)}`).join(' ');
-  const up = closes[closes.length - 1] >= closes[0];
-  const col = up ? '#00ff88' : '#ff5a7a';
-  const area = `M${xf(0).toFixed(1)},${(VH - pad).toFixed(1)} L${pts.split(' ').join(' L')} L${xf(closes.length - 1).toFixed(1)},${(VH - pad).toFixed(1)} Z`;
-  return `<div class="engine-spark"><svg viewBox="0 0 ${VW} ${VH}" width="100%" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <defs><linearGradient id="egSpark" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${col}" stop-opacity="0.28"/><stop offset="100%" stop-color="${col}" stop-opacity="0.01"/></linearGradient></defs>
-    <path d="${area}" fill="url(#egSpark)"/>
-    <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-  </svg><span class="engine-spark-label">~6-month price history</span></div>`;
-}
-
-function renderEngineResult(a) {
-  const m = a.metrics;
-  const dayCls = a.dayChgPct >= 0 ? 'col-change-pos' : 'col-change-neg';
-  const daySign = a.dayChgPct >= 0 ? '+' : '';
-  const gauge = engineGauge(a.conviction);
-  const spark = engineSparkline(a.closes);
-
-  const factorRows = a.factors.map(f => {
-    const cls = f.state > 0.15 ? 'ef-pos' : f.state < -0.15 ? 'ef-neg' : 'ef-neu';
-    const icon = f.state > 0.15 ? '✓' : f.state < -0.15 ? '✕' : '–';
-    return `<div class="engine-factor ${cls}">
-      <span class="ef-icon">${icon}</span>
-      <span class="ef-label">${escHtml(f.label)}</span>
-      <span class="ef-detail">${escHtml(f.detail)}</span>
-    </div>`;
-  }).join('');
-
-  const pct = (v) => v == null ? '—' : `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
-  const pcls = (v) => v == null ? '' : (v >= 0 ? 'col-change-pos' : 'col-change-neg');
-  const metric = (label, val, cls) => `<div class="em-item"><div class="em-label">${label}</div><div class="em-val ${cls || ''}">${val}</div></div>`;
-
-  const metricsGrid = `<div class="engine-metrics">
-    ${metric('1-Mo Return', pct(m.ret1m), pcls(m.ret1m))}
-    ${metric('3-Mo Return', pct(m.ret3m), pcls(m.ret3m))}
-    ${metric('6-Mo Return', pct(m.ret6m), pcls(m.ret6m))}
-    ${metric('RSI (14)', m.rsi == null ? '—' : m.rsi.toFixed(0))}
-    ${metric('Volatility (ann.)', m.vol == null ? '—' : m.vol.toFixed(0) + '%')}
-    ${metric('52-Wk Range Pos.', m.pos52.toFixed(0) + '%')}
-    ${metric('20-Day SMA', m.sma20 == null ? '—' : fmtDollar(m.sma20))}
-    ${metric('50-Day SMA', m.sma50 == null ? '—' : fmtDollar(m.sma50))}
-    ${metric('200-Day SMA', m.sma200 == null ? '—' : fmtDollar(m.sma200))}
-  </div>`;
-
-  const marketTag = a.marketOpen === false ? ' · market closed' : a.marketOpen === true ? ' · market open' : '';
-
-  return `<div class="engine-card">
-    <div class="engine-result-head">
-      <div class="erh-left">
-        <div class="erh-symbol">${escHtml(a.symbol)}</div>
-        <div class="erh-name">${escHtml(a.name)}</div>
-        <div class="erh-meta">${escHtml(a.exchange)} · ${escHtml(a.type)}${marketTag}</div>
-      </div>
-      <div class="erh-right">
-        <div class="erh-price">${fmtDollar(a.price)}</div>
-        <div class="erh-day ${dayCls}">${daySign}${a.dayChgPct.toFixed(2)}% today</div>
-        <div class="erh-asof">as of ${escHtml(a.asOf)}</div>
-      </div>
-    </div>
-
-    <div class="engine-verdict">
-      <div class="ev-gauge">${gauge}</div>
-      <div class="ev-call">
-        <div class="ev-signal ${a.rec.cls}">${a.rec.label}</div>
-        <div class="ev-chips">
-          <span class="ev-chip ev-style">${escHtml(a.style.label)}</span>
-          <span class="ev-chip ${a.risk.cls}">RISK: ${a.risk.label}</span>
-        </div>
-        <div class="ev-note">${escHtml(a.style.note)}</div>
-      </div>
-    </div>
-
-    ${spark}
-    ${metricsGrid}
-
-    <div class="engine-factors-wrap">
-      <div class="jfunds-sub">Signal Breakdown</div>
-      ${factorRows}
-    </div>
-
-    <p class="engine-foot-disclaimer"><strong>BETA · Not financial advice.</strong> Generated by CLU's deterministic quant model (no AI) from historical price data — a starting point for research, not a recommendation. Markets carry risk; you can lose money.</p>
-  </div>`;
-}
-
-/* ============================================================
-   ARCHIVE
-   ============================================================ */
-
-let archiveLoaded = false;
-
-async function loadArchive() {
-  if (archiveLoaded) return;
-  archiveLoaded = true;
-  const el = document.getElementById('archive-list');
-  try {
-    const res = await fetch(ARCHIVE_INDEX_URL + '?t=' + Date.now());
-    if (!res.ok) throw new Error();
-    const index = await res.json();
-    if (!index.length) {
-      el.innerHTML = '<p class="no-data" style="padding:16px">No archived reports yet.</p>';
-      return;
-    }
-    el.innerHTML = index.sort((a, b) => b.date.localeCompare(a.date)).map(entry => `
-      <div class="archive-entry" data-date="${entry.date}" data-session="${escHtml(entry.session)}">
-        <span class="archive-entry-date">${formatDateLong(entry.date.slice(0,10))}</span>
-        <span class="archive-entry-session">${escHtml(entry.session_label || entry.session)}</span>
-      </div>
-    `).join('');
-    el.querySelectorAll('.archive-entry').forEach(row => {
-      row.addEventListener('click', () => {
-        el.querySelectorAll('.archive-entry').forEach(r => r.classList.remove('active'));
-        row.classList.add('active');
-        loadArchiveReport(row.dataset.date);
-      });
-    });
-  } catch {
-    el.innerHTML = '<p class="no-data" style="padding:16px;color:var(--neon-red)">Failed to load archive.</p>';
-  }
-}
-
-async function loadArchiveReport(date) {
-  const empty = document.getElementById('archive-empty');
-  const root  = document.getElementById('archive-report-root');
-  empty.classList.add('hidden');
-  root.classList.remove('hidden');
-  root.innerHTML = '<div class="empty-state small"><div class="loader"></div><p>Loading…</p></div>';
-  try {
-    const res = await fetch(ARCHIVE_REPORT(date) + '?t=' + Date.now());
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    root.innerHTML = buildReportHTML(data);
-  } catch {
-    root.innerHTML = '<p class="empty-sub" style="padding:20px;color:var(--neon-red)">Failed to load report.</p>';
-  }
-}
-
-function buildReportHTML(d) {
-  const { meta, portfolio, positions, ah_movers, watchlist_movers, earnings,
-          stop_loss_alerts, trades_executed, alerts, top_opportunities } = d;
-  const movers = watchlist_movers || ah_movers || [];
-  return `
-    <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">
-      <div style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:4px">
-        C.L.U. ${escHtml((meta.session_label || 'Report').replace(/after[- ]?hours/i,'Live Report').toUpperCase())} — ${formatDate(meta.date)}
-      </div>
-      <div style="font-size:11px;color:var(--text-secondary)">
-        ${formatDateLong(meta.date)} · Updated ${formatTime(meta.generated_at)} · Next: ${escHtml(meta.next_session)}
-      </div>
-    </div>
-    ${buildAlertsHTML(alerts || [])}
-    ${buildPortfolioHTML(portfolio)}
-    ${buildMoversHTML(movers)}
-    ${buildEarningsHTML(earnings || [])}
-    ${buildTradesHTML(trades_executed || [])}
-    ${buildOpportunitiesHTML(top_opportunities || [])}
-  `;
-}
-
-function buildAlertsHTML(alerts) {
-  return alerts.map(a => `
-    <div class="alert-banner ${a.level}" style="margin-bottom:10px">
-      <div class="alert-title">⚠ ${escHtml(a.title)}</div>
-      <div class="alert-msg">${escHtml(a.message)}</div>
-    </div>`).join('');
-}
-
-function buildPortfolioHTML(p) {
-  const sign = p.day_pnl_dollars >= 0 ? '+' : '';
-  const pnlCls = p.day_pnl_dollars >= 0 ? 'pf-pnl-positive' : 'pf-pnl-negative';
-  return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div class="card-title">◈ Account Overview</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 0">
-      <div class="pf-item"><div class="pf-label">Total Value</div><div class="pf-value">${fmtDollar(p.total_value)}</div></div>
-      <div class="pf-item"><div class="pf-label">Cash/BP</div><div class="pf-value small">${fmtDollar(p.cash)}</div></div>
-      <div class="pf-item"><div class="pf-label">Day P&L</div><div class="pf-value small ${pnlCls}">${sign}${fmtDollar(p.day_pnl_dollars)} (${sign}${p.day_pnl_pct.toFixed(2)}%)</div></div>
-      <div class="pf-item"><div class="pf-label">Positions</div><div class="pf-value small">${p.open_positions}/${p.positions_cap}</div></div>
-    </div>
-  </div>`;
-}
-
-function buildMoversHTML(movers) {
-  if (!movers.length) return '';
-  return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div class="card-title">▲ Watchlist Movers</div>
-    <div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>Price</th><th>Change</th><th>Signal</th><th>Note</th></tr></thead>
-    <tbody>${movers.map(m => {
-      const price = m.price !== undefined ? m.price : m.ah_price;
-      const sign  = m.change_pct >= 0 ? '+' : '';
-      const cls   = m.change_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
-      const sigKey = (m.signal||'neutral').replace(/[^a-z0-9-]/gi,'').toLowerCase();
-      return `<tr><td class="col-symbol">${escHtml(m.symbol)}</td><td>${fmtDollar(price)}</td>
-        <td class="${cls}">${sign}${m.change_pct.toFixed(1)}%</td>
-        <td><span class="badge badge-${sigKey}">${(m.signal||'neutral').replace(/-/g,' ').toUpperCase()}</span></td>
-        <td style="font-size:11px;color:var(--text-secondary)">${escHtml(m.note)}</td></tr>`;
-    }).join('')}</tbody></table></div>
-  </div>`;
-}
-
-function buildEarningsHTML(earnings) {
-  if (!earnings.length) return '';
-  return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div class="card-title">◎ Earnings &amp; News</div>
-    <div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>Event</th><th>Result</th><th>Beat%</th><th>Impact</th></tr></thead>
-    <tbody>${earnings.map(e => {
-      const sign  = e.beat_pct >= 0 ? '+' : '';
-      const cls   = e.beat_pct >= 0 ? 'col-change-pos' : 'col-change-neg';
-      const badge = e.result === 'beat' ? 'beat' : (e.result === 'miss' ? 'miss' : 'inline');
-      return `<tr><td class="col-symbol">${escHtml(e.symbol)}</td>
-        <td style="font-size:11px;color:var(--text-secondary)">${escHtml(e.event)}</td>
-        <td><span class="badge badge-${badge}">${e.result.toUpperCase()}</span></td>
-        <td class="${cls}">${sign}${e.beat_pct.toFixed(1)}%</td>
-        <td style="font-size:11px;color:var(--text-secondary)">${escHtml(e.impact)}</td></tr>`;
-    }).join('')}</tbody></table></div>
-  </div>`;
-}
-
-function buildTradesHTML(trades) {
-  const inner = trades.length
-    ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>Ticker</th><th>Side</th><th>Shares</th><th>Price</th><th>Reason</th></tr></thead>
-       <tbody>${trades.map(t => {
-         const cls = t.side==='BUY' ? 'col-change-pos' : 'col-change-neg';
-         return `<tr><td class="col-symbol">${escHtml(t.symbol)}</td><td class="${cls}">${escHtml(t.side)}</td>
-           <td>${t.shares}</td><td>${fmtDollar(t.price)}</td>
-           <td style="font-size:11px;color:var(--text-secondary)">${escHtml(t.reason)}</td></tr>`;
-       }).join('')}</tbody></table></div>`
-    : '<div class="none-label">None this session.</div>';
-  return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div class="card-title">⇄ Trades Executed</div>${inner}</div>`;
-}
-
-function buildOpportunitiesHTML(opps) {
-  if (!opps.length) return '';
-  return `<div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div class="card-title">◆ Tomorrow's Top Opportunities</div>
-    <div class="opp-grid">${opps.map(o => `
-      <div class="opp-card">
-        <div class="opp-rank">#${o.rank}</div>
-        <div class="opp-ticker">${escHtml(o.symbol)}</div>
-        <div class="opp-thesis">${escHtml(o.thesis)}</div>
-        <div class="opp-footer">
-          <div class="opp-entry">Entry: ${escHtml(o.entry_target)}</div>
-          <div class="opp-action">${escHtml(o.action)}</div>
-        </div>
-      </div>`).join('')}
-    </div>
-  </div>`;
-}
-
-/* ============================================================
-   UTILS
-   ============================================================ */
-
-function fmtDollar(n) {
-  if (n === null || n === undefined) return '—';
-  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-function formatDate(dateStr) {
-  const [y, m, d] = dateStr.split('-');
-  return `${m}/${d}/${y}`;
-}
-function formatDateLong(dateStr) {
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const [y, m, d] = dateStr.split('-');
-  return `${months[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
-}
-function formatTime(isoStr) {
-  try {
-    return new Date(isoStr).toLocaleString('en-US', {
-      timeZone: 'America/Los_Angeles',
-      month: 'short', day: 'numeric',
-      hour: 'numeric', minute: '2-digit', hour12: true
-    }) + ' PDT';
-  } catch { return isoStr; }
-}
-function fmtMonthsLabel(m) {
-  if (m < 12) return m + ' mo';
-  const y = Math.floor(m / 12), r = m % 12;
-  return r === 0 ? y + ' yr' : y + ' yr ' + r + ' mo';
-}
-function addMonths(dateStr, m) {
-  const d = new Date(dateStr + 'T00:00:00Z');
-  d.setUTCMonth(d.getUTCMonth() + Math.round(m));
-  return d;
-}
-function fmtShortMonth(startDate, m) {
-  try {
-    const d = addMonths(startDate, m);
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return months[d.getUTCMonth()] + " '" + String(d.getUTCFullYear()).slice(2);
-  } catch { return m + 'mo'; }
-}
-function fmtReachDate(startDate, m) {
-  if (!startDate) return fmtMonthsLabel(m);
-  return fmtShortMonth(startDate, m) + ' (' + fmtMonthsLabel(m) + ')';
-}
-function escHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+/* UTILS */
+function fmtDollar(n){ if(n===null||n===undefined)return '—'; return '$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function formatDate(s){ const [y,m,d]=s.split('-'); return `${m}/${d}/${y}`; }
+function formatDateLong(s){ const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; const [y,m,d]=s.split('-'); return `${M[+m-1]} ${+d}, ${y}`; }
+function formatTimeShort(iso){ try{ return new Date(iso).toLocaleString('en-US',{timeZone:'America/Los_Angeles',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',hour12:true}); }catch{ return iso; } }
+function fmtMonthsLabel(m){ if(m<12)return m+' mo'; const y=Math.floor(m/12),r=m%12; return r===0?y+' yr':y+' yr '+r+' mo'; }
+function escHtml(s){ if(s===0)return '0'; if(!s)return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }

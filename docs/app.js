@@ -391,21 +391,28 @@ async function runEngine(raw){
 }
 function engMsg(t,s){ return `<div class="empty-state"><div class="empty-icon" style="color:#ff8800">⚠</div><p class="empty-title" style="color:#ff8800">${escHtml(t)}</p><p class="empty-sub">${escHtml(s)}</p></div>`; }
 
+const TONE_COLOR={bull:'#37e08a',bear:'#ff5a7a',caution:'#f2a73d',neutral:'#6fb8ef'};
+const BIAS_LABEL={short:'short-term',intermediate:'intermediate',long:'long-term'};
 function renderEngine(a){
   const m=a.metrics; const dc=a.dayChgPct>=0;
-  const facs=a.factors.map(f=>{ const cls=f.state>0.15?'':f.state<-0.15?'n':''; const icon=f.state>0.15?'✓':f.state<-0.15?'✕':'–';
-    const segs=Math.max(1,Math.round(Math.abs(f.state)*4)); let w=''; for(let i=0;i<4;i++) w+=`<i class="${i<segs?(f.state<0?'neg':'on'):''}"></i>`;
-    return `<div class="fac"><span class="fic ${cls}">${icon}</span> ${escHtml(f.label)} <span class="det">${escHtml(f.detail)}</span><span class="w">${w}</span></div>`; }).join('');
-  const met=[['1-Mo',m.ret1m,'pctSigned',pc(m.ret1m)],['3-Mo',m.ret3m,'pctSigned',pc(m.ret3m)],['6-Mo',m.ret6m,'pctSigned',pc(m.ret6m)],['RSI 14',m.rsi,'int',''],['Volatility',m.vol,'intPct',''],['52-Wk Pos',m.pos52,'intPct',''],['50-D SMA',m.sma50,'dollar',''],['200-D SMA',m.sma200,'dollar','']]
+  const hz=a.horizons.map(h=>{ const tc=TONE_COLOR[h.verdict.tone]||'#6fb8ef';
+    const ev=h.evidence.map(x=>`<li>${escHtml(x)}</li>`).join('');
+    return `<div class="hz"><div class="hzh"><span class="hzl">${escHtml(h.label)}</span><span class="hzw">${escHtml(h.window)}</span></div><div class="hzv" style="color:${tc};border-color:${tc}66">${escHtml(h.verdict.label)} <i>${Math.round(h.score)}</i></div><ul class="hze">${ev}</ul></div>`;
+  }).join('');
+  const met=[['1-Mo',m.ret1m,'pctSigned',pc(m.ret1m)],['3-Mo',m.ret3m,'pctSigned',pc(m.ret3m)],['6-Mo',m.ret6m,'pctSigned',pc(m.ret6m)],['RSI 14',m.rsi,'int',''],['Volatility',m.vol,'intPct',''],['ATR %',m.atr,'dec1Pct',''],['vs 50-day',m.distFrom50,'pctSigned',pc(m.distFrom50)],['vs 200-day',m.distFrom200,'pctSigned',pc(m.distFrom200)]]
     .map(x=>{ const raw=x[1], f=x[2]; const disp=(raw==null||!isFinite(raw))?'—':fmtCU(raw,f); const cu=(raw==null||!isFinite(raw))?'':` data-cu="${raw}" data-cuf="${f}"`;
       return `<div class="m"><div class="l">${x[0]}</div><div class="v ${x[3]}"${cu}>${disp}</div></div>`; }).join('');
+  const facs=a.evidence.map(f=>{ const cls=f.state>0.15?'':f.state<-0.15?'n':'z'; const icon=f.state>0.15?'✓':f.state<-0.15?'✕':'–';
+    return `<div class="fac"><span class="fic ${cls}">${icon}</span><span class="flab">${escHtml(f.label)}</span><span class="det">${escHtml(f.detail)}</span></div>`; }).join('');
   const mkt=a.marketOpen===false?' · market closed':a.marketOpen===true?' · market open':'';
   const sigColor={'sig-strong-buy':'#37e08a','sig-buy':'#6fb8ef','sig-hold':'#ffdd00','sig-reduce':'#f2a73d','sig-sell':'#ff5a7a'}[a.rec.cls]||'#37e08a';
+  const stc=TONE_COLOR[a.setup.tone]||'#6fb8ef';
   return card(`<div class="vh"><div><div class="sym">${escHtml(a.symbol)}</div><div class="nm2">${escHtml(a.name)}</div><div class="ex">${escHtml(a.exchange)} · ${escHtml(a.type)}${mkt}</div></div><div class="rt"><div class="price" data-cu="${a.price}" data-cuf="dollar">${fmtDollar(a.price)}</div><div class="chg" style="${dc?'':'color:var(--red)'}" data-cu="${a.dayChgPct}" data-cuf="dayPct">${dc?'+':''}${a.dayChgPct.toFixed(2)}% today</div><div class="asof">as of ${escHtml(a.asOf)}</div></div></div>
-    <div class="verdict"><div class="gauge">${engineGauge(a.conviction,sigColor)}</div><div><div class="sig" style="color:${sigColor};text-shadow:0 0 18px ${sigColor}66">${a.rec.label}</div><div class="chips"><span class="chip" style="color:${sigColor};border-color:${sigColor}">${escHtml(a.style.label)}</span><span class="chip amb">RISK: ${a.risk.label}</span></div><div class="vnote">${escHtml(a.style.note)}</div></div></div>
+    <div class="verdict"><div class="gauge">${engineGauge(a.conviction,sigColor)}</div><div><div class="sig" style="color:${sigColor};text-shadow:0 0 18px ${sigColor}66">${escHtml(a.rec.label)}</div><div class="chips"><span class="chip setup" style="color:${stc};border-color:${stc}">${escHtml(a.setup.name)}</span><span class="chip amb">RISK: ${a.risk.label}</span></div><div class="vnote">${escHtml(a.setup.action)} <span style="color:var(--t4)">· best fit: ${escHtml(BIAS_LABEL[a.setup.horizonBias]||a.setup.horizonBias)}</span></div></div></div>
+    <div class="hzwrap"><div class="fh">Horizon Outlook — by holding window</div><div class="hzmx">${hz}</div></div>
     <div class="met">${met}</div>
-    <div class="fwrap"><div class="fh">Signal Breakdown</div>${facs}</div>
-    <p class="disc" style="margin:12px 14px 14px"><b>BETA · Not financial advice.</b> Deterministic quant model (no AI) from historical price data — a research starting point, not a recommendation.</p>`);
+    <div class="fwrap"><div class="fh">Evidence &amp; Logic</div>${facs}</div>
+    <p class="disc" style="margin:12px 14px 14px"><b>BETA · Not financial advice.</b> Deterministic quant model (no AI) from price &amp; volume history — horizon windows and the setup label are rules-based reads, not recommendations.</p>`);
 }
 function engineGauge(score,color){
   const R=59; const L=Math.PI*R; // semicircle arc length
@@ -443,36 +450,120 @@ function retC(a,n){if(a.length<=n)return null;const p=a[a.length-1-n];return p?(
 function rsiC(a,p){p=p||14;if(a.length<p+1)return null;let g=0,l=0;for(let i=a.length-p;i<a.length;i++){const d=a[i]-a[i-1];if(d>=0)g+=d;else l-=d;}const ag=g/p,al=l/p;if(al===0)return 100;return 100-100/(1+ag/al);}
 function volC(a,w){w=w||30;if(a.length<w+1)w=a.length-1;if(w<2)return null;const r=[];for(let i=a.length-w;i<a.length;i++)r.push(a[i]/a[i-1]-1);const m=r.reduce((x,y)=>x+y,0)/r.length;const v=r.reduce((x,y)=>x+(y-m)*(y-m),0)/r.length;return Math.sqrt(v)*Math.sqrt(252)*100;}
 function macdH(a){if(a.length<35)return null;const e12=emaS(a,12),e26=emaS(a,26);const md=a.map((_,i)=>e12[i]-e26[i]);const sg=emaS(md,9);return md[md.length-1]-sg[sg.length-1];}
-function styleOf(conv,vol,rsi,a200,c50200){ if(conv<45)return{label:'Avoid / Reduce',note:'Signals are weak — trend and momentum favor staying out until the chart repairs.'};
-  if(conv<60)return{label:'Hold / Watch',note:'Mixed signals — hold existing exposure and wait for confirmation before adding.'};
-  if(a200&&c50200&&vol<40){ if(vol<22)return{label:'Long-Term Buy / DRIP',note:'Steady, low-volatility uptrend — suits long-horizon accumulation and dividend reinvestment.'}; return{label:'Long-Term Buy',note:'Established uptrend above the 200-day — favorable for longer-horizon holds.'}; }
-  if(vol>=40||rsi>72)return{label:'Short-Term / Swing',note:'Momentum strong but volatile/extended — better as a shorter-term trade with tight risk.'};
-  return{label:'Position Buy',note:'Constructive setup — reasonable to scale in with a defined stop.'}; }
+/* ---- enriched engine: extra indicators, horizon scoring, setup classification ---- */
+function smaAt(a,n,back){ const end=a.length-back; if(end<n||end<=0) return null; let s=0; for(let i=end-n;i<end;i++) s+=a[i]; return s/n; }
+function slopePct(a,n,back){ const cur=smaC(a,n), prev=smaAt(a,n,back); return (cur!=null&&prev!=null&&prev!==0)?(cur/prev-1)*100:null; }
+function atrPct(h,l,c,p){ p=p||14; if(c.length<p+1) return null; let s=0; for(let i=c.length-p;i<c.length;i++){ const tr=Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1])); s+=tr; } const atr=s/p, px=c[c.length-1]; return px?atr/px*100:null; }
+function volStats(c,v,w){ w=w||20; if(v.length<w+1) w=v.length-1; if(w<2) return {avg:null,ratio:null,bias:null}; let sum=0,up=0,dn=0; for(let i=v.length-w;i<v.length;i++){ sum+=v[i]; const ch=c[i]-c[i-1]; if(ch>=0) up+=v[i]; else dn+=v[i]; } const avg=sum/w, last=v[v.length-1]; return {avg, ratio:avg>0?last/avg:null, bias:(up+dn)>0?(up-dn)/(up+dn):null}; }
+const clampN=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
+const clamp100=x=>Math.max(0,Math.min(100,x));
+function scoreShort(M){ let s=50;
+  if(M.sma20!=null) s+= M.price>=M.sma20?11:-11;
+  if(M.macdHist!=null) s+= M.macdHist>=0?9:-9;
+  if(M.rsi!=null){ if(M.rsi>=80)s-=20; else if(M.rsi>=72)s-=6; else if(M.rsi>=55)s+=12; else if(M.rsi>=45)s+=2; else if(M.rsi>=30)s-=10; else s-=2; }
+  if(M.ret2w!=null) s+=clampN(M.ret2w*1.4,-12,12);
+  if(M.distFrom20!=null&&M.distFrom20>10) s-=clampN(M.distFrom20-10,0,12);
+  return clamp100(s); }
+function scoreInt(M){ let s=50;
+  if(M.sma50!=null) s+= M.price>=M.sma50?13:-13;
+  if(M.slope50!=null) s+=clampN(M.slope50*4,-10,10);
+  if(M.ret3m!=null) s+=clampN(M.ret3m*0.7,-14,14);
+  if(M.ret1m!=null) s+=clampN(M.ret1m*0.9,-8,8);
+  return clamp100(s); }
+function scoreLong(M){ let s=50;
+  if(M.sma200!=null) s+= M.price>=M.sma200?16:-16;
+  if(M.slope200!=null) s+=clampN(M.slope200*5,-10,10);
+  if(M.cross!=null) s+= M.cross>=0?8:-8;
+  if(M.ret6m!=null) s+=clampN(M.ret6m*0.4,-12,12);
+  if(M.pos52!=null) s+=clampN((M.pos52-50)*0.16,-8,8);
+  return clamp100(s); }
+function hzVerdict(score){ if(score>=66)return{label:'BULLISH',tone:'bull'}; if(score>=55)return{label:'CONSTRUCTIVE',tone:'bull'}; if(score>=45)return{label:'NEUTRAL',tone:'neutral'}; if(score>=34)return{label:'CAUTIOUS',tone:'bear'}; return{label:'BEARISH',tone:'bear'}; }
+function fmtPm(v,dec){ if(v==null||!isFinite(v))return '—'; return (v>=0?'+':'')+v.toFixed(dec==null?1:dec)+'%'; }
+function rsiWord(r){ return r>=72?'overbought':r>=55?'healthy':r>=45?'neutral':r>=30?'weak':'oversold'; }
+function evShort(M){ const e=[];
+  if(M.rsi!=null) e.push(`RSI ${M.rsi.toFixed(0)} — ${rsiWord(M.rsi)}`);
+  if(M.macdHist!=null) e.push(`MACD ${M.macdHist>=0?'bullish':'bearish'}`);
+  if(M.sma20!=null) e.push(`${fmtPm(M.distFrom20)} vs 20-day`);
+  if(M.ret2w!=null) e.push(`2-wk ${fmtPm(M.ret2w)}`);
+  return e.slice(0,3); }
+function evInt(M){ const e=[];
+  if(M.sma50!=null) e.push(`${fmtPm(M.distFrom50)} vs 50-day`);
+  if(M.slope50!=null) e.push(`50-day ${M.slope50>=0?'rising':'falling'}`);
+  if(M.ret3m!=null) e.push(`3-mo ${fmtPm(M.ret3m)}`);
+  return e.slice(0,3); }
+function evLong(M){ const e=[];
+  if(M.sma200!=null) e.push(`${fmtPm(M.distFrom200)} vs 200-day`);
+  if(M.cross!=null) e.push(M.cross>=0?'golden cross':'death cross');
+  if(M.ret6m!=null) e.push(`6-mo ${fmtPm(M.ret6m)}`);
+  return e.slice(0,3); }
+function setupObj(name,tone,bias,action){ return {name,tone,horizonBias:bias,action}; }
+function classifySetup(M){
+  const up200=M.sma200!=null&&M.price>=M.sma200, below200=M.sma200!=null&&M.price<M.sma200;
+  const bullStack=M.sma20!=null&&M.sma50!=null&&M.sma200!=null&&M.price>=M.sma20&&M.sma20>=M.sma50&&M.sma50>=M.sma200;
+  const bearStack=M.sma20!=null&&M.sma50!=null&&M.sma200!=null&&M.price<M.sma20&&M.sma20<M.sma50&&M.sma50<M.sma200;
+  const rsi=M.rsi==null?50:M.rsi;
+  if(below200&&M.ret1m!=null&&M.ret1m<=-12&&M.dd!=null&&M.dd<=-25&&M.vol!=null&&M.vol>=45) return setupObj('Falling Knife','bear','long','Sharp decline below every moving average — wait for a base; do not try to catch it.');
+  if(below200&&rsi<30) return setupObj('Oversold Bounce','caution','short','Counter-trend bounce candidate only — the primary trend is still down. High risk, tight leash.');
+  if(bearStack&&(M.slope200==null||M.slope200<0)) return setupObj('Confirmed Downtrend','bear','long','Price stacked below 20<50<200 with a falling long-term trend — avoid new longs until structure repairs.');
+  if(below200&&M.slope50!=null&&M.slope50>0&&rsi>=45) return setupObj('Basing / Recovery','neutral','long','Carving a base under the 200-day with the 50-day turning up — early accumulation watch; needs to reclaim the 200-day.');
+  if(rsi>=78||(M.distFrom50!=null&&M.distFrom50>=22)) return setupObj('Overextended','caution','short','Stretched far above trend — wait for a pullback rather than chase strength.');
+  if(up200&&M.pos52!=null&&M.pos52>=92&&M.ret3m!=null&&M.ret3m>5&&rsi>=58) return setupObj('Breakout / Momentum','bull','short','Pressing 52-week highs with momentum — trend-trade it but manage risk into strength.');
+  if(up200&&bullStack&&rsi>=50&&rsi<72&&(M.slope200==null||M.slope200>=0)) return setupObj('Confirmed Uptrend','bull','long','Cleanly stacked uptrend (price>20>50>200) — favor buying pullbacks; trend-following bias.');
+  if(up200&&((M.sma20!=null&&M.price<M.sma20)||(M.sma50!=null&&M.price<M.sma50)||rsi<50)&&(M.slope200==null||M.slope200>=-0.5)) return setupObj('Pullback in Uptrend','bull','intermediate','Long-term trend intact but short-term soft — a potential buyable dip if it reclaims the 20/50-day.');
+  if(up200&&M.slope50!=null&&M.slope50<0&&rsi<50) return setupObj('Distribution / Topping','caution','intermediate','Momentum rolling over while still above the 200-day — trim into strength and tighten stops.');
+  if((M.slope50==null||Math.abs(M.slope50)<1.5)&&(M.slope200==null||Math.abs(M.slope200)<1.2)) return setupObj('Range / Consolidation','neutral','intermediate','Flat moving averages — range conditions; trade the edges and wait for a decisive break.');
+  return up200?setupObj('Constructive','bull','intermediate','Mildly positive structure — be selective and confirm strength before adding.'):setupObj('Weak / Avoid','bear','long','Below the long-term trend with no clear base — stay patient until it stabilizes.');
+}
+function buildEvidence(M){
+  const E=[]; const cl=x=>Math.max(-1,Math.min(1,x));
+  const stack = (M.sma20!=null&&M.sma50!=null&&M.sma200!=null)
+    ? (M.price>=M.sma20&&M.sma20>=M.sma50&&M.sma50>=M.sma200) ? 1
+    : (M.price<M.sma20&&M.sma20<M.sma50&&M.sma50<M.sma200) ? -1 : 0 : 0;
+  if(M.sma200!=null) E.push({label:'Long-term trend (200-day)',state:M.price>=M.sma200?1:-1,detail:`${fmtPm(M.distFrom200)} · ${fmtDollar(M.sma200)}`});
+  E.push({label:'Trend structure',state:stack,detail:stack>0?'20>50>200 stacked (bullish)':stack<0?'price under all MAs (bearish)':'mixed / transitioning'});
+  if(M.slope200!=null) E.push({label:'200-day slope',state:cl(M.slope200*3),detail:`${M.slope200>=0?'rising':'falling'} (${fmtPm(M.slope200)})`});
+  if(M.cross!=null) E.push({label:'50 / 200 cross',state:M.cross>=0?1:-1,detail:M.cross>=0?'golden cross':'death cross'});
+  if(M.sma50!=null) E.push({label:'Intermediate trend (50-day)',state:M.price>=M.sma50?1:-1,detail:`${fmtPm(M.distFrom50)} · ${fmtDollar(M.sma50)}`});
+  if(M.ret3m!=null) E.push({label:'3-month momentum',state:cl(M.ret3m/15),detail:fmtPm(M.ret3m)});
+  if(M.ret1m!=null) E.push({label:'1-month momentum',state:cl(M.ret1m/10),detail:fmtPm(M.ret1m)});
+  if(M.rsi!=null){ let st; if(M.rsi>=80)st=-0.6;else if(M.rsi>=72)st=0.05;else if(M.rsi>=55)st=0.7;else if(M.rsi>=45)st=0;else if(M.rsi>=30)st=-0.4;else st=-0.5; E.push({label:'RSI (14)',state:st,detail:`${M.rsi.toFixed(0)} — ${rsiWord(M.rsi)}`}); }
+  if(M.macdHist!=null) E.push({label:'MACD histogram',state:M.macdHist>=0?0.7:-0.7,detail:M.macdHist>=0?'bullish':'bearish'});
+  if(M.volBias!=null) E.push({label:'Volume bias (20-day)',state:cl(M.volBias*1.5),detail:`${M.volBias>=0?'accumulation':'distribution'}${M.volRatio!=null?` · last ${M.volRatio.toFixed(1)}× avg`:''}`});
+  if(M.dd!=null) E.push({label:'From 52-week high',state:cl((M.dd+12)/12),detail:`${fmtPm(M.dd)}${M.pos52!=null?` · ${M.pos52.toFixed(0)}% of 52-wk range`:''}`});
+  if(M.vol!=null) E.push({label:'Volatility regime',state:M.vol<22?0.4:M.vol<40?0:M.vol<60?-0.4:-0.7,detail:`${M.vol.toFixed(0)}% ann${M.atr!=null?` · ATR ${M.atr.toFixed(1)}%`:''}`});
+  return E;
+}
 function analyzeTicker(symbol,q,ts){
   if(!ts||!ts.values||!ts.values.length)return null;
   const type=(q&&q.type)||(ts.meta&&ts.meta.type)||'';
   if(/digital currency|physical currency|crypto/i.test(type))return{blocked:'CLU does not analyze crypto or currencies.'};
-  const rows=ts.values.slice().reverse(); const closes=rows.map(r=>parseFloat(r.close)).filter(v=>!isNaN(v)); if(closes.length<30)return null;
+  const series=ts.values.slice().reverse().map(r=>({c:parseFloat(r.close),h:parseFloat(r.high),l:parseFloat(r.low),v:parseFloat(r.volume)||0,d:r.datetime})).filter(x=>!isNaN(x.c));
+  if(series.length<30)return null;
+  const closes=series.map(x=>x.c), highs=series.map(x=>x.h), lows=series.map(x=>x.l), volumes=series.map(x=>x.v);
   const price=q&&q.close?parseFloat(q.close):closes[closes.length-1]; const pv=q&&q.previous_close?parseFloat(q.previous_close):closes[closes.length-2];
   const day=q&&q.percent_change!=null?parseFloat(q.percent_change):(pv?(price/pv-1)*100:0);
-  const s20=smaC(closes,20),s50=smaC(closes,50),s200=smaC(closes,200);
-  const r1=retC(closes,21),r3=retC(closes,63),r6=retC(closes,126),rsi=rsiC(closes,14),vol=volC(closes,30),mh=macdH(closes);
+  const sma20=smaC(closes,20),sma50=smaC(closes,50),sma200=smaC(closes,200);
+  const slope20=slopePct(closes,20,5),slope50=slopePct(closes,50,10),slope200=slopePct(closes,200,20);
+  const ret2w=retC(closes,10),ret1m=retC(closes,21),ret3m=retC(closes,63),ret6m=retC(closes,126);
+  const rsi=rsiC(closes,14),vol=volC(closes,30),macdHist=macdH(closes),atr=atrPct(highs,lows,closes,14);
+  const vS=volStats(closes,volumes,20);
   const tail=closes.slice(-252); const hi=q&&q.fifty_two_week&&q.fifty_two_week.high?parseFloat(q.fifty_two_week.high):Math.max.apply(null,tail); const lo=q&&q.fifty_two_week&&q.fifty_two_week.low?parseFloat(q.fifty_two_week.low):Math.min.apply(null,tail);
   const pos52=hi>lo?((price-lo)/(hi-lo))*100:50;
-  const cl=x=>Math.max(-1,Math.min(1,x)); const F=[];
-  if(s200!=null)F.push({label:'Price vs 200-day trend',state:price>=s200?1:-1,detail:price>=s200?`above ${fmtDollar(s200)}`:`below ${fmtDollar(s200)}`,w:2});
-  if(s50!=null&&s200!=null)F.push({label:'50 / 200 cross',state:s50>=s200?1:-1,detail:s50>=s200?'golden cross':'death cross',w:1.5});
-  if(s50!=null)F.push({label:'Price vs 50-day',state:price>=s50?1:-1,detail:price>=s50?`above ${fmtDollar(s50)}`:`below ${fmtDollar(s50)}`,w:1.5});
-  if(r3!=null)F.push({label:'3-month momentum',state:cl(r3/15),detail:`${r3>=0?'+':''}${r3.toFixed(1)}%`,w:2});
-  if(r6!=null)F.push({label:'6-month momentum',state:cl(r6/30),detail:`${r6>=0?'+':''}${r6.toFixed(1)}%`,w:1.5});
-  if(r1!=null)F.push({label:'1-month momentum',state:cl(r1/10),detail:`${r1>=0?'+':''}${r1.toFixed(1)}%`,w:1});
-  if(rsi!=null){let st,dt; if(rsi>=80){st=-0.6;dt=`RSI ${rsi.toFixed(0)} — overbought`;}else if(rsi>=70){st=0.1;dt=`RSI ${rsi.toFixed(0)} — extended`;}else if(rsi>=55){st=0.7;dt=`RSI ${rsi.toFixed(0)} — healthy`;}else if(rsi>=45){st=0;dt=`RSI ${rsi.toFixed(0)} — neutral`;}else if(rsi>=30){st=-0.4;dt=`RSI ${rsi.toFixed(0)} — weak`;}else{st=-0.4;dt=`RSI ${rsi.toFixed(0)} — oversold`;} F.push({label:'RSI (14)',state:st,detail:dt,w:1.2});}
-  if(mh!=null)F.push({label:'MACD histogram',state:mh>=0?0.7:-0.7,detail:mh>=0?'bullish':'bearish',w:1});
-  let ws=0,w=0; F.forEach(f=>{ws+=f.state*f.w;w+=Math.abs(f.w);}); const raw=w?ws/w:0; const conv=Math.round((raw+1)/2*100);
-  let rec; if(conv>=72)rec={label:'STRONG BUY',cls:'sig-strong-buy'};else if(conv>=60)rec={label:'BUY',cls:'sig-buy'};else if(conv>=45)rec={label:'HOLD',cls:'sig-hold'};else if(conv>=33)rec={label:'REDUCE',cls:'sig-reduce'};else rec={label:'SELL / AVOID',cls:'sig-sell'};
+  const dd=hi?((price/hi)-1)*100:null, fromLow=lo?((price/lo)-1)*100:null;
+  const distFrom20=sma20?(price/sma20-1)*100:null, distFrom50=sma50?(price/sma50-1)*100:null, distFrom200=sma200?(price/sma200-1)*100:null;
+  const cross=(sma50!=null&&sma200!=null)?(sma50>=sma200?1:-1):null;
+  const M={price,sma20,sma50,sma200,slope20,slope50,slope200,ret2w,ret1m,ret3m,ret6m,rsi,vol,atr,macdHist,distFrom20,distFrom50,distFrom200,cross,pos52,dd,fromLow,hi,lo,volRatio:vS.ratio,volBias:vS.bias};
+  const sShort=scoreShort(M),sInt=scoreInt(M),sLong=scoreLong(M);
+  const horizons=[
+    {key:'short',label:'Short-Term',window:'~1–10 trading days',score:sShort,verdict:hzVerdict(sShort),evidence:evShort(M)},
+    {key:'intermediate',label:'Intermediate',window:'~1–3 months',score:sInt,verdict:hzVerdict(sInt),evidence:evInt(M)},
+    {key:'long',label:'Long-Term',window:'~6–18 months',score:sLong,verdict:hzVerdict(sLong),evidence:evLong(M)},
+  ];
+  const conviction=Math.round(0.25*sShort+0.35*sInt+0.40*sLong);
+  let rec; if(conviction>=72)rec={label:'STRONG BUY',cls:'sig-strong-buy'};else if(conviction>=60)rec={label:'BUY',cls:'sig-buy'};else if(conviction>=45)rec={label:'HOLD / NEUTRAL',cls:'sig-hold'};else if(conviction>=33)rec={label:'REDUCE',cls:'sig-reduce'};else rec={label:'AVOID',cls:'sig-sell'};
   let risk; if(vol==null)risk={label:'N/A'};else if(vol<22)risk={label:'LOW'};else if(vol<40)risk={label:'MODERATE'};else if(vol<60)risk={label:'HIGH'};else risk={label:'VERY HIGH'};
-  const a200=s200!=null&&price>=s200, c50200=s50!=null&&s200!=null&&s50>=s200;
-  return { symbol, name:(q&&q.name)||symbol, exchange:(q&&q.exchange)||(ts.meta&&ts.meta.exchange)||'', type:type||'Equity', asOf:(q&&q.datetime)||(rows.length?rows[rows.length-1].datetime:''), marketOpen:q?q.is_market_open:null, price, dayChgPct:day, metrics:{sma20:s20,sma50:s50,sma200:s200,ret1m:r1,ret3m:r3,ret6m:r6,rsi,vol,pos52}, factors:F.map(f=>({label:f.label,state:f.state,detail:f.detail})), conviction:conv, rec, risk, style:styleOf(conv,vol==null?30:vol,rsi==null?50:rsi,a200,c50200) };
+  const setup=classifySetup(M);
+  return { symbol, name:(q&&q.name)||symbol, exchange:(q&&q.exchange)||(ts.meta&&ts.meta.exchange)||'', type:type||'Equity', asOf:(q&&q.datetime)||(series.length?series[series.length-1].d:''), marketOpen:q?q.is_market_open:null, price, dayChgPct:day, metrics:M, horizons, conviction, rec, risk, setup, evidence:buildEvidence(M) };
 }
 
 /* ARCHIVE */
@@ -548,6 +639,7 @@ function fmtCU(v, f){
   if (f === 'dollar') return fmtDollar(v);
   if (f === 'pctSigned') return `${v>=0?'+':''}${v.toFixed(1)}%`;
   if (f === 'dayPct') return `${v>=0?'+':''}${v.toFixed(2)}% today`;
+  if (f === 'dec1Pct') return v.toFixed(1) + '%';
   if (f === 'intPct') return Math.round(v) + '%';
   if (f === 'int') return String(Math.round(v));
   return String(Math.round(v));

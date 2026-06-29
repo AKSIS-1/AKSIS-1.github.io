@@ -83,6 +83,35 @@ body[data-tab="archive"] { --ac:#f2a73d; --acDim:#946224; --acBg:rgba(242,167,61
 .jf .slider::-webkit-slider-thumb{ -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--ac); border:2px solid #06121f; box-shadow:0 0 10px var(--ac); cursor:pointer; }
 .hzlabel{ color:var(--ac); font-weight:700; }
 .gauge svg{ display:block; }
+
+/* section spacing — separate stacked cards/sections from the next header */
+.main > .card{ margin-bottom:22px; }
+.main > .intel{ margin-bottom:12px; }
+.main > .sec{ margin-top:8px; }
+.main > .sec:first-child{ margin-top:0; }
+
+/* performance widget — total value hero with ± delta */
+.perf-hero{ padding-bottom:14px; border-bottom:1px solid var(--line2); }
+.perf-hero .l{ font-size:8px; letter-spacing:1.5px; color:var(--t4); text-transform:uppercase; margin-bottom:5px; }
+.perf-val{ font-family:var(--disp); font-size:26px; font-weight:700; color:var(--ac); display:flex; align-items:baseline; gap:10px; line-height:1; }
+.perf-delta{ font-family:var(--disp); font-size:13px; font-weight:700; }
+.perf-delta.up{ color:var(--green); } .perf-delta.dn{ color:var(--red); }
+
+/* section load-in motion (plays on render / tab switch) */
+@keyframes rise{ from{ opacity:0; transform:translateY(9px); } to{ opacity:1; transform:none; } }
+.main > .sec, .main > .card, .main > .intel{ animation:rise .5s cubic-bezier(.2,.7,.2,1) both; }
+.main > *:nth-child(1){ animation-delay:.02s; }
+.main > *:nth-child(2){ animation-delay:.06s; }
+.main > *:nth-child(3){ animation-delay:.10s; }
+.main > *:nth-child(4){ animation-delay:.14s; }
+.main > *:nth-child(5){ animation-delay:.18s; }
+.main > *:nth-child(6){ animation-delay:.22s; }
+.main > *:nth-child(7){ animation-delay:.26s; }
+.main > *:nth-child(8){ animation-delay:.30s; }
+.main > *:nth-child(9){ animation-delay:.34s; }
+.main > *:nth-child(n+10){ animation-delay:.38s; }
+@media (prefers-reduced-motion: reduce){ .main > .sec, .main > .card, .main > .intel{ animation:none; } }
+
 @media (max-width:760px){
   .wrap{ grid-template-columns:0 1fr; } .rail{ display:none; }
   .grid{ grid-template-columns:1fr; } .archlay{ grid-template-columns:1fr; }

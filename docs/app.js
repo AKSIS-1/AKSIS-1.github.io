@@ -1,5 +1,5 @@
 /* ============================================================
-   C.L.U. — Cognitive Logic Unit — Renderer v5.0 "HUD"
+   C.L.U. — Cognitive Logic Unit — Renderer v5.1 "HUD"
    ============================================================ */
 const DATA_URL          = './data/latest.json';
 const ARCHIVE_INDEX_URL = './data/archive/index.json';
@@ -55,10 +55,10 @@ function setStatusBar(tab){
   let mid = '';
   if (tab === 'today'){
     const m = lastMeta || {};
-    mid = sbCell('SYS','NOMINAL') + clock + sbCell('SESSION', m.date ? formatDate(m.date) : '—') + sbCell('NEXT', m.next_session || '—');
+    mid = sbCell('SYS', m.status || 'NOMINAL') + clock + sbCell('SESSION', m.date ? formatDate(m.date) : '—') + sbCell('NEXT', m.next_session || '—');
   } else if (tab === 'journey'){
     const m = (journeyData && journeyData.meta) || {}; const gc = (journeyData && journeyData.growth_chart) || {};
-    mid = sbCell('MODEL','CLU v0.54') + sbCell('UPDATED', m.updated_at ? formatTimeShort(m.updated_at) : '—') + sbCell('NEXT', m.next_update || '—') + sbCell('CONFIDENCE', (gc.projection_confidence || 'medium').toUpperCase());
+    mid = sbCell('MODEL', m.model || 'CLU v0.54') + sbCell('UPDATED', m.updated_at ? formatTimeShort(m.updated_at) : '—') + sbCell('NEXT', m.next_update || '—') + sbCell('CONFIDENCE', (gc.projection_confidence || 'medium').toUpperCase());
   } else if (tab === 'engine'){
     mid = sbCell('FEED','TWELVE DATA') + clock + sbCell('CACHE','10 MIN');
   } else if (tab === 'archive'){
@@ -114,11 +114,15 @@ function renderReport(d){
   const deployed = Math.max(0, (p.total_value||0) - (p.cash||0));
   const cap = p.positions_cap || 4, open = p.open_positions || positions.length;
   let bars=''; for(let i=0;i<cap;i++) bars += `<i class="${i<open?'on':''}"></i>`;
-  const perf = card(`<div class="cb"><div class="stats">
-    <div class="kpi"><div class="l">Total Value</div><div class="v">${fmtDollar(p.total_value)}</div></div>
-    <div class="kpi"><div class="l">Day P&amp;L</div><div class="v ${pnlCls}">${sign}${fmtDollar(p.day_pnl_dollars)} (${sign}${(p.day_pnl_pct||0).toFixed(1)}%)</div></div>
+  const dlt = (p.day_pnl_pct||0); const dCls = dlt>=0?'up':'dn'; const dSign = dlt>=0?'+':'';
+  const buffer = Math.round((p.cash||0)/(p.total_value||1)*100);
+  const perf = card(`<div class="cb">
+    <div class="perf-hero"><div class="l">Total Value</div><div class="perf-val">${fmtDollar(p.total_value)} <span class="perf-delta ${dCls}">${dSign}${dlt.toFixed(1)}%</span></div></div>
+    <div class="stats" style="margin-top:14px">
+    <div class="kpi"><div class="l">Day P&amp;L</div><div class="v ${pnlCls}">${sign}${fmtDollar(p.day_pnl_dollars)}</div></div>
     <div class="kpi"><div class="l">Cash / Buying Power</div><div class="v sm">${fmtDollar(p.cash)}</div></div>
     <div class="kpi"><div class="l">Deployed · Slots ${open}/${cap}</div><div class="v sm">${fmtDollar(deployed)}</div><div class="barseg">${bars}</div></div>
+    <div class="kpi"><div class="l">Cash Buffer</div><div class="v sm">${buffer}%</div></div>
   </div></div>`, 'A1.2','Performance');
   m += `<div class="grid">${alloc}${perf}</div>`;
 

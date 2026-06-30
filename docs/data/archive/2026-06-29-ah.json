@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "date": "2026-06-29",
+    "session": "ah_check",
+    "session_label": "June 29 — Final Daily Report",
+    "generated_at": "2026-06-29T22:39:00Z",
+    "signal_computed_at": "2026-06-29T19:22:33Z",
+    "version": "0.74",
+    "next_session": "2026-06-30 6:00 AM PDT (Daily Brief) — archive today's AH report; pre-open gap check; route $36 cash to DRIP if dividend engine fixed and matrix fresh"
+  },
+  "portfolio": {
+    "total_value": 149.75,
+    "cash": 36.37,
+    "buying_power": 36.37,
+    "pending_deposits": 0.00,
+    "open_positions": 6,
+    "positions_cap": 10,
+    "day_pnl_dollars": 0.77,
+    "day_pnl_pct": 0.52
+  },
+  "thoughts": [
+    { "type": "concern", "label": "SAFE MODE — 3:20 PM ENGINE RUN DID NOT FIRE", "text": "The scheduled 3:20 PM close+AH Signal Engine run did not fire; the latest signal_matrix.json is the ~12:22 PDT run, 3h11m old at this 3:33 PM session — over the §2.5 3-hour limit. CLU is in SAFE MODE: no new entries this session, manage existing positions only. This is the engine's SECOND miss today (the 5:50 AM run also failed before recovering ~09:30). Engine reliability is the recurring flag." },
+    { "type": "observation", "label": "RECONCILED — 6 POSITIONS, NO STOP BREACHES", "text": "Broker holdings (INTC, ARKK, NVDA LAB + VOO, QQQ, SOXX CORE) match memory exactly. Gap/stop check on the LAB sleeve is CLEAR: INTC +17%, ARKK +9.9%, NVDA +2.5% above their ATR stops. Cash $36.37, no new deposit (pending_deposits $0). CORE/DRIP carry no stops (§13/§15.4)." },
+    { "type": "observation", "label": "COMPOSITES COOLED BULLISH → NEUTRAL", "text": "On the 12:22 matrix, momentum readings faded into the afternoon: INTC 0.302→−0.058, DELL +0.312→−0.119, MU +0.172→−0.052 all dropped from BULLISH to NEUTRAL; NVDA improved −0.502→−0.412. Every CORE and most LAB names now sit −0.1 to −0.2 — a broadly NEUTRAL tape with no directional edge." },
+    { "type": "plan", "label": "TOMORROW: DRIP IF UNBLOCKED, ELSE HOLD", "text": "DRIP stays the most-underweight tier (0% vs 30%, −30pp) and is the top capital priority for the $36.37 cash — but it is double-blocked: the dividend engine still emits broken data (§15.3 unverifiable) AND SAFE MODE forbids entries. At the 6:00 AM Daily Brief, route to DRIP only if a fresh matrix lifts SAFE MODE and the dividend data is reliable; otherwise hold cash." },
+    { "type": "concern", "label": "LAB OVER STAGING CAP — NO NEW SINGLE-STOCK ENTRIES", "text": "LAB is 25.7% vs its 20% Accumulation cap. RXRX (gate slipped 4/5→3/5 as Z rose to 1.63) and CRWD (3/5, overbought) remain deferred — §17.3 forbids force-selling to rebalance, so the sleeve dilutes only as deposits grow the base. Combined with SAFE MODE, no LAB add is on the table." }
+  ],
+  "positions": [
+    { "symbol": "INTC", "full_name": "Intel Corporation", "desc": "Foundry AI semiconductor pivot", "tier": "stock", "shares": 0.097496, "entry_price": 128.21, "reg_close": 131.71, "current_price": 131.08, "notional": 12.78, "day_pnl_pct": 2.15, "total_pnl_pct": 2.24, "stop_level": 112.06, "stop_type": "manual", "stop_trail_pct": 12.6, "composite_score": -0.058, "composite_signal": "NEUTRAL" },
+    { "symbol": "ARKK", "full_name": "ARK Innovation ETF", "desc": "Disruptive innovation basket ETF", "tier": "stock", "shares": 0.164426, "entry_price": 77.36, "reg_close": 80.60, "current_price": 80.596, "notional": 13.25, "day_pnl_pct": 3.16, "total_pnl_pct": 4.19, "stop_level": 73.34, "stop_type": "manual", "stop_trail_pct": 5.2, "composite_score": -0.188, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "full_name": "NVIDIA Corporation", "desc": "AI GPU compute monopoly", "tier": "stock", "shares": 0.063587, "entry_price": 200.04, "reg_close": 194.89, "current_price": 194.87, "notional": 12.39, "day_pnl_pct": 1.22, "total_pnl_pct": -2.58, "stop_level": 190.04, "stop_type": "manual", "stop_trail_pct": 5.0, "composite_score": -0.412, "composite_signal": "BEARISH" },
+    { "symbol": "VOO", "full_name": "Vanguard S&P 500 ETF", "desc": "Broad S&P 500 anchor", "tier": "etf", "shares": 0.036731, "entry_price": 680.62, "reg_close": 681.02, "current_price": 680.53, "notional": 25.00, "day_pnl_pct": 1.53, "total_pnl_pct": -0.01, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.149, "composite_signal": "NEUTRAL" },
+    { "symbol": "QQQ", "full_name": "Invesco QQQ Trust", "desc": "Nasdaq-100 growth core", "tier": "etf", "shares": 0.034562, "entry_price": 723.34, "reg_close": 723.97, "current_price": 722.77, "notional": 24.98, "day_pnl_pct": 2.30, "total_pnl_pct": -0.08, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.103, "composite_signal": "NEUTRAL" },
+    { "symbol": "SOXX", "full_name": "iShares Semiconductor ETF", "desc": "Diversified semiconductor sector sleeve", "tier": "etf", "shares": 0.040845, "entry_price": 612.07, "reg_close": 614.30, "current_price": 611.08, "notional": 24.96, "day_pnl_pct": 3.58, "total_pnl_pct": -0.16, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.073, "composite_signal": "NEUTRAL" }
+  ],
+  "signal_matrix": [
+    { "symbol": "VOO", "rsi_14": 51.9, "composite_score": -0.149, "composite_signal": "NEUTRAL", "z_score": -0.06, "macd": "Bearish", "trend_50d": "Up" },
+    { "symbol": "QQQ", "rsi_14": 52.5, "composite_score": -0.103, "composite_signal": "NEUTRAL", "z_score": 0.02, "macd": "Bearish", "trend_50d": "Up" },
+    { "symbol": "NVDA", "rsi_14": 37.0, "composite_score": -0.412, "composite_signal": "BEARISH", "z_score": -1.42, "macd": "Bearish", "trend_50d": "Down" },
+    { "symbol": "INTC", "rsi_14": 63.6, "composite_score": -0.058, "composite_signal": "NEUTRAL", "z_score": 0.93, "macd": "Bullish", "trend_50d": "Up" }
+  ],
+  "dividend_matrix": [],
+  "accuracy": {
+    "win_rate_pct": 0.0, "trades_evaluated": 1, "trades_pending": 3,
+    "lab_scorecard": "LAB vs QQQ — not yet graded on signal-conditioned trades. 1 graded (MRVL -1.0, pre-engine baseline); 3 pending (INTC 07-01, ARKK/NVDA 07-02).",
+    "do_not_trade": [],
+    "recent_ledger": [
+      { "ticker": "MRVL", "action": "BUY", "outcome": "Realized -5.71% (stop-out 06-26)", "accuracy_delta": "-1.0", "conditions": "Pre-engine baseline" }
+    ]
+  },
+  "stop_audit": {
+    "checked_at": "2026-06-29T22:38:00Z",
+    "all_protected": true,
+    "summary": { "whole_share_positions": 0, "protected": 0, "unprotected": 0, "partial": 0, "drip_violations": 0 },
+    "positions": [
+      { "symbol": "INTC", "tier": "stock", "quantity": 0.097496, "is_fractional": true, "status": "skipped_fractional" },
+      { "symbol": "ARKK", "tier": "stock", "quantity": 0.164426, "is_fractional": true, "status": "skipped_fractional" },
+      { "symbol": "NVDA", "tier": "stock", "quantity": 0.063587, "is_fractional": true, "status": "skipped_fractional" }
+    ],
+    "alerts": []
+  },
+  "trades_executed": [],
+  "alerts": [
+    { "level": "warning", "title": "SAFE MODE — 3:20 PM Engine Run Did Not Fire", "message": "Latest signal_matrix.json is the 12:22 PDT run, 3h11m old at the 3:33 PM session — over the §2.5 limit. No new entries." }
+  ],
+  "_archive_note": "Final daily report for 2026-06-29 (After-Hours). Archived 2026-06-30 AM per §12.2. Full signal_matrix/watchlist_movers/learned_patterns preserved in the original live report; trimmed here for the archive snapshot."
+}

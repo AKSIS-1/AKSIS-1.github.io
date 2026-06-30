@@ -431,20 +431,32 @@ async function tdFetch(path){ const sep=path.includes('?')?'&':'?'; const res=aw
   let j; try{ j=await res.json(); }catch{ throw new Error('Bad response from data provider.'); }
   if(j&&(j.status==='error'||(typeof j.code==='number'&&j.code>=400))){ if(j.code===429) throw new Error('Rate limit reached — wait a moment.'); throw new Error(j.message||'Data provider error.'); } return j; }
 // DRIP tier only: average year-over-year dividend growth from the dividend history.
+// Compares only COMPLETE calendar years. Both the in-progress current year AND the
+// truncated oldest year of a 5y window are partial — a half-paid boundary year would
+// otherwise read as a ~+100% jump into the next full year and inflate the average.
+// We keep only years paid at the full cadence (e.g. all 4 quarters) and compare
+// consecutive ones.
 async function fetchDivGrowth(symbol){
   try{
     const j = await tdFetch(`dividends?symbol=${encodeURIComponent(symbol)}&range=5y`);
     const arr = (j && (j.dividends || j.data)) || [];
     if(!arr.length) return null;
-    const byYear = {};
-    arr.forEach(d=>{ const dt=d.ex_date||d.payment_date||d.date||''; const amt=parseFloat(d.amount); if(dt&&isFinite(amt)){ const y=dt.slice(0,4); byYear[y]=(byYear[y]||0)+amt; } });
-    const thisYear = String(new Date().getFullYear());
-    let years = Object.keys(byYear).sort();
-    const complete = years.filter(y=>y!==thisYear);   // drop the in-progress year
-    if(complete.length>=2) years = complete;
-    if(years.length<2) return null;
+    const sum = {}, cnt = {};
+    arr.forEach(d=>{ const dt=d.ex_date||d.payment_date||d.date||''; const amt=parseFloat(d.amount);
+      if(dt&&isFinite(amt)){ const y=+dt.slice(0,4); sum[y]=(sum[y]||0)+amt; cnt[y]=(cnt[y]||0)+1; } });
+    const thisYear = new Date().getFullYear();
+    // Full cadence = the most payments seen in any settled (non-current) year.
+    let cadence = 0; for(const y in cnt){ if(+y < thisYear) cadence = Math.max(cadence, cnt[y]); }
+    if(!cadence) return null;
+    // Keep settled years paid at full cadence (drops the in-progress and truncated-oldest years).
+    const years = Object.keys(sum).map(Number).filter(y=>y < thisYear && cnt[y] >= cadence).sort((a,b)=>a-b);
+    if(years.length < 2) return null;
     const g=[];
-    for(let i=1;i<years.length;i++){ const prev=byYear[years[i-1]], cur=byYear[years[i]]; if(prev>0) g.push((cur/prev-1)*100); }
+    for(let i=1;i<years.length;i++){
+      if(years[i] !== years[i-1]+1) continue;            // only consecutive years are comparable
+      const prev=sum[years[i-1]], cur=sum[years[i]];
+      if(prev>0) g.push((cur/prev-1)*100);
+    }
     return g.length ? g.reduce((a,b)=>a+b,0)/g.length : null;
   }catch{ return null; }
 }

@@ -1,113 +1,124 @@
 {
   "meta": {
-    "updated_at": "2026-06-29T22:42:00Z",
+    "updated_at": "2026-07-06T22:40:00Z",
     "updated_by": "clu-auto",
     "update_cadence": "Mon/Wed/Fri close or manual",
-    "next_update": "2026-07-01",
-    "version": "0.74"
+    "next_update": "2026-07-08",
+    "version": "0.75"
   },
   "growth_chart": {
     "actual": [
       { "date": "2026-06-24", "value": 50.34, "note": "Session 1 — INTC entry" },
       { "date": "2026-06-25", "value": 51.15, "note": "Session 2 — ARKK + NVDA added" },
       { "date": "2026-06-26", "value": 148.82, "note": "Week 1 close — $100 deposit added; MRVL stopped out -5.71%; 3 positions + $111 cash" },
-      { "date": "2026-06-29", "value": 149.75, "note": "Mon close — $75 cash→CORE (VOO/QQQ/SOXX, internal reallocation, not a deposit); LAB markup +0.5%; 6 positions + $36 cash" }
+      { "date": "2026-06-29", "value": 149.75, "note": "Mon close — $75 cash→CORE (VOO/QQQ/SOXX, internal reallocation, not a deposit); LAB markup +0.5%; 6 positions + $36 cash" },
+      { "date": "2026-07-06", "value": 148.10, "note": "Mon close — first session since 06-30 (6-day engine/session outage; 07-01/07-03 Mon/Wed/Fri updates missed). No deposit. Book -1.1% deposit-free vs 06-29 anchor: SOXX -5%, INTC drawdown offset by ARKK +8%. 7 positions + $0.37 cash." }
     ],
     "return_index": [
       { "date": "2026-06-24", "value": 1.000, "note": "Seed — 1.00 = start (deposit-adjusted, time-weighted)" },
       { "date": "2026-06-25", "value": 1.016, "note": "+1.6% — position mark-up, no deposit" },
       { "date": "2026-06-26", "value": 0.970, "note": "-3.0% wk — $100 deposit excluded; MRVL stop + semi rotation ≈ -$1.5 underlying" },
-      { "date": "2026-06-29", "value": 0.975, "note": "+0.5% — Monday relief rally markup on the LAB sleeve (INTC/ARKK/NVDA); $75 cash→CORE is an internal reallocation, not a deposit, so it does not break the chain" }
+      { "date": "2026-06-29", "value": 0.975, "note": "+0.5% — Monday relief rally markup on the LAB sleeve; $75 cash→CORE is an internal reallocation, not a deposit" },
+      { "date": "2026-07-06", "value": 0.964, "note": "-1.1% — aggregates the 06-29→07-06 window (no external deposit, so the whole value change is performance). Intervening Wed 07-01 / Fri 07-03 updates were missed during the automation outage, so this point spans multiple sessions rather than one." }
     ],
     "projected": [
-      { "date": "2026-06-29", "value": 149.75 },
-      { "date": "2026-07-29", "value": 151.62 },
-      { "date": "2026-08-29", "value": 153.52 },
-      { "date": "2026-09-29", "value": 155.44 },
-      { "date": "2026-10-29", "value": 157.38 },
-      { "date": "2026-11-29", "value": 159.34 },
-      { "date": "2026-12-29", "value": 161.33 },
-      { "date": "2027-01-29", "value": 163.35 },
-      { "date": "2027-02-28", "value": 165.39 },
-      { "date": "2027-03-29", "value": 167.46 },
-      { "date": "2027-04-29", "value": 169.55 },
-      { "date": "2027-05-29", "value": 171.67 },
-      { "date": "2027-06-29", "value": 173.82 }
+      { "date": "2026-07-06", "value": 148.10 },
+      { "date": "2026-08-06", "value": 149.95 },
+      { "date": "2026-09-06", "value": 151.83 },
+      { "date": "2026-10-06", "value": 153.72 },
+      { "date": "2026-11-06", "value": 155.65 },
+      { "date": "2026-12-06", "value": 157.59 },
+      { "date": "2027-01-06", "value": 159.56 },
+      { "date": "2027-02-06", "value": 161.56 },
+      { "date": "2027-03-06", "value": 163.58 },
+      { "date": "2027-04-06", "value": 165.62 },
+      { "date": "2027-05-06", "value": 167.69 },
+      { "date": "2027-06-06", "value": 169.79 },
+      { "date": "2027-07-06", "value": 171.91 }
     ],
     "projection_horizon_months": 12,
     "projection_confidence": "low",
-    "projection_basis": "Possible future value one year out: today's $149.75 account value compounded at the CLU 1.25%/mo target → ~$174 by 2027-06, performance-only with no new deposits. Confidence is low — only ~1 week of live history, and a $100 mid-week deposit dominated week-1 value (underlying market performance ≈ -$1.5; the TWR return_index sits at 0.975, i.e. ~-2.5% net of deposits). The site recomputes this 12-month trajectory from the latest account value × the CLU monthly target each Mon/Wed/Fri close as deposit-free history accumulates. Layer contributions on top with the Added-Funds Sim.",
+    "projection_basis": "Possible value one year out: today's $148.10 account value compounded at the CLU 1.25%/mo target → ~$172 by 2027-07, performance-only, no new deposits. Confidence stays LOW — only ~2 weeks of thin live history, a $100 week-1 deposit still dominates raw value, and a 6-day automation outage (07-01→07-06) broke the Mon/Wed/Fri chain so the return_index has a multi-session gap. The TWR index sits at 0.964 (~-3.6% net of deposits since seed). Layer contributions in the Added-Funds Sim.",
     "weekly_target_pct": 1.5,
     "monthly_target_pct": 1.25
   },
   "next_decisions": [
-    { "type": "watch", "ticker": "SCHD / JEPQ (DRIP)", "thesis": "DRIP is the most-underweight tier (0% vs 30% Accumulation target) and the top priority for the $36.37 cash. Double-blocked: the dividend engine emits broken data (§15.3 unverifiable) and SAFE MODE forbids entries.", "trigger": "6:00 AM Daily Brief — route to DRIP only if a fresh matrix lifts SAFE MODE AND dividend data is reliable; else hold cash" },
-    { "type": "watch", "ticker": "RXRX", "thesis": "Cleanest LAB compound gate (3/5: Trend Up, MACD Bullish), sub-$4 accessible, AI drug discovery + NVDA partnership. Gate slipped 4/5→3/5 as Z rose to 1.63 — margin thinning.", "trigger": "Re-enter once base growth pulls LAB <20% (currently 25.7%) or on a LAB trim/exit; re-check news gate" },
-    { "type": "watch", "ticker": "NVDA", "thesis": "Composite BEARISH -0.412, Trend50=Down, RSI 37. -2.58% from entry but +2.5% above the $190.04 stop (kept tight on high-failure-risk). A gap-down breaches the stop.", "trigger": "Manual stop check every session; market-sell on a confirmed -5% breach" },
-    { "type": "hold", "ticker": "INTC", "thesis": "Composite cooled BULLISH 0.302 → NEUTRAL -0.058 but MACD still Bullish, Trend Up, +2.24% from entry. No action — the thesis (foundry/AI rebuild) is intact.", "trigger": "Migrate to SOXX at +15% (~$147.44) or stop; reassess if MACD turns Bearish" },
-    { "type": "watch", "ticker": "MU", "thesis": "HBM3/AI memory, gate 3/5 but composite cooled +0.172 → -0.052 and price ($1,138) is above the $1,050-1,100 entry zone with RSI divergence Bearish.", "trigger": "Price entering $1,050-1,100; do not chase" },
-    { "type": "rebalance", "ticker": "SIGNAL ENGINE", "thesis": "Two missed scheduled runs today (5:50 AM + 3:20 PM) forced two SAFE-MODE sessions and an action-less After-Hours. Engine reliability is the binding constraint on the book right now, not signal quality.", "trigger": "Investigate the GitHub Action cron/runner before the 6:00 AM Daily Brief" }
+    { "type": "rebalance", "ticker": "SIGNAL ENGINE + SESSIONS", "thesis": "The binding constraint. No engine run and no session fired 07-01→07-06 — the book went 6 days unmanaged and this After-Hours ran on a 6-day-stale matrix (SAFE MODE). Reliability, not signal quality, is what limits the account now.", "trigger": "Fire the engine (workflow_dispatch) before the 07-07 6:00 AM Daily Brief; investigate why scheduled sessions stopped" },
+    { "type": "watch", "ticker": "NVDA", "thesis": "Composite BEARISH -0.338, Trend50=Down (06-30 matrix). $195.62 is only +2.9% above the $190.04 tight stop. A gap-down breaches it.", "trigger": "Pre-open gap check every session; market-sell on a confirmed breach; the between-session monitor covers gaps" },
+    { "type": "build", "ticker": "DRIP (JEPQ / JEPI)", "thesis": "DRIP -6.1pp under target (23.9% vs 30%), the most-underweight tier. Covered-call names are payout-ratio-exempt so they clear §15.3 despite the dividend-engine bug; SCHD/DGRO/VIG/VYM remain blocked on streak=0/payout=null.", "trigger": "Route the next detected deposit (≥$25) here; nothing to route now ($0.37 cash)" },
+    { "type": "hold", "ticker": "INTC", "thesis": "-4.67% from entry after the holiday-week pullback but +9.1% above its wide 12.6% ATR stop; MACD Bullish, Trend Up on the last matrix. Foundry/AI-rebuild thesis intact.", "trigger": "Migrate to SOXX at +15% (~$147.44) or stop; reassess if MACD turns Bearish on a fresh matrix" },
+    { "type": "watch", "ticker": "NET", "thesis": "Cleanest LAB gate (4/5 on 06-30, STALE). News clear, ERN 07-30. The lead candidate once signals refresh and a LAB slot/cash opens.", "trigger": "Promote when matrix fresh, LAB <20% (base growth or a trim), and cash ≥ one entry" }
   ],
   "tier_scorecard": {
-    "core": { "drift_ok": true, "note": "CORE 50.0% vs 50% Accumulation target — on band (±5pp). VOO/QQQ/SOXX deployed Monday from deferred idle cash; little tracking error to the §13.2 three-sleeve blend." },
-    "drip": { "income_note": "DRIP 0% vs 30% target — not yet built. Most-underweight tier and top capital priority, but blocked on the dividend-engine data fix (§15.3 screen unverifiable). No income captured yet." },
-    "lab": { "excess_vs_qqq_pct": null, "win_rate_vs_qqq_pct": null, "gate_bar": "3/5", "action": "hold", "note": "No signal-conditioned LAB trades graded yet (1 pre-engine baseline MRVL -1.0; INTC/ARKK/NVDA grade 07-01/07-02 vs QQQ). LAB at 25.7% is over its 20% staging cap and dilutes via base growth — no force-sell (§17.3). Gate bar stays 3/5 until there is enough graded data to justify tightening." }
+    "core": { "drift_ok": true, "note": "CORE 50.0% vs 50% Accumulation target — dead-on band. VOO/QQQ/SOXX. SOXX -5.1% is a buying opportunity, not a stop (§13). Little tracking error to the §13.2 blend." },
+    "drip": { "income_note": "DRIP 23.9% vs 30% target (-6.1pp) — leg is open via JEPQ (9.95% yield). First distribution pending; ex-date passed 07-01. Growth-ETF adds still blocked on the dividend-engine data bug." },
+    "lab": { "excess_vs_qqq_pct": null, "win_rate_vs_qqq_pct": null, "gate_bar": "3/5", "action": "hold", "note": "No signal-conditioned LAB trades graded yet (1 pre-engine MRVL -1.0; INTC/ARKK/NVDA windows matured 07-01/07-02 but grade at Friday close vs QQQ). LAB 25.7% over its 20% staging cap — dilutes via base growth, no force-sell (§17.3). Gate bar stays 3/5 until graded data justifies tightening." }
   },
   "intelligence_evolution": [
     {
       "phase": "Phase 1 — Foundation",
       "date_range": "Jun 24–29, 2026",
       "sessions": 7,
-      "summary": "Established the 3-tier framework and first positions across semis + innovation ETF, then built the CORE tier 0%→50% by routing deferred idle cash (VOO/QQQ/SOXX). Live signal engine came online (34 tickers) but proved intermittent — it missed the 5:50 AM and 3:20 PM runs on Monday, triggering SAFE MODE twice. Completed the first full stop-loss cycle (MRVL -5.71%) and recalibrated LAB stops to ATR-based sizing.",
-      "key_insight": "Three systems validated under fire: (1) the stop-loss loop executed end-to-end on a fractional position via agentic market sell, (2) the compound entry gate caught an overbought false-promote (PANW), and (3) the §2.5 staleness guard correctly halted trading on a stale matrix — twice in one day. The recurring risk is now operational (engine cron reliability), not strategic.",
+      "summary": "Established the 3-tier framework and first positions across semis + innovation ETF, then built the CORE tier 0%→50% by routing deferred idle cash (VOO/QQQ/SOXX). Live signal engine came online (34 tickers) but proved intermittent. Completed the first full stop-loss cycle (MRVL -5.71%) and recalibrated LAB stops to ATR-based sizing.",
+      "key_insight": "Three systems validated under fire: the stop-loss loop executed end-to-end on a fractional position, the compound gate caught an overbought false-promote (PANW), and the §2.5 staleness guard correctly halted trading on a stale matrix. The recurring risk is operational (engine cron reliability), not strategic.",
       "patterns_locked": 7,
-      "next_phase": "Phase 2 — Pattern Recognition (target: 10 sessions, 3+ medium/high patterns, first signal-conditioned LAB grades vs QQQ on 07-01/07-02)"
+      "next_phase": "Phase 2 — Pattern Recognition (first signal-conditioned LAB grades vs QQQ)"
+    },
+    {
+      "phase": "Phase 2 — Reliability Test",
+      "date_range": "Jun 30 – Jul 6, 2026",
+      "sessions": 2,
+      "summary": "The DRIP leg opened via a $36 JEPQ reallocation (0%→24%), putting the book at a near-target 26/50/24 mix. Then a 6-day automation outage (07-01→07-06) left the account unmanaged and forced this After-Hours to run on a 6-day-stale matrix in SAFE MODE. Reconciliation stayed clean (7/7) and every LAB stop held through the holiday-week pullback.",
+      "key_insight": "The strategy is sound but the plumbing is not: the account's real risk this phase was not a bad trade, it was going 6 days with no engine and no session. The safety guards (staleness → SAFE MODE, fractional between-session monitor) did their job, but they only cap risk — they cannot compound. Fixing engine + session scheduling is the highest-leverage work.",
+      "patterns_locked": 5,
+      "next_phase": "Phase 3 — Automation hardened; resume signal-conditioned entries and first QQQ-relative grades"
     }
   ],
   "strategy_dna": [
     { "rule": "No Crypto", "status": "locked", "note": "Hard guardrail. Never evaluated, never overridden." },
     { "rule": "Max 25% Per Position", "status": "locked", "note": "Enforced pre-trade via get_portfolio. No exceptions." },
     { "rule": "Compound Entry Gate (>=3/5)", "status": "locked", "note": "LAB entries require the earnings block + DO_NOT_TRADE check, then >=3/5 quant criteria. Reversed PANW's thesis-only promotion." },
-    { "rule": "SAFE MODE on Stale Matrix (>3h)", "status": "locked", "note": "Triggered twice Monday (5:50 AM + 3:20 PM engine misses). No new entries on stale signals — managed existing positions only." },
-    { "rule": "Tiered Stops (LAB ATR-based / CORE + DRIP none)", "status": "active", "note": "LAB fractional positions use manual/agentic market-sell checks each session at their ATR stop_pct (INTC 12.6 / ARKK 5.2 / NVDA 5.0). CORE/DRIP carry no stop (§13/§15.4)." },
-    { "rule": "Deposit-Routing to Underweight Tier", "status": "active", "note": "New/idle capital routes to the most underweight tier vs stage targets (DRIP > ETF > Stock tiebreak). $75 idle cash → CORE (0%→50%). DRIP (-30pp) is next." },
-    { "rule": "Time-Weighted Return Index", "status": "active", "note": "Deposit-free return chained each Mon/Wed/Fri close. Internal reallocations (cash→ETF) excluded. Index at 0.975 after Monday's +0.5% markup." },
+    { "rule": "SAFE MODE on Stale Matrix (>3h)", "status": "locked", "note": "In force this session — matrix ~6 days stale. No new entries on stale signals; managed existing positions only." },
+    { "rule": "Tiered Stops (LAB ATR-based / CORE + DRIP none)", "status": "active", "note": "LAB fractional positions checked each session at their ATR stop_pct (INTC 12.6 / ARKK 5.2 / NVDA 5.0). All held above stop through the holiday-week pullback. CORE/DRIP carry no stop (§13/§15.4)." },
+    { "rule": "Deposit-Routing to Underweight Tier", "status": "active", "note": "New/idle capital routes to the most-underweight tier (DRIP > ETF > Stock). DRIP (-6.1pp) is next. No deposit to route this session." },
+    { "rule": "Time-Weighted Return Index", "status": "active", "note": "Deposit-free return chained each Mon/Wed/Fri close; internal reallocations excluded. Index 0.964 after the -1.1% multi-session window; automation outage left a gap in the chain." },
     { "rule": "Buy-AM / Midday Only", "status": "active", "note": "New entries at the 6:00 AM and 10:45 AM windows only. After-Hours is analysis/planning — no new entries." },
-    { "rule": "ETF Migration", "status": "learning", "note": "MRVL→SOXX (done, stop-out), ARKK→QQQ (+10%), INTC→SOXX (+15%). Shifting the book toward an ETF-anchored model to cut single-name noise." }
+    { "rule": "ETF Migration", "status": "learning", "note": "MRVL→SOXX (done, stop-out), ARKK→QQQ (+10%, cur +8.0%), INTC→SOXX (+15%, cur -4.7%). Shifting toward an ETF-anchored model to cut single-name noise." }
   ],
   "risk_profile": {
     "overall": "moderate",
     "concentration_risk": "moderate",
-    "diversification_score": 5,
+    "diversification_score": 6,
     "diversification_max": 10,
-    "cash_buffer_pct": 24.3,
-    "notes": "Cash buffer normalized to 24.3% after deploying $75 to CORE. The book is now 6 positions across LAB (3 single names) + CORE (3 broad/sector ETFs), but deployed capital is still semi-heavy: SOXX + INTC + NVDA ≈ $50 (~33% of the account) sit in semiconductors. SOXX diversifies the single-name risk. DRIP (0%) is the missing leg — building it is the next diversification step, blocked on the dividend-engine fix.",
+    "cash_buffer_pct": 0.2,
+    "notes": "Book is now fully deployed across all three tiers — LAB (3 single names), CORE (3 broad/sector ETFs), DRIP (JEPQ income). Cash buffer is essentially zero ($0.37), so there is no dry powder to act on a fresh signal or a dip until the next deposit; that is the main structural gap now that the DRIP leg exists. Semis remain the largest cluster: SOXX + INTC + NVDA ≈ $48 (~33% of the account), partly diversified by SOXX. No single position exceeds the 25% cap (JEPQ largest at ~24%).",
     "sector_exposure": [
-      { "sector": "Broad-Market / Growth ETF (VOO, QQQ)", "notional": 49.98 },
-      { "sector": "Semiconductors (SOXX, INTC, NVDA)", "notional": 50.13 },
-      { "sector": "Innovation ETF (ARKK)", "notional": 13.25 },
-      { "sector": "Cash Reserve", "notional": 36.37 }
+      { "sector": "Broad-Market / Growth ETF (VOO, QQQ)", "notional": 50.34 },
+      { "sector": "Semiconductors (SOXX, INTC, NVDA)", "notional": 48.09 },
+      { "sector": "Covered-Call Income (JEPQ)", "notional": 35.36 },
+      { "sector": "Innovation ETF (ARKK)", "notional": 13.73 },
+      { "sector": "Cash Reserve", "notional": 0.37 }
     ]
   },
   "milestones": [
     { "target": 100.00, "label": "$100 — First Century", "projected_date": "2026-06-26", "status": "hit", "notes": "Reached 2026-06-26 via a $100 deposit (capital injection, not market performance)." },
-    { "target": 150.00, "label": "$150 — Capital Deployed", "projected_date": "2026-07-03", "status": "upcoming", "notes": "Within reach — $149.75 with CORE deployed (50%). A normal up-session clears it. Note: largely deposit-funded, not performance (TWR index 0.975)." },
-    { "target": 200.00, "label": "$200 — Diversified Base", "projected_date": "2026-09-30", "status": "upcoming", "notes": "Target adds the DRIP leg (currently 0%) for a 3-tier book with reduced semi concentration." },
-    { "target": 300.00, "label": "$300 — Compounding", "projected_date": "2027-Q1", "status": "upcoming", "notes": "DRIP tier established and reinvesting; ETF-anchored model maturing." }
+    { "target": 150.00, "label": "$150 — Capital Deployed", "projected_date": "2026-07-03", "status": "upcoming", "notes": "Just under — $148.10 with all three tiers deployed. A normal up-session clears it. Largely deposit-funded, not performance (TWR index 0.964)." },
+    { "target": 200.00, "label": "$200 — Diversified Base", "projected_date": "2026-09-30", "status": "upcoming", "notes": "3-tier book now live (LAB/CORE/DRIP). Reaching $200 on performance needs the automation fixed so signal-conditioned entries can resume." },
+    { "target": 300.00, "label": "$300 — Compounding", "projected_date": "2027-Q1", "status": "upcoming", "notes": "DRIP tier reinvesting; ETF-anchored model maturing." }
   ],
   "weekly_recap": {
-    "week": "Jun 29 – Jul 3, 2026",
-    "week_num": 2,
-    "start_value": 148.82,
-    "end_value": 149.75,
-    "change_dollars": 0.93,
-    "change_pct": 0.63,
-    "sessions": 2,
-    "trades": 3,
+    "week": "Jul 6 – Jul 10, 2026",
+    "week_num": 3,
+    "start_value": 145.68,
+    "end_value": 148.10,
+    "change_dollars": 2.42,
+    "change_pct": 1.66,
+    "sessions": 1,
+    "trades": 0,
     "wins": 0,
     "losses": 0,
     "flat": 0,
-    "best_performer": { "ticker": "ARKK", "pct": 4.19 },
-    "summary": "Week 2 in progress (Mon close). The week opened by deploying the $111 dry powder: $75 routed to CORE (VOO/QQQ/SOXX $25 ea) building the tier 0%→50%, $36 held for DRIP. Monday's relief rally marked the LAB sleeve up (+0.5% deposit-free; ARKK +4.2% the best). The signal engine missed two scheduled runs (5:50 AM + 3:20 PM), forcing two SAFE-MODE sessions, so the After-Hours took no new action. DRIP remains blocked on the dividend-engine data bug. No trades graded yet — first signal-conditioned LAB grades land 07-01/07-02 vs QQQ."
+    "best_performer": { "ticker": "ARKK", "pct": 2.81 },
+    "summary": "Week 3 opened Monday as the first session since 06-30 — a 6-day engine/session outage meant no management 07-01→07-06. The book recovered +1.66% off the 07-02 close on a broad up-day (ARKK +2.8%, SOXX +2.6%, QQQ +1.4%). SAFE MODE (stale matrix) blocked new entries; reconciliation clean 7/7, all LAB stops held, no deposit to route. Priority for the week: fix the automation before the next Daily Brief so signal-conditioned action can resume."
   }
 }

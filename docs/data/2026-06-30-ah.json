@@ -1,0 +1,22 @@
+{
+  "meta": {
+    "date": "2026-06-30",
+    "session": "ah_check",
+    "session_label": "[June 30] — Final Daily Report",
+    "generated_at": "2026-06-30T22:40:00Z",
+    "signal_computed_at": "2026-06-30T19:21:18Z",
+    "version": "0.75",
+    "next_session": "2026-07-01 6:00 AM PDT (Daily Brief)"
+  },
+  "portfolio": {
+    "total_value": 152.84,
+    "cash": 0.37,
+    "buying_power": 0.37,
+    "pending_deposits": 0.00,
+    "open_positions": 7,
+    "positions_cap": 10,
+    "day_pnl_dollars": 2.84,
+    "day_pnl_pct": 1.89
+  },
+  "note_archive": "Final daily report for 2026-06-30. Positions at archive: INTC/ARKK/NVDA (LAB), VOO/QQQ/SOXX (CORE), JEPQ (DRIP). INTC subsequently exited by an agentic sell on 2026-07-07 at $109.01 (-14.98%). Archived 2026-07-15 during the first Daily Brief after a 15-day session/Signal-Engine outage. Full report body preserved in git history; this archive carries the header + portfolio snapshot for the journey view."
+}

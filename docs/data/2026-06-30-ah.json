@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "date": "2026-06-30",
+    "session": "ah_check",
+    "session_label": "Jun 30 — Final Daily Report",
+    "generated_at": "2026-06-30T22:40:00Z",
+    "signal_computed_at": "2026-06-30T19:21:18Z",
+    "version": "0.75",
+    "next_session": "2026-07-01 6:00 AM PDT (Daily Brief) — archive today's AH report; pre-open gap check; route any new deposit to DRIP (most underweight, -6.4pp); SAFE MODE persists until a fresh matrix is computed"
+  },
+  "portfolio": {
+    "total_value": 152.84,
+    "cash": 0.37,
+    "buying_power": 0.37,
+    "pending_deposits": 0.00,
+    "open_positions": 7,
+    "positions_cap": 10,
+    "day_pnl_dollars": 2.84,
+    "day_pnl_pct": 1.89
+  },
+  "thoughts": [
+    { "type": "observation", "label": "DRIP SLEEVE OPENED — JEPQ $36 SEED", "text": "Reconciliation surfaced a NEW holding vs this morning's memory: JEPQ 0.5878 sh @ $61.25 ($36.00), an agentic market buy filled 08:26 PDT today that an intervening session executed but never wrote to memory. Per §5.1 the broker is truth — JEPQ is now a held DRIP position. This converts the $36.37 idle cash into the income sleeve, lifting DRIP from 0% to 23.6% and finally clearing the standing top-capital-priority flag. No deposit involved (cash -> ETF reallocation, TWR-invisible)." },
+    { "type": "observation", "label": "RECONCILED — 7 POSITIONS, NO STOP BREACHES", "text": "Broker now holds 3 LAB (INTC, ARKK, NVDA) + 3 CORE (VOO, QQQ, SOXX) + 1 DRIP (JEPQ) = 7. LAB gap/stop check CLEAR: INTC +24.5%, ARKK +10.1%, NVDA +5.1% above their ATR stops. Cash $0.37. CORE/DRIP carry no stops (§13/§15.4)." },
+    { "type": "concern", "label": "SAFE MODE — 3:20 PM ENGINE RUN DID NOT FIRE", "text": "The scheduled 3:20 PM close+AH Signal Engine run did not fire. The latest signal_matrix.json is the 12:21 PDT run, 3h12m old at this 3:33 PM session — over the §2.5 3-hour limit. CLU is in SAFE MODE: no new entries, manage existing positions only. The 3:20 PM miss is the recurring engine-reliability flag; SAFE MODE has now recurred across multiple sessions." },
+    { "type": "observation", "label": "STRONG TECH TAPE, NEUTRAL COMPOSITES", "text": "Best quarter for the S&P/Nasdaq in six years closed today. Holdings ripped: INTC +5.9%, SOXX +4.2%, NVDA +2.5%, QQQ +1.6%. Yet composites stay NEUTRAL/BEARISH (-0.06 to -0.34) because MACD remains Bearish on most names — the histogram lags the V-recovery. Price leads, the quant blend hasn't confirmed." },
+    { "type": "plan", "label": "DRIP STILL THE ROUTING TARGET FOR NEW CASH", "text": "After the JEPQ seed, allocation is LAB 25.9% / CORE 50.2% / DRIP 23.6% / cash 0.2% vs Accumulation targets 20/50/30. DRIP remains the most-underweight tier (-6.4pp) and the next-deposit target (tiebreak DRIP>CORE>LAB). With only $0.37 cash there is nothing to route now; wait for the next deposit. Dividend engine still emits streak=0/payout=null, so the §15.3 screen stays unverifiable — prefer covered-call JEPI/JEPQ (payout N/A by rule) until streak/payout populate." },
+    { "type": "concern", "label": "LAB OVER STAGING CAP — NO NEW SINGLE-STOCK ENTRIES", "text": "LAB is 25.9% vs its 20% Accumulation cap. NET now shows the cleanest gate (4/5) and RXRX holds 3/5, but §17.3 forbids force-selling to rebalance, so no LAB add is authorized; the sleeve dilutes via base growth. Combined with SAFE MODE and ~$0 cash, no LAB entry is on the table." }
+  ],
+  "positions": [
+    { "symbol": "INTC", "full_name": "Intel Corporation", "desc": "Foundry AI semiconductor pivot", "tier": "stock", "shares": 0.097496, "entry_price": 128.21, "reg_close": 139.50, "current_price": 139.50, "notional": 13.60, "day_pnl_pct": 5.91, "total_pnl_pct": 8.80, "stop_level": 112.06, "stop_type": "manual", "stop_trail_pct": 12.6, "composite_score": -0.056, "composite_signal": "NEUTRAL" },
+    { "symbol": "ARKK", "full_name": "ARK Innovation ETF", "desc": "Disruptive innovation basket ETF", "tier": "stock", "shares": 0.164426, "entry_price": 77.36, "reg_close": 80.78, "current_price": 80.78, "notional": 13.28, "day_pnl_pct": 0.19, "total_pnl_pct": 4.42, "stop_level": 73.34, "stop_type": "manual", "stop_trail_pct": 5.2, "composite_score": -0.180, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "full_name": "NVIDIA Corporation", "desc": "AI GPU compute monopoly", "tier": "stock", "shares": 0.063587, "entry_price": 200.04, "reg_close": 199.76, "current_price": 199.76, "notional": 12.70, "day_pnl_pct": 2.46, "total_pnl_pct": -0.14, "stop_level": 190.04, "stop_type": "manual", "stop_trail_pct": 5.0, "composite_score": -0.338, "composite_signal": "BEARISH" },
+    { "symbol": "VOO", "full_name": "Vanguard S&P 500 ETF", "desc": "Broad S&P 500 anchor", "tier": "etf", "shares": 0.036731, "entry_price": 680.62, "reg_close": 686.06, "current_price": 686.06, "notional": 25.20, "day_pnl_pct": 0.74, "total_pnl_pct": 0.80, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.217, "composite_signal": "NEUTRAL" },
+    { "symbol": "QQQ", "full_name": "Invesco QQQ Trust", "desc": "Nasdaq-100 growth core", "tier": "etf", "shares": 0.034562, "entry_price": 723.34, "reg_close": 735.78, "current_price": 735.78, "notional": 25.43, "day_pnl_pct": 1.62, "total_pnl_pct": 1.72, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.209, "composite_signal": "NEUTRAL" },
+    { "symbol": "SOXX", "full_name": "iShares Semiconductor ETF", "desc": "Diversified semiconductor sector sleeve", "tier": "etf", "shares": 0.040845, "entry_price": 612.07, "reg_close": 639.99, "current_price": 639.99, "notional": 26.14, "day_pnl_pct": 4.17, "total_pnl_pct": 4.56, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.198, "composite_signal": "NEUTRAL" },
+    { "symbol": "JEPQ", "full_name": "JPMorgan Nasdaq Equity Premium Income ETF", "desc": "Nasdaq covered-call income", "tier": "drip", "shares": 0.587772, "entry_price": 61.25, "reg_close": 61.45, "current_price": 61.45, "notional": 36.12, "day_pnl_pct": 1.24, "total_pnl_pct": 0.33, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.158, "composite_signal": "NEUTRAL" }
+  ],
+  "_archive_note": "Archived 2026-07-15 by the revival AH session. The scheduled 2026-07-01 6:00 AM archive never ran (system dormant ~2 weeks). Content is the 2026-06-30 AH final report verbatim; only session_label changed for archival. Note: INTC (shown here at +8.80%) subsequently stopped out 2026-07-07 @ $109.01 (-15%).",
+  "signal_matrix": [],
+  "dividend_matrix": [],
+  "accuracy": { "win_rate_pct": 0.0, "trades_evaluated": 1, "trades_pending": 3, "lab_scorecard": "See CLU_MEMORY. Trimmed on archive.", "do_not_trade": [], "recent_ledger": [] },
+  "watchlist_movers": [],
+  "learned_patterns": [],
+  "earnings": [],
+  "stop_loss_alerts": [],
+  "trades_executed": [],
+  "watchlist_changes": [],
+  "alerts": [],
+  "top_opportunities": []
+}

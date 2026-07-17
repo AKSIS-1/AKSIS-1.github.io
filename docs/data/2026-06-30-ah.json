@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "date": "2026-06-30",
+    "session": "ah_check",
+    "session_label": "June 30 — Final Daily Report",
+    "generated_at": "2026-06-30T22:40:00Z",
+    "signal_computed_at": "2026-06-30T19:21:18Z",
+    "version": "0.75",
+    "next_session": "2026-07-01 6:00 AM PDT (Daily Brief) — archive today's AH report; pre-open gap check; route any new deposit to DRIP (most underweight, -6.4pp); SAFE MODE persists until a fresh matrix is computed"
+  },
+  "portfolio": {
+    "total_value": 152.84,
+    "cash": 0.37,
+    "buying_power": 0.37,
+    "pending_deposits": 0.00,
+    "open_positions": 7,
+    "positions_cap": 10,
+    "day_pnl_dollars": 2.84,
+    "day_pnl_pct": 1.89
+  },
+  "_archived_note": "Archived 2026-07-17 during the Daily Brief. This is the final 2026-06-30 AH report; the 2026-07-01 archive step did not run during the ~17-day Signal Engine outage (no sessions fired 07-01..07-16).",
+  "positions": [
+    { "symbol": "INTC", "full_name": "Intel Corporation", "desc": "Foundry AI semiconductor pivot", "tier": "stock", "shares": 0.097496, "entry_price": 128.21, "reg_close": 139.50, "current_price": 139.50, "notional": 13.60, "day_pnl_pct": 5.91, "total_pnl_pct": 8.80, "stop_level": 112.06, "stop_type": "manual", "stop_trail_pct": 12.6, "composite_score": -0.056, "composite_signal": "NEUTRAL" },
+    { "symbol": "ARKK", "full_name": "ARK Innovation ETF", "desc": "Disruptive innovation basket ETF", "tier": "stock", "shares": 0.164426, "entry_price": 77.36, "reg_close": 80.78, "current_price": 80.78, "notional": 13.28, "day_pnl_pct": 0.19, "total_pnl_pct": 4.42, "stop_level": 73.34, "stop_type": "manual", "stop_trail_pct": 5.2, "composite_score": -0.180, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "full_name": "NVIDIA Corporation", "desc": "AI GPU compute monopoly", "tier": "stock", "shares": 0.063587, "entry_price": 200.04, "reg_close": 199.76, "current_price": 199.76, "notional": 12.70, "day_pnl_pct": 2.46, "total_pnl_pct": -0.14, "stop_level": 190.04, "stop_type": "manual", "stop_trail_pct": 5.0, "composite_score": -0.338, "composite_signal": "BEARISH" },
+    { "symbol": "VOO", "full_name": "Vanguard S&P 500 ETF", "desc": "Broad S&P 500 anchor", "tier": "etf", "shares": 0.036731, "entry_price": 680.62, "reg_close": 686.06, "current_price": 686.06, "notional": 25.20, "day_pnl_pct": 0.74, "total_pnl_pct": 0.80, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.217, "composite_signal": "NEUTRAL" },
+    { "symbol": "QQQ", "full_name": "Invesco QQQ Trust", "desc": "Nasdaq-100 growth core", "tier": "etf", "shares": 0.034562, "entry_price": 723.34, "reg_close": 735.78, "current_price": 735.78, "notional": 25.43, "day_pnl_pct": 1.62, "total_pnl_pct": 1.72, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.209, "composite_signal": "NEUTRAL" },
+    { "symbol": "SOXX", "full_name": "iShares Semiconductor ETF", "desc": "Diversified semiconductor sector sleeve", "tier": "etf", "shares": 0.040845, "entry_price": 612.07, "reg_close": 639.99, "current_price": 639.99, "notional": 26.14, "day_pnl_pct": 4.17, "total_pnl_pct": 4.56, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.198, "composite_signal": "NEUTRAL" },
+    { "symbol": "JEPQ", "full_name": "JPMorgan Nasdaq Equity Premium Income ETF", "desc": "Nasdaq covered-call income", "tier": "drip", "shares": 0.587772, "entry_price": 61.25, "reg_close": 61.45, "current_price": 61.45, "notional": 36.12, "day_pnl_pct": 1.24, "total_pnl_pct": 0.33, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.158, "composite_signal": "NEUTRAL" }
+  ],
+  "accuracy": {
+    "win_rate_pct": 0.0,
+    "trades_evaluated": 1,
+    "trades_pending": 3,
+    "lab_scorecard": "LAB vs QQQ — not yet graded on signal-conditioned trades. 1 trade graded (MRVL -1.0, pre-engine baseline); 3 pending (INTC due 07-01, ARKK/NVDA 07-02).",
+    "do_not_trade": [],
+    "recent_ledger": [
+      { "ticker": "MRVL", "action": "BUY", "outcome": "Realized -5.71% (stop-out 06-26)", "accuracy_delta": "-1.0", "conditions": "Pre-engine baseline" },
+      { "ticker": "INTC", "action": "BUY", "outcome": "TBD 2026-07-01", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline" },
+      { "ticker": "ARKK", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline" },
+      { "ticker": "NVDA", "action": "BUY", "outcome": "TBD 2026-07-02", "accuracy_delta": "TBD", "conditions": "Pre-engine baseline" }
+    ]
+  },
+  "stop_audit": {
+    "checked_at": "2026-06-30T22:39:00Z",
+    "all_protected": true,
+    "summary": { "whole_share_positions": 0, "protected": 0, "unprotected": 0, "partial": 0, "drip_violations": 0 },
+    "positions": [
+      { "symbol": "INTC", "tier": "stock", "quantity": 0.097496, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 12.6, "status": "skipped_fractional" },
+      { "symbol": "ARKK", "tier": "stock", "quantity": 0.164426, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 5.2, "status": "skipped_fractional" },
+      { "symbol": "NVDA", "tier": "stock", "quantity": 0.063587, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 5.0, "status": "skipped_fractional" },
+      { "symbol": "VOO", "tier": "etf", "quantity": 0.036731, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 0.0, "status": "skipped_fractional" },
+      { "symbol": "QQQ", "tier": "etf", "quantity": 0.034562, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 0.0, "status": "skipped_fractional" },
+      { "symbol": "SOXX", "tier": "etf", "quantity": 0.040845, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 0.0, "status": "skipped_fractional" },
+      { "symbol": "JEPQ", "tier": "drip", "quantity": 0.587772, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 0.0, "status": "drip_ok" }
+    ],
+    "alerts": []
+  },
+  "trades_executed": [],
+  "alerts": [
+    { "level": "info", "title": "DRIP Sleeve Opened — JEPQ $36 (Reconciled)", "message": "An agentic JEPQ buy (0.5878 sh @ $61.25) reconciled into the held book per §5.1. DRIP 0% -> 23.6%." },
+    { "level": "warning", "title": "SAFE MODE — 3:20 PM Engine Run Did Not Fire", "message": "Latest signal_matrix.json is the 12:21 PDT run, 3h12m old at the 3:33 PM session — over the §2.5 3-hour limit. No new entries." }
+  ],
+  "note": "Archived snapshot. Full signal_matrix / watchlist_movers / dividend_matrix retained in the live latest.json history; this archive preserves the portfolio, positions, accuracy, and stop_audit of record for 2026-06-30."
+}

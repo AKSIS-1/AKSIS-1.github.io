@@ -2,11 +2,16 @@
   {
     "date": "2026-06-24-ah",
     "session": "daily_brief",
-    "session_label": "Jun 24 — Final Daily Report"
+    "session_label": "Jun 24 \u2014 Final Daily Report"
   },
   {
     "date": "2026-06-25-ah",
     "session": "ah_check",
-    "session_label": "Jun 25 — Final Daily Report"
+    "session_label": "Jun 25 \u2014 Final Daily Report"
+  },
+  {
+    "date": "2026-06-30-ah",
+    "session": "ah_check",
+    "session_label": "Jun 30 \u2014 Final Daily Report"
   }
 ]

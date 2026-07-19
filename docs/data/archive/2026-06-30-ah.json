@@ -1,56 +1,74 @@
 {
   "meta": {
-    "date": "2026-07-19",
-    "session": "daily_brief",
-    "session_label": "Live Report",
-    "generated_at": "2026-07-19T13:10:00Z",
+    "date": "2026-06-30",
+    "session": "ah_check",
+    "session_label": "Jun 30 — Final Daily Report",
+    "generated_at": "2026-06-30T22:40:00Z",
     "signal_computed_at": "2026-06-30T19:21:18Z",
     "version": "0.75",
-    "next_session": "2026-07-20 6:00 AM PDT (Daily Brief) \u2014 pre-open gap check. SAFE MODE persists until the Signal Engine runs and writes a fresh matrix (last computed 2026-06-30, ~19 days stale). No new entries until the engine fires."
+    "next_session": "2026-07-01 6:00 AM PDT (Daily Brief) — archive today's AH report; pre-open gap check; route any new deposit to DRIP (most underweight, -6.4pp); SAFE MODE persists until a fresh matrix is computed"
   },
   "portfolio": {
-    "total_value": 141.29,
-    "cash": 11.37,
-    "buying_power": 11.37,
-    "pending_deposits": 0.0,
-    "open_positions": 6,
+    "total_value": 152.84,
+    "cash": 0.37,
+    "buying_power": 0.37,
+    "pending_deposits": 0.00,
+    "open_positions": 7,
     "positions_cap": 10,
-    "day_pnl_dollars": 0.0,
-    "day_pnl_pct": 0.0
+    "day_pnl_dollars": 2.84,
+    "day_pnl_pct": 1.89
   },
   "thoughts": [
     {
       "type": "observation",
-      "label": "RECONCILED \u2014 INTC STOP-OUT SOLD 07-07, BOOK NOW 6",
-      "text": "Broker reconciliation vs the last-recorded memory (06-30) surfaced one change: INTC was sold 2026-07-07 @ $109.01 (agentic market sell, order 6a4d1e69) after breaching its ~$112 ATR stop \u2014 entry $128.21, realized -14.98%. No session had written this to memory. Per \u00a75.1 the broker is truth: INTC is removed. Held book is now 2 LAB (ARKK, NVDA) + 3 CORE (VOO, QQQ, SOXX) + 1 DRIP (JEPQ) = 6, all fractional. Cash rose $0.37 -> $11.37, fully explained by the INTC sale proceeds (~$10.63) \u2014 an exit, NOT a deposit, so no \u00a717 routing."
-    },
-    {
-      "type": "concern",
-      "label": "SAFE MODE \u2014 SIGNAL MATRIX ~19 DAYS STALE",
-      "text": "signal_summary.txt / signal_matrix.json computed_at is 2026-06-30T19:21:18Z \u2014 roughly 19 days old at this 2026-07-19 session, far past the \u00a72.5 3-hour limit. The Signal Engine has not produced a fresh matrix since 06-30. SAFE MODE is mandatory: manage existing positions only, NO new entries. All quant figures below are the stale 06-30 engine output, retained for continuity only and not tradable."
+      "label": "DRIP SLEEVE OPENED — JEPQ $36 SEED",
+      "text": "Reconciliation surfaced a NEW holding vs this morning's memory: JEPQ 0.5878 sh @ $61.25 ($36.00), an agentic market buy filled 08:26 PDT today that an intervening session executed but never wrote to memory. Per §5.1 the broker is truth — JEPQ is now a held DRIP position. This converts the $36.37 idle cash into the income sleeve, lifting DRIP from 0% to 23.6% and finally clearing the standing top-capital-priority flag. No deposit involved (cash -> ETF reallocation, TWR-invisible)."
     },
     {
       "type": "observation",
-      "label": "WEEKEND REPORT \u2014 GAP/STOP CHECK CLEAR",
-      "text": "Today is Sunday 2026-07-19; markets are closed and this is a report-only weekend session (no trades on weekends). Pre-open gap/stop check on the LAB sleeve vs Friday's (07-17) closes: ARKK $75.26 vs $73.34 stop (+2.6% above), NVDA $202.64 vs $190.04 stop (+6.6% above) \u2014 both CLEAR, no breach. CORE/DRIP are stop-exempt (\u00a713/\u00a715.4)."
+      "label": "RECONCILED — 7 POSITIONS, NO STOP BREACHES",
+      "text": "Broker now holds 3 LAB (INTC, ARKK, NVDA) + 3 CORE (VOO, QQQ, SOXX) + 1 DRIP (JEPQ) = 7. LAB gap/stop check CLEAR: INTC +24.5%, ARKK +10.1%, NVDA +5.1% above their ATR stops. Cash $0.37. CORE/DRIP carry no stops (§13/§15.4)."
     },
     {
       "type": "concern",
-      "label": "CORE/DRIP DRAWDOWNS HELD BY DESIGN",
-      "text": "SOXX is -14.86% from entry ($612.07 -> $521.11) and QQQ -3.88%, JEPQ -4.49% on the semis/Nasdaq pullback since late June. These are CORE/DRIP positions and carry NO stops (\u00a713/\u00a715.4) \u2014 declines are reinvestment/DCA opportunities, not exit signals. No action; the compounding base is not stopped out. LAB names (ARKK -2.71%, NVDA +1.30%) remain above their ATR stops."
+      "label": "SAFE MODE — 3:20 PM ENGINE RUN DID NOT FIRE",
+      "text": "The scheduled 3:20 PM close+AH Signal Engine run did not fire. The latest signal_matrix.json is the 12:21 PDT run, 3h12m old at this 3:33 PM session — over the §2.5 3-hour limit. CLU is in SAFE MODE: no new entries, manage existing positions only. The 3:20 PM miss is the recurring engine-reliability flag; SAFE MODE has now recurred across multiple sessions."
+    },
+    {
+      "type": "observation",
+      "label": "STRONG TECH TAPE, NEUTRAL COMPOSITES",
+      "text": "Best quarter for the S&P/Nasdaq in six years closed today. Holdings ripped: INTC +5.9%, SOXX +4.2%, NVDA +2.5%, QQQ +1.6%. Yet composites stay NEUTRAL/BEARISH (-0.06 to -0.34) because MACD remains Bearish on most names — the histogram lags the V-recovery. Price leads, the quant blend hasn't confirmed."
     },
     {
       "type": "plan",
-      "label": "HOLD \u2014 NOTHING TO ROUTE, AWAIT FRESH ENGINE",
-      "text": "No deposit (cash is sale proceeds, and $11.37 < the $25 \u00a717.3 minimum anyway). Weekend + SAFE MODE = no entries, no rebalancing (never force-sell, \u00a717.3). DRIP is the most-underweight tier (24.3% vs 30%, -5.7pp) and remains the next-deposit target once real cash arrives and the engine is fresh. Top priority operationally: get the Signal Engine running again \u2014 it has been dark since 06-30."
+      "label": "DRIP STILL THE ROUTING TARGET FOR NEW CASH",
+      "text": "After the JEPQ seed, allocation is LAB 25.9% / CORE 50.2% / DRIP 23.6% / cash 0.2% vs Accumulation targets 20/50/30. DRIP remains the most-underweight tier (-6.4pp) and the next-deposit target (tiebreak DRIP>CORE>LAB). With only $0.37 cash there is nothing to route now; wait for the next deposit. Dividend engine still emits streak=0/payout=null, so the §15.3 screen stays unverifiable — prefer covered-call JEPI/JEPQ (payout N/A by rule) until streak/payout populate."
     },
     {
-      "type": "observation",
-      "label": "SIGNAL ENGINE OUTAGE IS THE DOMINANT BLOCKER",
-      "text": "The recurring 'missed scheduled run' flag has become a sustained outage \u2014 no matrix since 2026-06-30. Every session since has been forced into SAFE MODE, so no signal-conditioned entry (e.g. the NET 4/5 gate flagged 06-30) has been possible regardless of cash or cap. Investigating the workflow_dispatch/runner for signal_engine.yml is the single highest-value fix."
+      "type": "concern",
+      "label": "LAB OVER STAGING CAP — NO NEW SINGLE-STOCK ENTRIES",
+      "text": "LAB is 25.9% vs its 20% Accumulation cap. NET now shows the cleanest gate (4/5) and RXRX holds 3/5, but §17.3 forbids force-selling to rebalance, so no LAB add is authorized; the sleeve dilutes via base growth. Combined with SAFE MODE and ~$0 cash, no LAB entry is on the table."
     }
   ],
   "positions": [
+    {
+      "symbol": "INTC",
+      "full_name": "Intel Corporation",
+      "desc": "Foundry AI semiconductor pivot",
+      "tier": "stock",
+      "shares": 0.097496,
+      "entry_price": 128.21,
+      "reg_close": 139.50,
+      "current_price": 139.50,
+      "notional": 13.60,
+      "day_pnl_pct": 5.91,
+      "total_pnl_pct": 8.80,
+      "stop_level": 112.06,
+      "stop_type": "manual",
+      "stop_trail_pct": 12.6,
+      "composite_score": -0.056,
+      "composite_signal": "NEUTRAL"
+    },
     {
       "symbol": "ARKK",
       "full_name": "ARK Innovation ETF",
@@ -58,34 +76,34 @@
       "tier": "stock",
       "shares": 0.164426,
       "entry_price": 77.36,
-      "reg_close": 76.67,
-      "current_price": 75.26,
-      "notional": 12.37,
-      "day_pnl_pct": -1.84,
-      "total_pnl_pct": -2.71,
+      "reg_close": 80.78,
+      "current_price": 80.78,
+      "notional": 13.28,
+      "day_pnl_pct": 0.19,
+      "total_pnl_pct": 4.42,
       "stop_level": 73.34,
       "stop_type": "manual",
-      "composite_score": -0.18,
-      "composite_signal": "NEUTRAL",
-      "stop_trail_pct": 5.2
+      "stop_trail_pct": 5.2,
+      "composite_score": -0.180,
+      "composite_signal": "NEUTRAL"
     },
     {
       "symbol": "NVDA",
       "full_name": "NVIDIA Corporation",
-      "desc": "AI GPU compute leader",
+      "desc": "AI GPU compute monopoly",
       "tier": "stock",
       "shares": 0.063587,
       "entry_price": 200.04,
-      "reg_close": 207.4,
-      "current_price": 202.64,
-      "notional": 12.89,
-      "day_pnl_pct": -2.3,
-      "total_pnl_pct": 1.3,
+      "reg_close": 199.76,
+      "current_price": 199.76,
+      "notional": 12.70,
+      "day_pnl_pct": 2.46,
+      "total_pnl_pct": -0.14,
       "stop_level": 190.04,
       "stop_type": "manual",
+      "stop_trail_pct": 5.0,
       "composite_score": -0.338,
-      "composite_signal": "BEARISH",
-      "stop_trail_pct": 5.0
+      "composite_signal": "BEARISH"
     },
     {
       "symbol": "VOO",
@@ -94,11 +112,11 @@
       "tier": "etf",
       "shares": 0.036731,
       "entry_price": 680.62,
-      "reg_close": 690.14,
-      "current_price": 683.06,
-      "notional": 25.09,
-      "day_pnl_pct": -1.03,
-      "total_pnl_pct": 0.36,
+      "reg_close": 686.06,
+      "current_price": 686.06,
+      "notional": 25.20,
+      "day_pnl_pct": 0.74,
+      "total_pnl_pct": 0.80,
       "stop_level": 0.0,
       "stop_type": "none",
       "composite_score": -0.217,
@@ -111,11 +129,11 @@
       "tier": "etf",
       "shares": 0.034562,
       "entry_price": 723.34,
-      "reg_close": 705.94,
-      "current_price": 695.3,
-      "notional": 24.03,
-      "day_pnl_pct": -1.51,
-      "total_pnl_pct": -3.88,
+      "reg_close": 735.78,
+      "current_price": 735.78,
+      "notional": 25.43,
+      "day_pnl_pct": 1.62,
+      "total_pnl_pct": 1.72,
       "stop_level": 0.0,
       "stop_type": "none",
       "composite_score": -0.209,
@@ -128,11 +146,11 @@
       "tier": "etf",
       "shares": 0.040845,
       "entry_price": 612.07,
-      "reg_close": 530.5,
-      "current_price": 521.11,
-      "notional": 21.28,
-      "day_pnl_pct": -1.77,
-      "total_pnl_pct": -14.86,
+      "reg_close": 639.99,
+      "current_price": 639.99,
+      "notional": 26.14,
+      "day_pnl_pct": 4.17,
+      "total_pnl_pct": 4.56,
       "stop_level": 0.0,
       "stop_type": "none",
       "composite_score": -0.198,
@@ -145,11 +163,11 @@
       "tier": "drip",
       "shares": 0.587772,
       "entry_price": 61.25,
-      "reg_close": 59.26,
-      "current_price": 58.5,
-      "notional": 34.38,
-      "day_pnl_pct": -1.28,
-      "total_pnl_pct": -4.49,
+      "reg_close": 61.45,
+      "current_price": 61.45,
+      "notional": 36.12,
+      "day_pnl_pct": 1.24,
+      "total_pnl_pct": 0.33,
       "stop_level": 0.0,
       "stop_type": "none",
       "composite_score": -0.158,
@@ -183,7 +201,7 @@
       "rsi_divergence": "Bullish",
       "macd": "Bearish",
       "macd_hist": -1.6382,
-      "z_score": 0.9,
+      "z_score": 0.90,
       "z_signal": "Normal",
       "bb_bandwidth_pct": 8.53,
       "vol_signal": "Low",
@@ -226,7 +244,7 @@
       "bb_bandwidth_pct": 4.73,
       "vol_signal": "Normal",
       "trend_50d": "Up",
-      "atr_pct": 1.4,
+      "atr_pct": 1.40,
       "suggested_stop_pct": 5.0,
       "days_to_earnings": null,
       "next_earnings_date": null,
@@ -259,7 +277,7 @@
       "rsi_divergence": "Bullish",
       "macd": "Bearish",
       "macd_hist": -0.8024,
-      "z_score": 0.7,
+      "z_score": 0.70,
       "z_signal": "Normal",
       "bb_bandwidth_pct": 12.17,
       "vol_signal": "Low",
@@ -278,7 +296,7 @@
       "rsi_divergence": "Bullish",
       "macd": "Bearish",
       "macd_hist": -0.5045,
-      "z_score": 0.5,
+      "z_score": 0.50,
       "z_signal": "Normal",
       "bb_bandwidth_pct": 11.79,
       "vol_signal": "Low",
@@ -411,9 +429,9 @@
       "rsi_divergence": "None",
       "macd": "Bullish",
       "macd_hist": 0.0519,
-      "z_score": 1.5,
+      "z_score": 1.50,
       "z_signal": "Normal",
-      "bb_bandwidth_pct": 26.1,
+      "bb_bandwidth_pct": 26.10,
       "vol_signal": "Normal",
       "trend_50d": "Up",
       "atr_pct": 5.86,
@@ -451,7 +469,7 @@
       "macd_hist": -5.5022,
       "z_score": 0.99,
       "z_signal": "Normal",
-      "bb_bandwidth_pct": 16.9,
+      "bb_bandwidth_pct": 16.90,
       "vol_signal": "Low",
       "trend_50d": "Up",
       "atr_pct": 7.03,
@@ -468,7 +486,7 @@
       "rsi_divergence": "None",
       "macd": "Bullish",
       "macd_hist": 1.5401,
-      "z_score": 2.2,
+      "z_score": 2.20,
       "z_signal": "OVERBOUGHT",
       "vol_signal": "Normal",
       "trend_50d": "Up",
@@ -487,7 +505,7 @@
       "rsi_divergence": "None",
       "macd": "Bullish",
       "macd_hist": 3.189,
-      "z_score": 2.7,
+      "z_score": 2.70,
       "z_signal": "OVERBOUGHT",
       "vol_signal": "Low",
       "trend_50d": "Up",
@@ -563,7 +581,7 @@
       "rsi_divergence": "None",
       "macd": "Bearish",
       "macd_hist": -0.7414,
-      "z_score": -0.8,
+      "z_score": -0.80,
       "z_signal": "Normal",
       "bb_bandwidth_pct": 82.05,
       "vol_signal": "Low",
@@ -626,7 +644,7 @@
     },
     {
       "symbol": "JEPI",
-      "dividend_yield_pct": 8.1,
+      "dividend_yield_pct": 8.10,
       "payout_ratio_pct": null,
       "annual_dividend": 4.584,
       "ex_dividend_date": "2026-07-01",
@@ -635,7 +653,7 @@
     },
     {
       "symbol": "SCHD",
-      "dividend_yield_pct": 3.3,
+      "dividend_yield_pct": 3.30,
       "payout_ratio_pct": null,
       "annual_dividend": 1.048,
       "ex_dividend_date": "2026-09-23",
@@ -672,9 +690,9 @@
   ],
   "accuracy": {
     "win_rate_pct": 0.0,
-    "trades_evaluated": 2,
-    "trades_pending": 2,
-    "lab_scorecard": "LAB vs QQQ \u2014 no signal-conditioned trades graded yet (engine dark since 06-30). 2 pre-engine baselines realized as losses: MRVL -5.71% (stop 06-26), INTC -14.98% (stop 07-07). 2 pre-engine baselines still held (ARKK, NVDA). No vs-QQQ excess figure until signal-era trades exist and mature. CORE/DRIP not graded (base/income, not predictions).",
+    "trades_evaluated": 1,
+    "trades_pending": 3,
+    "lab_scorecard": "LAB vs QQQ — not yet graded on signal-conditioned trades. 1 trade graded (MRVL -1.0, pre-engine baseline); 3 pending (INTC due 07-01, ARKK/NVDA 07-02). Friday grading (§14.1) will produce the first vs-QQQ excess figures. Sample too small to be meaningful. CORE/DRIP buys are not graded (base, not predictions).",
     "do_not_trade": [],
     "recent_ledger": [
       {
@@ -682,85 +700,94 @@
         "action": "BUY",
         "outcome": "Realized -5.71% (stop-out 06-26)",
         "accuracy_delta": "-1.0",
-        "conditions": "Pre-engine baseline \u2014 no matrix at entry"
+        "conditions": "Pre-engine baseline — no matrix at entry"
       },
       {
         "ticker": "INTC",
         "action": "BUY",
-        "outcome": "Realized -14.98% (stop-out 07-07)",
-        "accuracy_delta": "-1.0",
-        "conditions": "Pre-engine baseline \u2014 no matrix at entry"
+        "outcome": "TBD 2026-07-01",
+        "accuracy_delta": "TBD",
+        "conditions": "Pre-engine baseline — no matrix at entry"
       },
       {
         "ticker": "ARKK",
         "action": "BUY",
-        "outcome": "Held \u2014 pre-engine baseline, ungraded (T+5 window elapsed 07-02)",
-        "accuracy_delta": "N/A",
-        "conditions": "Pre-engine baseline \u2014 no matrix at entry"
+        "outcome": "TBD 2026-07-02",
+        "accuracy_delta": "TBD",
+        "conditions": "Pre-engine baseline — no matrix at entry"
       },
       {
         "ticker": "NVDA",
         "action": "BUY",
-        "outcome": "Held \u2014 pre-engine baseline, ungraded (T+5 window elapsed 07-02)",
-        "accuracy_delta": "N/A",
-        "conditions": "Pre-engine baseline \u2014 no matrix at entry"
+        "outcome": "TBD 2026-07-02",
+        "accuracy_delta": "TBD",
+        "conditions": "Pre-engine baseline — no matrix at entry"
       }
     ]
   },
   "watchlist_movers": [
     {
-      "symbol": "ARKK",
-      "price": 75.26,
-      "change_pct": -1.84,
+      "symbol": "INTC",
+      "price": 139.50,
+      "change_pct": 5.91,
       "signal": "active",
       "watchlist": "Active Position (LAB)",
-      "composite_score": -0.18,
-      "note": "-2.71% from entry ($77.36). Friday close $75.26 vs $73.34 stop = +2.6% above \u2014 CLEAR. QQQ migration at +10% (~$85.10). Stale 06-30 composite -0.18."
+      "composite_score": -0.056,
+      "note": "+8.80% from entry after a +5.9% session. RSI 69.3 nearing overbought, MACD Bullish, BBW 40% (volatility breakout). Stop 12.6% ($112.06) — CLEAR (+24.5% above). Approaching SOXX-migration trigger +15% (~$147.44)."
+    },
+    {
+      "symbol": "ARKK",
+      "price": 80.78,
+      "change_pct": 0.19,
+      "signal": "active",
+      "watchlist": "Active Position (LAB)",
+      "composite_score": -0.180,
+      "note": "+4.42% from entry. Stop 5.2% ($73.34). QQQ migration at +10% (~$85.10), now ~$80.78."
     },
     {
       "symbol": "NVDA",
-      "price": 202.64,
-      "change_pct": -2.29,
+      "price": 199.76,
+      "change_pct": 2.46,
       "signal": "active",
       "watchlist": "Active Position (LAB)",
       "composite_score": -0.338,
-      "note": "+1.30% from entry ($200.04). $202.64 vs $190.04 stop = +6.6% above \u2014 CLEAR (kept tight, high-failure-risk). Stale 06-30 composite BEARISH -0.338."
-    },
-    {
-      "symbol": "VOO",
-      "price": 683.06,
-      "change_pct": -1.03,
-      "signal": "active",
-      "watchlist": "Active Position (CORE)",
-      "composite_score": -0.217,
-      "note": "S&P-500 anchor, +0.36% from entry. No stop (\u00a713). Declines are DCA opportunities."
-    },
-    {
-      "symbol": "QQQ",
-      "price": 695.3,
-      "change_pct": -1.51,
-      "signal": "active",
-      "watchlist": "Active Position (CORE)",
-      "composite_score": -0.209,
-      "note": "Nasdaq-100 growth + ARKK migration target. -3.88% from entry on the pullback. No stop (\u00a713)."
-    },
-    {
-      "symbol": "SOXX",
-      "price": 521.11,
-      "change_pct": -1.77,
-      "signal": "active",
-      "watchlist": "Active Position (CORE)",
-      "composite_score": -0.198,
-      "note": "Semis sleeve / MRVL replacement. -14.86% from entry ($612.07) on the semis selloff. No stop (\u00a713) \u2014 held as compounding base; declines add shares on deposit."
+      "note": "Composite BEARISH, Trend50=Down, RSI 42.3, Z -0.83. -0.14% from entry but +5.1% above $190.04 stop (kept tight, high-failure-risk). Weakest held name — watch."
     },
     {
       "symbol": "JEPQ",
-      "price": 58.5,
-      "change_pct": -1.28,
+      "price": 61.45,
+      "change_pct": 1.24,
       "signal": "active",
       "watchlist": "Active Position (DRIP)",
       "composite_score": -0.158,
-      "note": "Nasdaq covered-call income (9.95% yield). -4.49% from entry. No stop (\u00a715.4) \u2014 a lower price buys more shares per distribution. Never sold on signal."
+      "note": "NEW DRIP seed — $36 covered-call income sleeve opened today (reconciled from broker). 9.95% yield. Ex-dividend 2026-07-01. No stop (§15.4). Lifts DRIP 0% -> 23.6%."
+    },
+    {
+      "symbol": "VOO",
+      "price": 686.06,
+      "change_pct": 0.74,
+      "signal": "active",
+      "watchlist": "Active Position (CORE)",
+      "composite_score": -0.217,
+      "note": "S&P-500 anchor, +0.80% from entry; +0.74% on the day. No stop (§13)."
+    },
+    {
+      "symbol": "QQQ",
+      "price": 735.78,
+      "change_pct": 1.62,
+      "signal": "active",
+      "watchlist": "Active Position (CORE)",
+      "composite_score": -0.209,
+      "note": "Nasdaq-100 growth + ARKK migration target. +1.72% from entry. No stop."
+    },
+    {
+      "symbol": "SOXX",
+      "price": 639.99,
+      "change_pct": 4.17,
+      "signal": "active",
+      "watchlist": "Active Position (CORE)",
+      "composite_score": -0.198,
+      "note": "Semis sleeve / MRVL replacement. +4.56% from entry after a +4.2% session. No stop."
     },
     {
       "symbol": "NET",
@@ -769,7 +796,7 @@
       "signal": "gate-chk",
       "watchlist": "Predicted Victory (LAB)",
       "composite_score": -0.178,
-      "note": "Cleanest LAB gate on the stale 06-30 matrix (4/5). DEFERRED \u2014 SAFE MODE (no fresh matrix since 06-30). Re-rank when the engine runs. Price/gate shown are stale (06-30)."
+      "note": "NEW cleanest gate — 4/5 (Z=0.48, RSI 55.9, Trend Up, MACD Bullish; only Score -0.178 fails). ERN 30d clear, news clear. DEFERRED — SAFE MODE + LAB over 20% cap + ~$0 cash."
     },
     {
       "symbol": "RXRX",
@@ -778,7 +805,7 @@
       "signal": "gate-chk",
       "watchlist": "Predicted Victory (LAB)",
       "composite_score": 0.064,
-      "note": "Gate 3/5 on the stale 06-30 matrix; sub-$4 fractional. DEFERRED \u2014 SAFE MODE. Re-check gate + news when the engine is fresh."
+      "note": "Gate 3/5 — Z=1.50 just fails (>=1.5 line), RSI 66.2 fails; Score +0.064, Trend Up, MACD Bullish pass. Sub-$4, most accessible fractional. ERN 36d. DEFERRED."
     },
     {
       "symbol": "MU",
@@ -787,40 +814,90 @@
       "signal": "neutral",
       "watchlist": "Predicted Victory (LAB)",
       "composite_score": -0.186,
-      "note": "Gate 3/5 (stale) but price above the $1,050-1,100 zone \u2014 do not chase. DEFERRED under SAFE MODE."
+      "note": "Gate 3/5 (Z 1.15, RSI 61.8, Trend Up; Score & MACD Bearish fail). $1,164 ABOVE the $1,050-1,100 entry zone — do not chase, await zone."
+    },
+    {
+      "symbol": "CRWD",
+      "price": 763.05,
+      "change_pct": 0.0,
+      "signal": "no-chase",
+      "watchlist": "Predicted Victory (LAB)",
+      "composite_score": -0.18,
+      "note": "Gate slipped to 2/5 — RSI 80.0 overbought, Z 1.92, Score -0.18 fail. Demoted; deferred."
+    },
+    {
+      "symbol": "AMD",
+      "price": 583.21,
+      "change_pct": 0.0,
+      "signal": "no-chase",
+      "watchlist": "Entry Pipeline (LAB)",
+      "composite_score": -0.159,
+      "note": "Z=2.11 OVERBOUGHT — entry blocked per §4.1 (Z>2.0). Semi redeploy option once it cools. ERN 35d."
+    },
+    {
+      "symbol": "TSM",
+      "price": 475.82,
+      "change_pct": 0.0,
+      "signal": "catalyst",
+      "watchlist": "Entry Pipeline (LAB)",
+      "composite_score": -0.257,
+      "note": "Z=2.20 OVERBOUGHT (blocked) AND ERN 2026-07-16 (16d) — <5d earnings block applies near the date. Monitor."
+    },
+    {
+      "symbol": "PANW",
+      "price": 341.62,
+      "change_pct": 0.0,
+      "signal": "no-chase",
+      "watchlist": "Entry Pipeline (LAB)",
+      "composite_score": -0.136,
+      "note": "Gate FAIL — RSI 88.8 / Z=2.70 OVERBOUGHT. Entry blocked per §4.1 (Z>2.0)."
+    },
+    {
+      "symbol": "DELL",
+      "price": 426.39,
+      "change_pct": 0.0,
+      "signal": "gate2",
+      "watchlist": "Pending Verdict (LAB)",
+      "composite_score": -0.131,
+      "note": "Gate 2 (news) BLOCKED — GF Securities downgrade + $1.56B insider selling; RSI divergence Bearish. Do not promote."
     }
   ],
   "learned_patterns": [
     {
       "category": "RECONCILIATION",
-      "pattern": "A second untracked agentic fill surfaced only via broker reconciliation: INTC was stop-sold 2026-07-07 @ $109.01 (-14.98%) but no session recorded it \u2014 memory still listed INTC as held 19 days later. Reinforces the 06-30 JEPQ lesson: always reconcile positions AND recent orders against the broker; prose memory silently drifts. \u00a75.1 (broker is truth) caught it again.",
+      "pattern": "An agentic JEPQ buy ($36, 08:26 PDT) filled but was never written to memory by the session that placed it — surfaced only by the §3 broker reconciliation. Confirms the discipline: broker state is the source of truth (§5.1), prose memory lags. Untracked agentic fills will appear and must be folded in, not undone (DRIP is never sold on signal).",
       "confidence": "high"
     },
     {
       "category": "ENGINE RELIABILITY",
-      "pattern": "The 'missed scheduled run' flag has escalated from intermittent to a sustained ~19-day outage \u2014 no signal_matrix.json since 2026-06-30. Every session since is forced into SAFE MODE, so no signal-conditioned entry is possible regardless of cash/cap. A stale-guard that keeps firing means the engine, not the guard, is the problem. Root-causing signal_engine.yml is the top operational fix.",
+      "pattern": "The Signal Engine again missed its 3:20 PM close+AH run; the AH session ran on the 12:21 PDT matrix (3h12m stale), forcing SAFE MODE per §2.5. The guard keeps working, but recurring scheduled misses mean back-to-back sessions cannot act on signal. Workflow cron/runner reliability remains the top operational fix.",
       "confidence": "high"
     },
     {
-      "category": "RISK CONTROL",
-      "pattern": "Two LAB single-stock stop-outs now on the board (MRVL -5.71%, INTC -14.98%) vs CORE/DRIP which weathered the same semis/Nasdaq pullback unstopped (SOXX -14.86%, QQQ -3.88%, JEPQ -4.49%) and stay in the book to compound. Confirms the v1.0 design intent: stops belong only on the LAB experiment; the ETF/DRIP base rides drawdowns as buying opportunities.",
+      "category": "PRICE-vs-QUANT DIVERGENCE",
+      "pattern": "Best quarter in six years closed with holdings up sharply (INTC +5.9%, SOXX +4.2%, QQQ +1.6%) while composites stayed NEUTRAL/BEARISH (-0.06 to -0.34). MACD histograms remain Bearish on most names — the signed-momentum term lags a fast V-recovery, so the gate reads neutral even as price rips. Composite is a lagging confirmation in sharp reversals, not a leading one.",
       "confidence": "medium"
     },
     {
-      "category": "PRICE-vs-QUANT DIVERGENCE",
-      "pattern": "The 06-30 matrix read NEUTRAL/BEARISH composites into a strong tape; ~2.5 weeks later semis/Nasdaq gave much of it back (SOXX -19% from its 06-30 mark). The composite's lagging MACD term flipped from 'too bearish in a rally' to roughly right after the pullback \u2014 another data point that the blend confirms late, not early.",
+      "category": "STAGING / ALLOCATION",
+      "pattern": "The DRIP seed (cash->JEPQ) moved the book from 0% DRIP to a near-target 26/50/24 LAB/CORE/DRIP mix in one $36 trade — deposit-free reallocation is the fastest path to the staging glide path when a tier sits at 0%. LAB still 25.9% > 20% cap; it dilutes only via base growth (§17.3), not trimming.",
+      "confidence": "high"
+    },
+    {
+      "category": "GATE SENSITIVITY",
+      "pattern": "NET emerged as the cleanest LAB gate (4/5) purely on a low Z (0.48) + Bullish MACD, while RXRX sits exactly on the Z=1.50 line (fails by the >=1.5 boundary) and CRWD fell to 2/5 on an RSI-80 overbought print. Gate ranking reshuffles session to session on small Z/RSI moves — re-rank every session, never carry a stale top-3.",
       "confidence": "medium"
     },
     {
       "category": "DIVIDEND DATA INTEGRITY",
-      "pattern": "Dividend yields render sanely (JEPQ 9.95%, JEPI 8.10%, SCHD 3.30%) but dividend_growth_streak=0 and payout_ratio=null persist for every DRIP name, so the \u00a715.3 dividend-growth screen stays unverifiable. Covered-call JEPI/JEPQ (payout N/A by rule) can seed on yield; SCHD/DGRO/VIG/VYM wait on the streak/payout fix.",
+      "pattern": "Dividend yields now render sanely (JEPQ 9.95%, JEPI 8.10%, SCHD 3.30%) but dividend_growth_streak=0 and payout_ratio=null persist for every DRIP name, so the §15.3 screen (streak>=5, payout<80%) stays unverifiable. Covered-call names (JEPI/JEPQ, payout N/A by rule) can seed on yield alone; dividend-growth names (SCHD/DGRO/VIG/VYM) wait on the streak/payout fix.",
       "confidence": "high"
     }
   ],
   "earnings": [],
   "stop_loss_alerts": [],
   "stop_audit": {
-    "checked_at": "2026-07-19T13:10:00Z",
+    "checked_at": "2026-06-30T22:39:00Z",
     "all_protected": true,
     "summary": {
       "whole_share_positions": 0,
@@ -830,6 +907,15 @@
       "drip_violations": 0
     },
     "positions": [
+      {
+        "symbol": "INTC",
+        "tier": "stock",
+        "quantity": 0.097496,
+        "is_fractional": true,
+        "covered_qty": 0.0,
+        "trail_pct": 12.6,
+        "status": "skipped_fractional"
+      },
       {
         "symbol": "ARKK",
         "tier": "stock",
@@ -890,68 +976,78 @@
   "trades_executed": [],
   "watchlist_changes": [
     {
-      "symbol": "INTC",
-      "change": "Removed \u2014 stop-out sold 07-07",
-      "reason": "Reconciled a -14.98% stop-loss exit ($128.21 -> $109.01, 2026-07-07) that no prior session had recorded. Broker is truth (\u00a75.1). LAB drops to 2 held (ARKK, NVDA)."
+      "symbol": "JEPQ",
+      "change": "Added — DRIP sleeve opened",
+      "reason": "Reconciled an agentic $36 covered-call buy (08:26 PDT) into the held book. DRIP 0% -> 23.6%; clears the standing DRIP-build capital priority."
+    },
+    {
+      "symbol": "NET",
+      "change": "Promoted to top LAB watch (gate 4/5)",
+      "reason": "Cleanest compound gate: Z=0.48, RSI 55.9, Trend Up, MACD Bullish; only Score fails. ERN 30d clear. Entry still gated by SAFE MODE + LAB over cap."
+    },
+    {
+      "symbol": "CRWD",
+      "change": "Gate 3/5 -> 2/5",
+      "reason": "RSI rose to 80.0 (overbought); Z 1.92. Demoted out of the actionable tier."
     },
     {
       "symbol": "SESSION",
-      "change": "SAFE MODE (matrix ~19 days stale)",
-      "reason": "No Signal Engine run since 2026-06-30; matrix far past the \u00a72.5 3-hour limit. Weekend report-only session. No new entries."
+      "change": "SAFE MODE (3:20 PM engine miss)",
+      "reason": "Latest matrix 12:21 PDT, 3h12m stale (>3h, §2.5). No new entries."
     }
   ],
   "alerts": [
     {
-      "level": "warning",
-      "title": "SAFE MODE \u2014 Signal Matrix ~19 Days Stale",
-      "message": "signal_matrix.json computed_at is 2026-06-30T19:21:18Z, ~19 days old at this 2026-07-19 session (\u00a72.5 limit is 3h). No new entries; existing positions managed only. The Signal Engine has not run since 06-30 \u2014 investigate signal_engine.yml (workflow_dispatch/runner) as the top priority."
-    },
-    {
       "level": "info",
-      "title": "Reconciled \u2014 INTC Stop-Out Removed From Book",
-      "message": "INTC was sold 2026-07-07 @ $109.01 (-14.98% from $128.21 entry) after breaching its ~$112 ATR stop \u2014 an agentic exit no session had recorded. Folded in per \u00a75.1; LAB now 2 held (ARKK, NVDA), book 6 positions. Cash $0.37 -> $11.37 is sale proceeds, not a deposit."
+      "title": "DRIP Sleeve Opened — JEPQ $36 (Reconciled)",
+      "message": "An agentic JEPQ buy (0.5878 sh @ $61.25, 08:26 PDT) was reconciled into the held book per §5.1. DRIP moves 0% -> 23.6%, clearing the standing top-capital-priority DRIP-build flag. No stop (§15.4). Recorded; not undone (DRIP never sold on signal)."
     },
     {
       "level": "warning",
-      "title": "Signal Engine Outage \u2014 No Run Since 2026-06-30",
-      "message": "Every session since 06-30 has been forced into SAFE MODE by a stale matrix. No signal-conditioned entry is possible until the engine produces a fresh matrix. This is the dominant operational blocker."
+      "title": "SAFE MODE — 3:20 PM Engine Run Did Not Fire",
+      "message": "Latest signal_matrix.json is the 12:21 PDT run, 3h12m old at the 3:33 PM session — over the §2.5 3-hour limit. No new entries this session; existing positions managed only. Recurring engine-reliability flag — investigate the GitHub Action schedule before tomorrow's 6:00 AM Daily Brief."
     },
     {
       "level": "warning",
-      "title": "Email Channel \u2014 RESEND_API_KEY May Be Missing",
-      "message": "Prior sessions reported RESEND_API_KEY absent in this environment; the Daily Brief email may fall back to PushNotification per \u00a710.3. Provision the key to restore email delivery."
+      "title": "Dividend Engine Partial — Streak/Payout Still Missing",
+      "message": "Yields now render sanely but dividend_growth_streak=0 and payout_ratio=null persist for all DRIP names, so the §15.3 dividend-growth screen (streak>=5, payout<80%) remains unverifiable. Covered-call JEPI/JEPQ (payout N/A) can seed on yield; SCHD/DGRO/VIG/VYM wait on the fix."
+    },
+    {
+      "level": "warning",
+      "title": "Email Channel Down — RESEND_API_KEY Missing",
+      "message": "The Resend API key is absent in this environment; the After-Hours email could not be sent. Fell back to PushNotification per §10.3. Provision the key to restore email reports."
     }
   ],
   "top_opportunities": [
     {
       "rank": 1,
       "symbol": "NET",
-      "thesis": "Cloudflare \u2014 edge/zero-trust + AI-inference-at-edge. Was the cleanest LAB compound gate (4/5) on the last (06-30) matrix.",
+      "thesis": "Cloudflare — edge network / zero-trust security with AI-inference-at-edge tailwinds. Newly the cleanest LAB compound gate (4/5: Z=0.48, RSI 55.9, Trend Up, MACD Bullish). ERN 30d (clear), news clear.",
       "entry_target": "~$245 (fractional)",
       "composite_score": -0.178,
       "composite_signal": "NEUTRAL",
-      "quant_gate_status": "STALE 4/5 (06-30) \u2014 Z=0.48, Score=-0.178(fail), RSI=55.9, Trend=Up, MACD=Bullish. Not tradable until a fresh matrix.",
-      "action": "DEFERRED \u2014 SAFE MODE (no matrix since 06-30). Re-rank and re-run the \u00a74.1 gate when the engine fires."
+      "quant_gate_status": "4/5 PASS — Z=0.48, Score=-0.178(fail), RSI=55.9, Trend=Up, MACD=Bullish",
+      "action": "DEFERRED — SAFE MODE + LAB over 20% staging cap + ~$0 cash. Top LAB watch once base growth pulls LAB <20% (or on a LAB trim/exit) and a fresh matrix lifts SAFE MODE."
     },
     {
       "rank": 2,
       "symbol": "RXRX",
-      "thesis": "Recursion \u2014 AI drug discovery, NVIDIA partnership. Sub-$4, most accessible fractional entry.",
+      "thesis": "Recursion — AI drug discovery, NVIDIA partnership. Gate 3/5 (Score +0.064, Trend Up, MACD Bullish). Sub-$4 = most accessible meaningful fractional entry. ERN 36d (clear).",
       "entry_target": "~$3.66 (fractional)",
       "composite_score": 0.064,
       "composite_signal": "NEUTRAL",
-      "quant_gate_status": "STALE 3/5 (06-30) \u2014 Z=1.50(on the line), Score=+0.064, RSI=66.2(fail), Trend=Up, MACD=Bullish.",
-      "action": "DEFERRED \u2014 SAFE MODE. Re-check gate + news gate on a fresh matrix."
+      "quant_gate_status": "3/5 PASS — Z=1.50(on the >=1.5 line, fails), Score=+0.064, RSI=66.2(fail), Trend=Up, MACD=Bullish",
+      "action": "DEFERRED — SAFE MODE + LAB over cap. Re-enter once LAB <20%, or on a LAB trim/exit. Gate margin thin (Z exactly on the line). Re-check news gate."
     },
     {
       "rank": 3,
       "symbol": "MU",
-      "thesis": "Micron \u2014 HBM3/AI memory cycle. Long earnings runway.",
-      "entry_target": "$1,050-1,100 zone",
+      "thesis": "Micron — HBM3/AI memory cycle. Gate 3/5 (Z 1.15, RSI 61.8, Trend Up). Long earnings runway (ERN 85d).",
+      "entry_target": "$1,050-1,100 zone (cur $1,164 — above)",
       "composite_score": -0.186,
       "composite_signal": "NEUTRAL",
-      "quant_gate_status": "STALE 3/5 (06-30). Price was above the entry zone.",
-      "action": "WATCH \u2014 do not chase above zone; deferred under SAFE MODE regardless."
+      "quant_gate_status": "3/5 — Z=1.15, Score=-0.186(fail), RSI=61.8, Trend=Up, MACD=Bearish(fail)",
+      "action": "WATCH — do NOT chase above the $1,050-1,100 entry zone. Await a pullback into zone; deferred under SAFE MODE + LAB cap regardless."
     }
   ]
 }

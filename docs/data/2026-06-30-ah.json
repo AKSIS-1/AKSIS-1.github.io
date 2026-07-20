@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "date": "2026-06-30",
+    "session": "ah_check",
+    "session_label": "June 30 — Final Daily Report",
+    "generated_at": "2026-06-30T22:40:00Z",
+    "signal_computed_at": "2026-06-30T19:21:18Z",
+    "version": "0.75",
+    "next_session": "2026-07-01 6:00 AM PDT (Daily Brief) — archive today's AH report; pre-open gap check; route any new deposit to DRIP (most underweight, -6.4pp); SAFE MODE persists until a fresh matrix is computed"
+  },
+  "portfolio": {
+    "total_value": 152.84,
+    "cash": 0.37,
+    "buying_power": 0.37,
+    "pending_deposits": 0.00,
+    "open_positions": 7,
+    "positions_cap": 10,
+    "day_pnl_dollars": 2.84,
+    "day_pnl_pct": 1.89
+  },
+  "thoughts": [
+    { "type": "observation", "label": "DRIP SLEEVE OPENED — JEPQ $36 SEED", "text": "Reconciliation surfaced a NEW holding vs this morning's memory: JEPQ 0.5878 sh @ $61.25 ($36.00), an agentic market buy filled 08:26 PDT today. Per §5.1 the broker is truth — JEPQ is now a held DRIP position, lifting DRIP from 0% to 23.6%." },
+    { "type": "concern", "label": "SAFE MODE — 3:20 PM ENGINE RUN DID NOT FIRE", "text": "The scheduled 3:20 PM close+AH Signal Engine run did not fire. The latest matrix is the 12:21 PDT run, 3h12m old — over the §2.5 3-hour limit. SAFE MODE: no new entries." },
+    { "type": "plan", "label": "DRIP STILL THE ROUTING TARGET FOR NEW CASH", "text": "Allocation LAB 25.9% / CORE 50.2% / DRIP 23.6% vs targets 20/50/30. DRIP remains most-underweight (-6.4pp). $0.37 cash — nothing to route now." }
+  ],
+  "positions": [
+    { "symbol": "INTC", "full_name": "Intel Corporation", "desc": "Foundry AI semiconductor pivot", "tier": "stock", "shares": 0.097496, "entry_price": 128.21, "reg_close": 139.50, "current_price": 139.50, "notional": 13.60, "day_pnl_pct": 5.91, "total_pnl_pct": 8.80, "stop_level": 112.06, "stop_type": "manual", "stop_trail_pct": 12.6, "composite_score": -0.056, "composite_signal": "NEUTRAL" },
+    { "symbol": "ARKK", "full_name": "ARK Innovation ETF", "desc": "Disruptive innovation basket ETF", "tier": "stock", "shares": 0.164426, "entry_price": 77.36, "reg_close": 80.78, "current_price": 80.78, "notional": 13.28, "day_pnl_pct": 0.19, "total_pnl_pct": 4.42, "stop_level": 73.34, "stop_type": "manual", "stop_trail_pct": 5.2, "composite_score": -0.180, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "full_name": "NVIDIA Corporation", "desc": "AI GPU compute monopoly", "tier": "stock", "shares": 0.063587, "entry_price": 200.04, "reg_close": 199.76, "current_price": 199.76, "notional": 12.70, "day_pnl_pct": 2.46, "total_pnl_pct": -0.14, "stop_level": 190.04, "stop_type": "manual", "stop_trail_pct": 5.0, "composite_score": -0.338, "composite_signal": "BEARISH" },
+    { "symbol": "VOO", "full_name": "Vanguard S&P 500 ETF", "desc": "Broad S&P 500 anchor", "tier": "etf", "shares": 0.036731, "entry_price": 680.62, "reg_close": 686.06, "current_price": 686.06, "notional": 25.20, "day_pnl_pct": 0.74, "total_pnl_pct": 0.80, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.217, "composite_signal": "NEUTRAL" },
+    { "symbol": "QQQ", "full_name": "Invesco QQQ Trust", "desc": "Nasdaq-100 growth core", "tier": "etf", "shares": 0.034562, "entry_price": 723.34, "reg_close": 735.78, "current_price": 735.78, "notional": 25.43, "day_pnl_pct": 1.62, "total_pnl_pct": 1.72, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.209, "composite_signal": "NEUTRAL" },
+    { "symbol": "SOXX", "full_name": "iShares Semiconductor ETF", "desc": "Diversified semiconductor sector sleeve", "tier": "etf", "shares": 0.040845, "entry_price": 612.07, "reg_close": 639.99, "current_price": 639.99, "notional": 26.14, "day_pnl_pct": 4.17, "total_pnl_pct": 4.56, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.198, "composite_signal": "NEUTRAL" },
+    { "symbol": "JEPQ", "full_name": "JPMorgan Nasdaq Equity Premium Income ETF", "desc": "Nasdaq covered-call income", "tier": "drip", "shares": 0.587772, "entry_price": 61.25, "reg_close": 61.45, "current_price": 61.45, "notional": 36.12, "day_pnl_pct": 1.24, "total_pnl_pct": 0.33, "stop_level": 0.0, "stop_type": "none", "composite_score": -0.158, "composite_signal": "NEUTRAL" }
+  ],
+  "signal_matrix": [
+    { "symbol": "INTC", "rsi_14": 69.3, "rsi_signal": "Neutral", "rsi_divergence": "None", "macd": "Bullish", "macd_hist": 0.6129, "z_score": 1.49, "z_signal": "Normal", "bb_bandwidth_pct": 40.15, "vol_signal": "Low", "trend_50d": "Up", "atr_pct": 7.64, "suggested_stop_pct": 11.5, "days_to_earnings": 23, "next_earnings_date": "2026-07-23", "composite_score": -0.056, "composite_signal": "NEUTRAL" },
+    { "symbol": "NVDA", "rsi_14": 42.3, "rsi_signal": "Neutral", "rsi_divergence": "None", "macd": "Bearish", "macd_hist": -1.3698, "z_score": -0.83, "z_signal": "Normal", "bb_bandwidth_pct": 15.22, "vol_signal": "Low", "trend_50d": "Down", "atr_pct": 3.14, "suggested_stop_pct": 5.0, "days_to_earnings": 57, "next_earnings_date": "2026-08-26", "composite_score": -0.338, "composite_signal": "BEARISH" }
+  ],
+  "dividend_matrix": [
+    { "symbol": "JEPQ", "dividend_yield_pct": 9.95, "payout_ratio_pct": null, "annual_dividend": 6.12, "ex_dividend_date": "2026-07-01", "dividend_growth_streak": 0, "dividend_safety_score": 65 }
+  ],
+  "accuracy": {
+    "win_rate_pct": 0.0,
+    "trades_evaluated": 1,
+    "trades_pending": 3,
+    "lab_scorecard": "LAB vs QQQ — not yet graded on signal-conditioned trades. 1 graded (MRVL -1.0, baseline); 3 pending.",
+    "do_not_trade": [],
+    "recent_ledger": [
+      { "ticker": "MRVL", "action": "BUY", "outcome": "Realized -5.71% (stop-out 06-26)", "accuracy_delta": "-1.0", "conditions": "Pre-engine baseline" }
+    ]
+  },
+  "watchlist_movers": [],
+  "learned_patterns": [
+    { "category": "RECONCILIATION", "pattern": "An agentic JEPQ buy surfaced only via §3 reconciliation. Broker state is truth (§5.1); untracked fills are folded in, not undone.", "confidence": "high" }
+  ],
+  "earnings": [],
+  "stop_loss_alerts": [],
+  "stop_audit": {
+    "checked_at": "2026-06-30T22:39:00Z",
+    "all_protected": true,
+    "summary": { "whole_share_positions": 0, "protected": 0, "unprotected": 0, "partial": 0, "drip_violations": 0 },
+    "positions": [
+      { "symbol": "INTC", "tier": "stock", "quantity": 0.097496, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 12.6, "status": "skipped_fractional" },
+      { "symbol": "JEPQ", "tier": "drip", "quantity": 0.587772, "is_fractional": true, "covered_qty": 0.0, "trail_pct": 0.0, "status": "drip_ok" }
+    ],
+    "alerts": []
+  },
+  "trades_executed": [],
+  "watchlist_changes": [
+    { "symbol": "JEPQ", "change": "Added — DRIP sleeve opened", "reason": "Reconciled agentic $36 buy. DRIP 0% -> 23.6%." }
+  ],
+  "alerts": [
+    { "level": "warning", "title": "SAFE MODE — 3:20 PM Engine Run Did Not Fire", "message": "Latest matrix 12:21 PDT, 3h12m stale (>3h, §2.5). No new entries." }
+  ],
+  "top_opportunities": [
+    { "rank": 1, "symbol": "NET", "thesis": "Cloudflare — cleanest LAB compound gate (4/5).", "entry_target": "~$245 (fractional)", "composite_score": -0.178, "composite_signal": "NEUTRAL", "quant_gate_status": "4/5 PASS — Z=0.48, Score=-0.178(fail), RSI=55.9, Trend=Up, MACD=Bullish", "action": "DEFERRED — SAFE MODE + LAB over 20% cap + ~$0 cash." }
+  ]
+}

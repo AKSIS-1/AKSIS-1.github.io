@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "date": "2026-06-30",
+    "session": "ah_check",
+    "session_label": "Live Report",
+    "generated_at": "2026-06-30T22:40:00Z",
+    "signal_computed_at": "2026-06-30T19:21:18Z",
+    "version": "0.75",
+    "next_session": "2026-07-01 6:00 AM PDT (Daily Brief)"
+  },
+  "note": "Archived verbatim (portfolio/positions/thoughts/signal_matrix omitted here for brevity) on 2026-08-24 before publishing the v2.0 daily snapshot. This was the last report written under the retired v1.x trade-machinery framework; it showed 7 positions and a $152.84 book. As of 2026-08-24 the broker holds only SOXX + JEPQ ($55.90) — INTC, ARKK, NVDA, VOO, QQQ were exited manually by the owner in the interim. Full original retained in git history at SHA 73785e844ef0779ea961339e018163abf94c01df."
+}
